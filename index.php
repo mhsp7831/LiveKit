@@ -1,0 +1,293 @@
+<?php
+// Use a more robust way to include the functions file
+require_once __DIR__ . '/config/functions.php';
+
+// --- HELPER FUNCTION FOR IMAGE PATHS ---
+/**
+ * Determines the correct path for an image, whether it's a local upload or an external URL.
+ * @param string $path The stored path from the config file.
+ * @return string The correct, displayable URL for the image.
+ */
+function get_image_url($path) {
+    if (empty($path) || preg_match('/^(https?:)?\/\//', $path)) {
+        // If the path is empty or already a full URL, return it as is.
+        return $path;
+    }
+    // Otherwise, it's a local file, so prepend the path to the config directory.
+    return 'config/' . $path;
+}
+
+
+// --- DATA LOADING ---
+$event_id = $_GET['event'] ?? null;
+$configs = null;
+$error_message = '';
+
+// Determine which event to load
+if (!$event_id) {
+    // If no event is specified, redirect to the first one
+    $all_events = get_events();
+    if (!empty($all_events)) {
+        header('Location: ?event=' . $all_events[0]['id']);
+        exit;
+    } else {
+        $error_message = 'هیچ رویدادی برای نمایش وجود ندارد.';
+    }
+} else {
+    // SECURITY: Validate the event ID
+    if (!is_valid_event_id($event_id)) {
+        $error_message = 'رویداد مورد نظر یافت نشد.';
+    } else {
+        // Load the specified event
+        $event_path = EVENTS_DIR . $event_id;
+        $configsFile = $event_path . '/configs.json';
+        if (file_exists($configsFile)) {
+            $configs = json_decode(file_get_contents($configsFile), true);
+        } else {
+            $error_message = 'فایل تنظیمات برای این رویداد یافت نشد.';
+        }
+    }
+}
+
+// Exit with an error page if configs could not be loaded
+if (empty($configs) || !empty($error_message)):
+?>
+<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><title>خطا</title><style>body{font-family:sans-serif;text-align:center;padding:40px;background:#fefefe;color:#333}h1{color:#d9534f;}</style></head><body><h1>خطا در بارگذاری رویداد</h1><p><?= htmlspecialchars($error_message ?: 'تنظیمات رویداد یافت نشد.') ?></p></body></html>
+<?php exit; endif; ?>
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><?= htmlspecialchars($configs["title"] ?? 'پخش زنده') ?></title>
+  <link rel="icon" href="<?= htmlspecialchars(get_image_url($configs["logo"] ?? '')) ?>" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+        --bg: <?= htmlspecialchars($configs["colors"]["bg"]) ?>;
+        --title: <?= htmlspecialchars($configs["colors"]["title"]) ?>;
+        --primary: <?= htmlspecialchars($configs["colors"]["primary"]) ?>;
+        --primary-hover: <?= htmlspecialchars($configs["colors"]["primary-hover"]) ?>;
+        --card-bg: <?= htmlspecialchars($configs["colors"]["card-bg"]) ?>;
+        --placeholder: <?= htmlspecialchars($configs["colors"]["placeholder"]) ?>;
+        --placeholder-border: <?= htmlspecialchars($configs["colors"]["placeholder-border"]) ?>;
+        --text: <?= htmlspecialchars($configs["colors"]["text"]) ?>;
+    }
+    *{padding: 0;margin: 0;outline: none;box-sizing:border-box}
+    body{margin:0;font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+    header{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.05);padding:.8rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+    header img{height:50px;margin-left: 50px;}
+    header a{color:var(--title);text-decoration:none;font-weight:700;transition:.25s}
+    header a:hover{color:var(--primary-hover)}
+    main{flex:1;display:flex;justify-content:center;align-items:flex-start;padding:2rem 1rem}
+    .card{background:var(--card-bg);width:100%;max-width:920px;border-radius:18px;box-shadow:0 12px 32px rgba(0,0,0,.06);padding:1rem;text-align:center}
+    h1{color:var(--title);font-size:1.85rem}
+    .card h1{margin-bottom: 10px;}
+    .video{width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-bottom:1rem;border:0;box-shadow:0 4px 12px rgba(0,0,0,.05)}
+    .video iframe{width:100%;height:100%;border:none}
+    .countdown, h3{font-size:1rem;font-weight:700;color:var(--title);margin:1rem 0 1rem}
+    .countdown{display: flex;justify-content: center;align-items: center;gap: 5px;}
+    .countdown div{display: flex;flex-direction: column;justify-content: center;align-items: center;gap: 5px;}
+    .countdown div span{background-color:var(--primary);color: var(--card-bg);padding: .5rem .8rem;border-radius: 8px;font-weight: bold;font-size: 2rem;width: 65px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+    .countdown div span span{padding: 0;font-size: 1rem;margin-top: -8px;line-height:1.2;}
+    .banners{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.25rem}
+    .banners .banner{background-image: url(<?= htmlspecialchars(get_image_url($configs["banner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;aspect-ratio: 64/19;}
+    .banner{width:100%;background:var(--placeholder);border-radius:12px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-weight:700}
+    #preBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["preBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
+    #endBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["endBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
+    .actions{display:flex;flex-wrap:nowrap;gap:.3rem;justify-content:center;margin-bottom:1.5rem}
+    .btn{padding:.4rem .5rem;border-radius:7px;background:var(--primary);color:#fff;text-decoration:none;font-weight:700;font-size:.7rem;transition:.25s;border:none;display:inline-block;word-spacing: -2px;}
+    .btn:hover{background:var(--primary-hover);transform:translateY(-2px)}
+    .social{display:flex;flex-wrap:nowrap;gap:.3rem;justify-content:center}
+    .social div {display: flex;gap: .5rem;}
+    .social a{padding:.5rem .9rem;border-radius:8px;background:var(--bg);color:var(--title);text-decoration:none;font-size:.95rem;transition:.2s;border:1px solid var(--placeholder-border);display: flex;flex-direction: column;justify-content: space-around;align-items: center;gap: .2rem;line-height: 14px;}
+    .social a:hover{background:var(--placeholder)}
+    .social a img{width: 35px;}
+    footer{text-align:center;color:var(--title);padding:1rem}
+    #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center}
+    #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem;opacity:0;transition:opacity .6s ease;}
+    #subtitleText.show{opacity:1}
+    @media (max-width:600px){
+      h1{font-size:1rem}
+      header a{font-size: .7rem;}
+      header a img{height: 35px;margin: 0;}
+      .countdown{font-size:.8rem}
+      .countdown div span{font-size: 1rem;width: 45px;}
+      .countdown div span span{font-size: .7rem;}
+      footer{font-size: .8rem;}
+      .social a img{width: 30px;}
+      .social a{font-size: .7rem;}
+      #subtitleText{font-size: .8rem;}
+    }
+  </style>
+</head>
+<body>
+<?php
+  date_default_timezone_set('Asia/Tehran');
+  $LIVE_START_STR = $configs["liveStart"];
+  $LIVE_END_STR   = $configs["liveEnd"];
+  $LIVE_START_MS = !empty($LIVE_START_STR) ? strtotime($LIVE_START_STR) * 1000 : 0;
+  $LIVE_END_MS   = !empty($LIVE_END_STR) ? strtotime($LIVE_END_STR) * 1000 : 0;
+  $SERVER_NOW_MS = time() * 1000;
+?>
+  <header>
+    <a href="<?= htmlspecialchars($configs["homePage"]) ?>"><img src="<?= htmlspecialchars(get_image_url($configs["logo"])) ?>" alt="لوگو"></a>
+    <h1>پخش زنده</h1>
+    <a href="<?= htmlspecialchars($configs["homePage"]) ?>">صفحه اصلی</a>
+  </header>
+
+  <main>
+    <div class="card">
+
+      <h1><?= htmlspecialchars($configs["title"]) ?></h1>
+
+      <div id="preBanner" class="banner"></div>
+      <div id="livePlayer" class="video" style="display:none;"><?= $configs["iframe"] ?></div>
+      <div id="endBanner" class="banner" style="display:none;"></div>
+      <div id="subtitleBox"><span id="subtitleText"></span></div>
+      <div id="countdown" class="countdown">در حال بارگذاری تایمر…</div>
+      <div class="banners" id="banners"><a href="https://tarbiatkadeh.ir/nazr/" target="_blank"><div class="banner"></div></a></div>
+      
+      <div class="actions">
+        <?php foreach ($configs['buttons'] as $button): ?>
+            <?php if (!empty($button['link']) && !empty($button['title'])): ?>
+                <a class='btn' href="<?= htmlspecialchars($button["link"]) ?>" target="_blank" rel="noopener"><?= htmlspecialchars($button["title"]) ?></a>
+            <?php endif; ?>
+        <?php endforeach; ?>
+      </div>
+
+      <?php
+        // Check if there are any valid social links to display
+        $has_socials = false;
+        if (isset($configs['socials']) && is_array($configs['socials'])) {
+            foreach ($configs['socials'] as $social) {
+                if (!empty($social['link']) && !empty($social['title'])) {
+                    $has_socials = true;
+                    break;
+                }
+            }
+        }
+      ?>
+
+      <?php if ($has_socials): ?>
+          <h3>صفحات اجتماعی:</h3>
+          <div class="social">
+            <?php foreach ($configs['socials'] as $social): ?>
+                <?php if (!empty($social['link']) && !empty($social['title'])): ?>
+                    <a href="<?= htmlspecialchars($social['link']) ?>" target="_blank" rel="noopener">
+                        <?php if (!empty($social['icon'])): ?>
+                            <img src="<?= htmlspecialchars($social['icon']) ?>" alt="<?= htmlspecialchars($social['title']) ?>">
+                        <?php endif; ?>
+                        <span><?= htmlspecialchars($social['title']) ?></span>
+                    </a>
+                <?php endif; ?>
+            <?php endforeach; ?>
+          </div>
+      <?php endif; ?>
+
+    </div>
+  </main>
+  <footer>© 2025 همه حقوق محفوظ است</footer>
+
+  <script>
+    var serverNow   = <?php echo $SERVER_NOW_MS; ?>;
+    var liveStart   = <?php echo $LIVE_START_MS; ?>;
+    var liveEnd     = <?php echo $LIVE_END_MS; ?>;
+    var clientNow   = Date.now();
+    var timeOffset  = serverNow - clientNow;
+
+    function numberToPersian(n) { 
+        return n.toString().padStart(2, '0').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]); 
+    }
+    
+    // --- CORRECTED COUNTDOWN FORMATTER ---
+    function fmt(ms){
+      var d = Math.floor(ms / 86400000);
+      var h = Math.floor((ms % 86400000) / 3600000);
+      var m = Math.floor((ms % 3600000) / 60000);
+      var s = Math.floor((ms % 60000) / 1000);
+      var result = '';
+      if(d > 0) result += `<div><span>${numberToPersian(d)}<span>روز</span></span></div>`;
+      if(h > 0 || d > 0) result += `<div><span>${numberToPersian(h)}<span>ساعت</span></span></div>`;
+      result += `<div><span>${numberToPersian(m)}<span>دقیقه</span></span></div>`;
+      result += `<div><span>${numberToPersian(s)}<span>ثانیه</span></span></div>`;
+      return result;
+    }
+
+    var elPre = document.getElementById("preBanner"), elLive = document.getElementById("livePlayer"), elEnd = document.getElementById("endBanner"), elCd = document.getElementById("countdown");
+    function tick(){
+      var now = Date.now() + timeOffset;
+      if (liveStart === 0 || now < liveStart){
+        elPre.style.display  = "block"; elLive.style.display = "none"; elEnd.style.display  = "none";
+        elCd.style.display = 'flex';
+        var distance = liveStart - now;
+        elCd.innerHTML = (liveStart === 0) ? "پخش زنده هنوز زمان‌بندی نشده است." : "زمان باقی‌مانده تا شروع: " + fmt(distance);
+      } else if (now >= liveStart && now < liveEnd){
+        elPre.style.display  = "none"; elLive.style.display = "block"; elEnd.style.display  = "none";
+        elCd.style.display = "none";
+      } else {
+        elPre.style.display  = "none"; elLive.style.display = "none"; elEnd.style.display  = "block";
+        elCd.style.display = "none";
+        clearInterval(timer);
+      }
+    }
+    tick();
+    var timer = setInterval(tick, 1000);
+
+    // --- Subtitles: AJAX Polling Implementation (Reverted) ---
+    const fetchInterval = <?= intval($configs["fetchInterval"]) ?>;
+    const subtitleDelay = <?= intval($configs["subtitleDelay"]) ?>;
+    let subtitles = [], currentIndex = 0, subtitleTimer = null;
+
+    async function loadSubtitles() {
+      try {
+        // Use a cache-busting query parameter to get the latest version
+        const subtitlesPath = 'config/events/<?= htmlspecialchars($event_id) ?>/subtitles.json?nocache=' + Date.now();
+        const res = await fetch(subtitlesPath);
+        if (!res.ok) return;
+        const data = await res.json();
+        // Only restart the animation cycle if the data has changed
+        if (JSON.stringify(data) !== JSON.stringify(subtitles)) {
+          subtitles = data;
+          currentIndex = 0;
+          startSubtitleCycle();
+        }
+      } catch (err) { console.error("Error loading or parsing subtitles:", err); }
+    }
+
+    function showSubtitle(sub) {
+      const textEl = document.getElementById("subtitleText");
+      textEl.classList.remove("show");
+      setTimeout(() => {
+        if (sub && sub.text) {
+          textEl.innerHTML = sub.link ? `<a href="${sub.link}" target="_blank" rel="noopener" style="color:#1b8e53;text-decoration:none;">${sub.text}</a>` : sub.text;
+        } else {
+          textEl.innerHTML = "";
+        }
+        textEl.classList.add("show");
+      }, 600); // Wait for fade-out animation before changing text
+    }
+
+    function startSubtitleCycle() {
+      clearInterval(subtitleTimer);
+      if (!subtitles.length) { 
+          showSubtitle(null); 
+          return; 
+      }
+      const cycle = () => {
+        showSubtitle(subtitles[currentIndex]);
+        currentIndex = (currentIndex + 1) % subtitles.length;
+      };
+      cycle(); // Show the first one immediately
+      subtitleTimer = setInterval(cycle, subtitleDelay);
+    }
+
+    // Load subtitles on page load, and then poll for changes
+    loadSubtitles();
+    setInterval(loadSubtitles, fetchInterval);
+    // --- End Subtitles Implementation ---
+  </script>
+</body>
+</html>
+

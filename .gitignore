@@ -1,0 +1,25 @@
+# --- User-Generated Content ---
+# Ignore all user-generated event data, configurations, and uploads.
+# The application will create these directories and files automatically if they don't exist.
+config/events/
+config/uploads/
+config/events.json
+config/app.log
+config/live_database.sqlite
+
+# --- System Files ---
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+._*
+
+# --- Editor/IDE Files ---
+# Ignore configuration files from popular editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- Miscellaneous ---
+# Ignore PHP error logs if they are created in the project directory
+error_log
