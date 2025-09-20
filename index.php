@@ -1,31 +1,21 @@
 <?php
-// Use a more robust way to include the functions file
+// FIX 4: Correct require_once path
 require_once __DIR__ . '/config/functions.php';
 
-// --- HELPER FUNCTION FOR IMAGE PATHS ---
-/**
- * Determines the correct path for an image, whether it's a local upload or an external URL.
- * @param string $path The stored path from the config file.
- * @return string The correct, displayable URL for the image.
- */
+// FIX 5: Image URL helper now expects paths like "config/uploads/..." and just returns them.
 function get_image_url($path) {
     if (empty($path) || preg_match('/^(https?:)?\/\//', $path)) {
-        // If the path is empty or already a full URL, return it as is.
         return $path;
     }
-    // Otherwise, it's a local file, so prepend the path to the config directory.
-    return 'config/' . $path;
+    // The path is already correct as stored in configs.json (e.g., "config/uploads/...")
+    return $path;
 }
 
-
-// --- DATA LOADING ---
 $event_id = $_GET['event'] ?? null;
 $configs = null;
 $error_message = '';
 
-// Determine which event to load
 if (!$event_id) {
-    // If no event is specified, redirect to the first one
     $all_events = get_events();
     if (!empty($all_events)) {
         header('Location: ?event=' . $all_events[0]['id']);
@@ -34,11 +24,9 @@ if (!$event_id) {
         $error_message = 'هیچ رویدادی برای نمایش وجود ندارد.';
     }
 } else {
-    // SECURITY: Validate the event ID
     if (!is_valid_event_id($event_id)) {
         $error_message = 'رویداد مورد نظر یافت نشد.';
     } else {
-        // Load the specified event
         $event_path = EVENTS_DIR . $event_id;
         $configsFile = $event_path . '/configs.json';
         if (file_exists($configsFile)) {
@@ -48,8 +36,10 @@ if (!$event_id) {
         }
     }
 }
+// Ensure arrays exist to prevent errors on front-end
+if (isset($configs) && !isset($configs['buttons'])) $configs['buttons'] = [];
+if (isset($configs) && !isset($configs['socials'])) $configs['socials'] = [];
 
-// Exit with an error page if configs could not be loaded
 if (empty($configs) || !empty($error_message)):
 ?>
 <!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><title>خطا</title><style>body{font-family:sans-serif;text-align:center;padding:40px;background:#fefefe;color:#333}h1{color:#d9534f;}</style></head><body><h1>خطا در بارگذاری رویداد</h1><p><?= htmlspecialchars($error_message ?: 'تنظیمات رویداد یافت نشد.') ?></p></body></html>
@@ -96,14 +86,13 @@ if (empty($configs) || !empty($error_message)):
     .banner{width:100%;background:var(--placeholder);border-radius:12px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-weight:700}
     #preBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["preBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
     #endBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["endBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
-    .actions{display:flex;flex-wrap:nowrap;gap:.3rem;justify-content:center;margin-bottom:1.5rem}
+    .actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:1.5rem}
     .btn{padding:.4rem .5rem;border-radius:7px;background:var(--primary);color:#fff;text-decoration:none;font-weight:700;font-size:.7rem;transition:.25s;border:none;display:inline-block;word-spacing: -2px;}
     .btn:hover{background:var(--primary-hover);transform:translateY(-2px)}
-    .social{display:flex;flex-wrap:nowrap;gap:.3rem;justify-content:center}
-    .social div {display: flex;gap: .5rem;}
+    .social{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
     .social a{padding:.5rem .9rem;border-radius:8px;background:var(--bg);color:var(--title);text-decoration:none;font-size:.95rem;transition:.2s;border:1px solid var(--placeholder-border);display: flex;flex-direction: column;justify-content: space-around;align-items: center;gap: .2rem;line-height: 14px;}
     .social a:hover{background:var(--placeholder)}
-    .social a img{width: 35px;}
+    .social a img{width: 35px;height:35px;object-fit:contain;}
     footer{text-align:center;color:var(--title);padding:1rem}
     #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center}
     #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem;opacity:0;transition:opacity .6s ease;}
@@ -116,7 +105,7 @@ if (empty($configs) || !empty($error_message)):
       .countdown div span{font-size: 1rem;width: 45px;}
       .countdown div span span{font-size: .7rem;}
       footer{font-size: .8rem;}
-      .social a img{width: 30px;}
+      .social a img{width: 30px;height:30px;}
       .social a{font-size: .7rem;}
       #subtitleText{font-size: .8rem;}
     }
@@ -133,7 +122,7 @@ if (empty($configs) || !empty($error_message)):
 ?>
   <header>
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>"><img src="<?= htmlspecialchars(get_image_url($configs["logo"])) ?>" alt="لوگو"></a>
-    <h1>پخش زنده</h1>
+    <h1><?= htmlspecialchars($configs["title"]) ?></h1>
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>">صفحه اصلی</a>
   </header>
 
@@ -151,35 +140,33 @@ if (empty($configs) || !empty($error_message)):
       
       <div class="actions">
         <?php foreach ($configs['buttons'] as $button): ?>
-            <?php if (!empty($button['link']) && !empty($button['title'])): ?>
+            <?php if (!empty($button['title']) && !empty($button['link'])): ?>
                 <a class='btn' href="<?= htmlspecialchars($button["link"]) ?>" target="_blank" rel="noopener"><?= htmlspecialchars($button["title"]) ?></a>
             <?php endif; ?>
         <?php endforeach; ?>
       </div>
 
       <?php
-        // Check if there are any valid social links to display
         $has_socials = false;
-        if (isset($configs['socials']) && is_array($configs['socials'])) {
+        if (!empty($configs['socials'])) {
             foreach ($configs['socials'] as $social) {
-                if (!empty($social['link']) && !empty($social['title'])) {
+                if (!empty($social['title']) && !empty($social['link'])) {
                     $has_socials = true;
                     break;
                 }
             }
         }
       ?>
-
       <?php if ($has_socials): ?>
           <h3>صفحات اجتماعی:</h3>
           <div class="social">
             <?php foreach ($configs['socials'] as $social): ?>
-                <?php if (!empty($social['link']) && !empty($social['title'])): ?>
+                <?php if (!empty($social['title']) && !empty($social['link'])): ?>
                     <a href="<?= htmlspecialchars($social['link']) ?>" target="_blank" rel="noopener">
                         <?php if (!empty($social['icon'])): ?>
-                            <img src="<?= htmlspecialchars($social['icon']) ?>" alt="<?= htmlspecialchars($social['title']) ?>">
+                            <img src="<?= htmlspecialchars(get_image_url($social['icon'])) ?>">
                         <?php endif; ?>
-                        <span><?= htmlspecialchars($social['title']) ?></span>
+                        <span><?= nl2br(htmlspecialchars($social['title'])) ?></span>
                     </a>
                 <?php endif; ?>
             <?php endforeach; ?>
@@ -201,7 +188,6 @@ if (empty($configs) || !empty($error_message)):
         return n.toString().padStart(2, '0').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]); 
     }
     
-    // --- CORRECTED COUNTDOWN FORMATTER ---
     function fmt(ms){
       var d = Math.floor(ms / 86400000);
       var h = Math.floor((ms % 86400000) / 3600000);
@@ -235,19 +221,16 @@ if (empty($configs) || !empty($error_message)):
     tick();
     var timer = setInterval(tick, 1000);
 
-    // --- Subtitles: AJAX Polling Implementation (Reverted) ---
-    const fetchInterval = <?= intval($configs["fetchInterval"]) ?>;
-    const subtitleDelay = <?= intval($configs["subtitleDelay"]) ?>;
+    const fetchInterval = <?= intval($configs["fetchInterval"] ?? 60000) ?>;
+    const subtitleDelay = <?= intval($configs["subtitleDelay"] ?? 4000) ?>;
     let subtitles = [], currentIndex = 0, subtitleTimer = null;
 
     async function loadSubtitles() {
       try {
-        // Use a cache-busting query parameter to get the latest version
         const subtitlesPath = 'config/events/<?= htmlspecialchars($event_id) ?>/subtitles.json?nocache=' + Date.now();
         const res = await fetch(subtitlesPath);
         if (!res.ok) return;
         const data = await res.json();
-        // Only restart the animation cycle if the data has changed
         if (JSON.stringify(data) !== JSON.stringify(subtitles)) {
           subtitles = data;
           currentIndex = 0;
@@ -266,7 +249,7 @@ if (empty($configs) || !empty($error_message)):
           textEl.innerHTML = "";
         }
         textEl.classList.add("show");
-      }, 600); // Wait for fade-out animation before changing text
+      }, 600);
     }
 
     function startSubtitleCycle() {
@@ -279,14 +262,12 @@ if (empty($configs) || !empty($error_message)):
         showSubtitle(subtitles[currentIndex]);
         currentIndex = (currentIndex + 1) % subtitles.length;
       };
-      cycle(); // Show the first one immediately
+      cycle();
       subtitleTimer = setInterval(cycle, subtitleDelay);
     }
 
-    // Load subtitles on page load, and then poll for changes
     loadSubtitles();
     setInterval(loadSubtitles, fetchInterval);
-    // --- End Subtitles Implementation ---
   </script>
 </body>
 </html>

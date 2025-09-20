@@ -1,17 +1,18 @@
 <?php 
-require_once 'functions.php'; 
+// FIX 4: Correct require_once path
+require_once __DIR__ . '/functions.php'; 
 
-// --- HELPER FUNCTION FOR IMAGE PATHS (Dashboard specific) ---
+// FIX 5: Image URL helper for dashboard expects paths like "config/uploads/..."
 function get_dashboard_image_url($path) {
     if (empty($path) || preg_match('/^(https?:)?\/\//', $path)) {
         return $path;
     }
-    // dashboard.php is in /config, uploads are in /config/uploads, so the path is relative from /config
+    if (strpos($path, 'config/') === 0) {
+        return substr($path, strlen('config/'));
+    }
     return $path;
 }
 
-// --- INITIALIZE FIRST EVENT (Dashboard only) ---
-// This logic runs only when the dashboard is loaded for the first time.
 if (empty($all_events)) {
     $first_event_id = 'event_' . uniqid();
     $all_events = [['id' => $first_event_id, 'name' => 'رویداد اول']];
@@ -20,7 +21,6 @@ if (empty($all_events)) {
     $events_json = json_encode($all_events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     safe_file_put_contents(EVENTS_FILE, $events_json);
     
-    // Reload variables after creation to ensure the page has the correct context
     $current_event_id = $first_event_id;
     $_SESSION['current_event_id'] = $current_event_id;
     $configsFile = EVENTS_DIR . $current_event_id . '/configs.json';
@@ -29,12 +29,9 @@ if (empty($all_events)) {
     $subtitles = json_decode(file_get_contents($subtitlesFile), true);
 }
 
-// Make sure socials key exists to prevent errors
-if (!isset($configs['socials'])) {
-    $configs['socials'] = $defaultConfigs['socials'];
-}
+if (!isset($configs['buttons'])) { $configs['buttons'] = []; }
+if (!isset($configs['socials'])) { $configs['socials'] = []; }
 
-// Fetch all users to display in the user management tab
 $users = get_all_users();
 ?>
 <!DOCTYPE html>
@@ -56,20 +53,20 @@ $users = get_all_users();
             <h2>پنل مدیریت</h2>
             <ul>
                 <li><a href="#" class="tab-button active" data-tab="settings">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span>تنظیمات پخش</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span>تنظیمات</span>
                 </a></li>
                 <li><a href="#" class="tab-button" data-tab="subtitles">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v1h-14v-1zM19 9h-14v10a2 2 0 002 2h10a2 2 0 002-2v-10z" /></svg>
-                    <span>مدیریت زیرنویس</span>
+                    <span>زیرنویس</span>
                 </a></li>
-                <li><a href="#" class="tab-button" data-tab="colors">
+                <li><a href="#" class="tab-button" data-tab="appearance">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
-                    <span>تم رنگی</span>
+                    <span>ظاهر</span>
                 </a></li>
                 <li><a href="#" class="tab-button" data-tab="users">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5 5 0 019 10a5 5 0 014 2.002m-4 0a4 4 0 100-5.292" /></svg>
-                    <span>مدیریت کاربران</span>
+                    <span>کاربران</span>
                 </a></li>
                 <li><a href="#" class="tab-button" data-tab="backup">
                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
@@ -92,7 +89,7 @@ $users = get_all_users();
                         <?php endforeach; ?>
                     </select>
                     <div class="event-actions">
-                         <button id="create-event-btn" clfass="btn btn-secondary btn-sm btn-icon" title="رویداد جدید">
+                         <button id="create-event-btn" class="btn btn-secondary btn-sm btn-icon" title="رویداد جدید">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                             <span>جدید</span>
                         </button>
@@ -126,155 +123,161 @@ $users = get_all_users();
         </header>
 
         <main class="content-area">
-            <div id="settings" class="tab-panel active">
-                 <form id="settings-form" enctype="multipart/form-data">
-                    <input type="hidden" name="action" value="save_settings">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
-                    <div class="card">
-                        <h3>تنظیمات اصلی پخش زنده</h3>
-                        <div class="form-grid">
-                            <div class="form-group"><label for="title">عنوان پخش زنده:</label><input required type="text" name="title" id="title" value="<?= htmlspecialchars($configs['title']) ?>"></div>
-                            <div class="form-group"><label for="homePage">صفحه اصلی:</label><input required type="url" name="homePage" id="homePage" value="<?= htmlspecialchars($configs['homePage']) ?>"></div>
-                            <div class="form-group"><label for="iframe">ای‌فریم:</label><input required type="text" name="iframe" id="iframe" value="<?= htmlspecialchars($configs['iframe']) ?>"></div>
-                            <div class="form-group"><label for="liveStart">زمان شروع:</label><input required type="datetime-local" name="liveStart" id="liveStart" value="<?= htmlspecialchars($configs['liveStart']) ?>"></div>
-                            <div class="form-group"><label for="liveEnd">زمان پایان:</label><input required type="datetime-local" name="liveEnd" id="liveEnd" value="<?= htmlspecialchars($configs['liveEnd']) ?>"></div>
-                            <div class="form-group"><label for="fetchInterval">فاصله زمانی دریافت زیرنویس (ms):</label><input required type="number" name="fetchInterval" id="fetchInterval" value="<?= htmlspecialchars($configs['fetchInterval']) ?>"></div>
-                            <div class="form-group"><label for="subtitleDelay">زمان نمایش هر زیرنویس (ms):</label><input required type="number" name="subtitleDelay" id="subtitleDelay" value="<?= htmlspecialchars($configs['subtitleDelay']) ?>"></div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>تصاویر و بنرها</h3>
-                        <div class="form-grid image-upload-grid">
-                            <div class="form-group image-group">
-                                <label for="logo_file">لوگو:</label>
-                                <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" alt="پیش‌نمایش" class="image-preview" id="logo_preview"></div>
-                                <input type="text" name="logo_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['logo']) ?>" data-preview-target="logo_preview">
-                                <input type="file" name="logo_file" id="logo_file" accept="image/*" data-preview-target="logo_preview">
-                                <input type="hidden" name="logo_old" value="<?= htmlspecialchars($configs['logo']) ?>">
-                            </div>
-                            <div class="form-group image-group">
-                                <label for="preBanner_file">بنر قبل از پخش:</label>
-                                <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" alt="پیش‌نمایش" class="image-preview" id="preBanner_preview"></div>
-                                <input type="text" name="preBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['preBanner']) ?>" data-preview-target="preBanner_preview">
-                                <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" data-preview-target="preBanner_preview">
-                                <input type="hidden" name="preBanner_old" value="<?= htmlspecialchars($configs['preBanner']) ?>">
-                            </div>
-                            <div class="form-group image-group">
-                                <label for="endBanner_file">بنر بعد از پخش:</label>
-                                <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" alt="پیش‌نمایش" class="image-preview" id="endBanner_preview"></div>
-                                <input type="text" name="endBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['endBanner']) ?>" data-preview-target="endBanner_preview">
-                                <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" data-preview-target="endBanner_preview">
-                                <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
-                            </div>
-                             <div class="form-group image-group">
-                                <label for="banner_file">بنر:</label>
-                                <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" alt="پیش‌نمایش" class="image-preview" id="banner_preview"></div>
-                                <input type="text" name="banner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['banner']) ?>" data-preview-target="banner_preview">
-                                <input type="file" name="banner_file" id="banner_file" accept="image/*" data-preview-target="banner_preview">
-                                <input type="hidden" name="banner_old" value="<?= htmlspecialchars($configs['banner']) ?>">
+            <form id="settings-form" class="main-form">
+                <div class="form-content">
+                    <div id="settings" class="tab-panel active">
+                        <input type="hidden" name="action" value="save_settings">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                        <div class="card">
+                            <h3>تنظیمات اصلی</h3>
+                            <div class="form-grid">
+                                <div class="form-group"><label for="title">عنوان پخش زنده:</label><input required type="text" name="title" id="title" value="<?= htmlspecialchars($configs['title']) ?>"></div>
+                                <div class="form-group"><label for="homePage">صفحه اصلی:</label><input type="url" name="homePage" id="homePage" value="<?= htmlspecialchars($configs['homePage']) ?>"></div>
+                                <div class="form-group"><label for="iframe">ای‌فریم:</label><input type="text" name="iframe" id="iframe" value="<?= htmlspecialchars($configs['iframe']) ?>"></div>
+                                <div class="form-group"><label for="liveStart">زمان شروع:</label><input type="datetime-local" name="liveStart" id="liveStart" value="<?= htmlspecialchars($configs['liveStart']) ?>"></div>
+                                <div class="form-group"><label for="liveEnd">زمان پایان:</label><input type="datetime-local" name="liveEnd" id="liveEnd" value="<?= htmlspecialchars($configs['liveEnd']) ?>"></div>
+                                <div class="form-group"><label for="fetchInterval">فاصله زمانی زیرنویس (ms):</label><input type="number" name="fetchInterval" id="fetchInterval" value="<?= htmlspecialchars($configs['fetchInterval']) ?>"></div>
+                                <div class="form-group"><label for="subtitleDelay">زمان نمایش زیرنویس (ms):</label><input type="number" name="subtitleDelay" id="subtitleDelay" value="<?= htmlspecialchars($configs['subtitleDelay']) ?>"></div>
                             </div>
                         </div>
-                    </div>
-                     <div class="card">
-                        <h3>دکمه‌ها</h3>
-                        <div class="buttons-container">
-                           <div class="button-group"><h4>دکمه ۱</h4><div class="form-group"><label for="btn1-title">عنوان:</label><input type="text" name="btn1-title" id="btn1-title" value="<?= htmlspecialchars($configs['buttons']['btn1']['title']) ?>"></div><div class="form-group"><label for="btn1-link">لینک:</label><input type="url" name="btn1-link" id="btn1-link" value="<?= htmlspecialchars($configs['buttons']['btn1']['link']) ?>"></div></div>
-                           <div class="button-group"><h4>دکمه ۲</h4><div class="form-group"><label for="btn2-title">عنوان:</label><input type="text" name="btn2-title" id="btn2-title" value="<?= htmlspecialchars($configs['buttons']['btn2']['title']) ?>"></div><div class="form-group"><label for="btn2-link">لینک:</label><input type="url" name="btn2-link" id="btn2-link" value="<?= htmlspecialchars($configs['buttons']['btn2']['link']) ?>"></div></div>
-                           <div class="button-group"><h4>دکمه ۳</h4><div class="form-group"><label for="btn3-title">عنوان:</label><input type="text" name="btn3-title" id="btn3-title" value="<?= htmlspecialchars($configs['buttons']['btn3']['title']) ?>"></div><div class="form-group"><label for="btn3-link">لینک:</label><input type="url" name="btn3-link" id="btn3-link" value="<?= htmlspecialchars($configs['buttons']['btn3']['link']) ?>"></div></div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>صفحات اجتماعی</h3>
-                        <div class="buttons-container">
-                            <?php for ($i = 1; $i <= 4; $i++): ?>
-                                <div class="button-group">
-                                    <h4>آیتم <?= $i ?></h4>
-                                    <div class="form-group">
-                                        <label for="social<?= $i ?>-title">عنوان:</label>
-                                        <input type="text" name="social<?= $i ?>-title" id="social<?= $i ?>-title" value="<?= htmlspecialchars($configs['socials']['social'.$i]['title']) ?>">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="social<?= $i ?>-link">لینک:</label>
-                                        <input type="url" name="social<?= $i ?>-link" id="social<?= $i ?>-link" value="<?= htmlspecialchars($configs['socials']['social'.$i]['link']) ?>">
-                                    </div>
-                                    <div class="form-group image-group">
-                                        <label for="social<?= $i ?>_icon_file">آیکن:</label>
-                                        <div class="image-preview-container">
-                                            <img src="<?= htmlspecialchars(get_dashboard_image_url($configs['socials']['social'.$i]['icon'])) ?>" alt="پیش‌نمایش" class="image-preview" id="social<?= $i ?>_icon_preview">
+                        <div class="card">
+                            <h3>دکمه‌ها</h3>
+                            <div id="buttons-container" class="sortable-list-grid">
+                                <?php foreach ($configs['buttons'] as $index => $button): ?>
+                                    <div class="sortable-item">
+                                        <div class="sortable-header">
+                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                                            <span class="item-title">دکمه #<span class="item-counter"><?= $index + 1 ?></span></span>
+                                            <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
                                         </div>
-                                        <input type="text" name="social<?= $i ?>_icon_url" placeholder="آدرس آیکن" value="<?= htmlspecialchars($configs['socials']['social'.$i]['icon']) ?>" data-preview-target="social<?= $i ?>_icon_preview">
-                                        <input type="file" name="social<?= $i ?>_icon_file" id="social<?= $i ?>_icon_file" accept="image/*" data-preview-target="social<?= $i ?>_icon_preview">
-                                        <input type="hidden" name="social<?= $i ?>_icon_old" value="<?= htmlspecialchars($configs['socials']['social'.$i]['icon']) ?>">
+                                        <div class="sortable-content">
+                                            <div class="form-group"><label>عنوان:</label><input type="text" name="button_title[]" value="<?= htmlspecialchars($button['title']) ?>"></div>
+                                            <div class="form-group"><label>لینک:</label><input type="url" name="button_link[]" value="<?= htmlspecialchars($button['link']) ?>"></div>
+                                        </div>
                                     </div>
-                                </div>
-                            <?php endfor; ?>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="form-actions"><button type="button" id="add-button-btn" class="btn btn-secondary"><span class="btn-text">افزودن دکمه</span></button></div>
+                        </div>
+                        <div class="card">
+                            <h3>صفحات اجتماعی</h3>
+                            <div id="socials-container" class="sortable-list-grid">
+                                <?php foreach ($configs['socials'] as $index => $social): ?>
+                                    <div class="sortable-item">
+                                        <div class="sortable-header">
+                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                                            <span class="item-title">آیتم #<span class="item-counter"><?= $index + 1 ?></span></span>
+                                            <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
+                                        </div>
+                                        <div class="sortable-content">
+                                            <div class="form-group"><label>عنوان:</label><input type="text" name="social_title[]" value="<?= htmlspecialchars($social['title']) ?>"></div>
+                                            <div class="form-group"><label>لینک:</label><input type="url" name="social_link[]" value="<?= htmlspecialchars($social['link']) ?>"></div>
+                                            <div class="form-group image-group">
+                                                <label>آیکن:</label>
+                                                <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($social['icon'])) ?>" class="image-preview"></div>
+                                                <input type="text" name="social_icon_url[]" placeholder="آدرس آیکن" value="<?= htmlspecialchars(get_dashboard_image_url($social['icon'])) ?>" class="preview-url-input">
+                                                <input type="file" name="social_icon_file[]" accept="image/*" class="preview-file-input">
+                                                <input type="hidden" name="social_icon_old[]" value="<?= htmlspecialchars($social['icon']) ?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="form-actions"><button type="button" id="add-social-btn" class="btn btn-secondary"><span class="btn-text">افزودن آیتم اجتماعی</span></button></div>
                         </div>
                     </div>
-                    <div class="save-button-container"><button type="submit"><span class="btn-text">ذخیره تمام تنظیمات پخش</span></button></div>
-                </form>
-            </div>
 
-            <div id="subtitles" class="tab-panel">
-                <div class="card">
-                    <h3>مدیریت زیرنویس‌ها</h3>
-                    <form id="subtitles-form">
-                        <input type="hidden" name="action" value="save_subtitles">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
-                        <div id="subtitles-container">
-                            <?php foreach ($subtitles as $subtitle): ?>
-                                <div class="subtitle-item">
-                                    <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
-                                    <input type="text" name="subtitle_text[]" value="<?= htmlspecialchars($subtitle['text']) ?>" placeholder="متن زیرنویس">
-                                    <input type="url" name="subtitle_link[]" value="<?= htmlspecialchars($subtitle['link']) ?>" placeholder="لینک (اختیاری)">
-                                    <button type="button" class="remove-btn"><span class="btn-text">حذف</span></button>
-                                </div>
-                            <?php endforeach; ?>
+                    <div id="subtitles" class="tab-panel">
+                        <div class="card">
+                            <h3>مدیریت زیرنویس‌ها</h3>
+                            <div id="subtitles-container" class="sortable-list">
+                                <?php foreach ($subtitles as $subtitle): ?>
+                                    <div class="sortable-item">
+                                        <div class="sortable-header">
+                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                                            <span class="item-title">زیرنویس</span>
+                                            <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
+                                        </div>
+                                        <div class="sortable-content form-grid">
+                                            <div class="form-group"><label>متن:</label><input type="text" name="subtitle_text[]" value="<?= htmlspecialchars($subtitle['text']) ?>"></div>
+                                            <div class="form-group"><label>لینک (اختیاری):</label><input type="url" name="subtitle_link[]" value="<?= htmlspecialchars($subtitle['link'] ?? '') ?>"></div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" id="add-subtitle-btn" class="btn btn-secondary"><span class="btn-text">افزودن زیرنویس</span></button>
+                                <button type="button" id="remove-all-subtitles-btn" class="btn btn-danger"><span class="btn-text">حذف همه</span></button>
+                            </div>
                         </div>
-                        <div class="form-actions">
-                            <button type="button" id="add-subtitle-btn" class="btn"><span class="btn-text">افزودن زیرنویس جدید</span></button>
-                            <button type="button" id="remove-all-subtitles-btn" class="btn btn-danger"><span class="btn-text">حذف همه</span></button>
-                            <button type="submit"><span class="btn-text">ذخیره زیرنویس‌ها</span></button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div id="colors" class="tab-panel">
-                <div class="card">
-                    <h3>شخصی‌سازی تم رنگی</h3>
-                     <div class="color-preview-area" style="<?php foreach ($configs['colors'] as $name => $value) echo '--' . htmlspecialchars($name) . ':' . htmlspecialchars($value) . ';'; ?>">
-                        <h4>این یک عنوان نمونه است</h4>
-                        <p>این یک متن نمونه برای نمایش رنگ فونت اصلی صفحه شما است.</p>
-                        <button type="button" class="preview-button"><span class="btn-text">دکمه اصلی</span></button>
-                        <div class="preview-card"><p>این یک کارت نمونه است:</p><div class="placeholder"></div></div>
                     </div>
-                    <form id="color-form">
-                        <input type="hidden" name="action" value="save_colors">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
-                        <div class="form-grid">
-                            <div class="form-group"><label for="bg">پس‌زمینه (bg):</label><input required type="color" name="bg" id="bg" value="<?= htmlspecialchars($configs['colors']['bg']) ?>"></div>
-                            <div class="form-group"><label for="title-color">عنوان (title):</label><input required type="color" name="title-color" id="title-color" value="<?= htmlspecialchars($configs['colors']['title']) ?>"></div>
-                            <div class="form-group"><label for="primary">رنگ اصلی (primary):</label><input required type="color" name="primary" id="primary" value="<?= htmlspecialchars($configs['colors']['primary']) ?>"></div>
-                            <div class="form-group"><label for="primary-hover">هاور رنگ اصلی (primary-hover):</label><input required type="color" name="primary-hover" id="primary-hover" value="<?= htmlspecialchars($configs['colors']['primary-hover']) ?>"></div>
-                            <div class="form-group"><label for="card-bg">پس‌زمینه کارت (card-bg):</label><input required type="color" name="card-bg" id="card-bg" value="<?= htmlspecialchars($configs['colors']['card-bg']) ?>"></div>
-                            <div class="form-group"><label for="placeholder">جایگاه‌ها (placeholder):</label><input required type="color" name="placeholder" id="placeholder" value="<?= htmlspecialchars($configs['colors']['placeholder']) ?>"></div>
-                            <div class="form-group"><label for="placeholder-border">کادر جایگاه‌ها (placeholder-border):</label><input type="color" name="placeholder-border" id="placeholder-border" value="<?= htmlspecialchars($configs['colors']['placeholder-border']) ?>"></div>
-                            <div class="form-group"><label for="text">متن ساده (text):</label><input required type="color" name="text" id="text" value="<?= htmlspecialchars($configs['colors']['text']) ?>"></div>
-                        </div>
-                        <div class="form-actions">
-                             <button type="button" id="reset-colors-btn" class="btn btn-secondary" data-defaults='<?= htmlspecialchars(json_encode($defaultConfigs['colors'])) ?>'><span class="btn-text">بازگشت به پیش‌فرض</span></button>
-                            <button type="submit"><span class="btn-text">ذخیره رنگ‌ها</span></button>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
+                    <div id="appearance" class="tab-panel">
+                         <div class="card">
+                            <h3>تصاویر و بنرها</h3>
+                            <div class="image-upload-grid">
+                                <div class="form-group image-group">
+                                    <label for="logo_file">لوگو:</label>
+                                    <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="image-preview" id="logo_preview"></div>
+                                    <input type="text" name="logo_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="preview-url-input">
+                                    <input type="file" name="logo_file" id="logo_file" accept="image/*" class="preview-file-input">
+                                    <input type="hidden" name="logo_old" value="<?= htmlspecialchars($configs['logo']) ?>">
+                                </div>
+                                <div class="form-group image-group">
+                                    <label for="preBanner_file">بنر قبل از پخش:</label>
+                                    <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="image-preview" id="preBanner_preview"></div>
+                                    <input type="text" name="preBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['preBanner']) ?>" class="preview-url-input">
+                                    <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input">
+                                    <input type="hidden" name="preBanner_old" value="<?= htmlspecialchars($configs['preBanner']) ?>">
+                                </div>
+                                <div class="form-group image-group">
+                                    <label for="endBanner_file">بنر بعد از پخش:</label>
+                                    <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="image-preview" id="endBanner_preview"></div>
+                                    <input type="text" name="endBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['endBanner']) ?>" class="preview-url-input">
+                                    <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input">
+                                    <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
+                                </div>
+                                 <div class="form-group image-group">
+                                    <label for="banner_file">بنر:</label>
+                                    <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="image-preview" id="banner_preview"></div>
+                                    <input type="text" name="banner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['banner']) ?>" class="preview-url-input">
+                                    <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input">
+                                    <input type="hidden" name="banner_old" value="<?= htmlspecialchars($configs['banner']) ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3>شخصی‌سازی تم رنگی</h3>
+                             <div class="color-preview-area" style="<?php foreach ($configs['colors'] as $name => $value) echo '--' . htmlspecialchars($name) . ':' . htmlspecialchars($value) . ';'; ?>">
+                                <h4>این یک عنوان نمونه است</h4>
+                                <p>این یک متن نمونه برای نمایش رنگ فونت اصلی صفحه شما است.</p>
+                                <button type="button" class="preview-button"><span class="btn-text">دکمه اصلی</span></button>
+                                <div class="preview-card"><p>این یک کارت نمونه است:</p><div class="placeholder"></div></div>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group"><label for="bg">پس‌زمینه (bg):</label><input type="color" name="bg" id="bg" value="<?= htmlspecialchars($configs['colors']['bg']) ?>"></div>
+                                <div class="form-group"><label for="title-color">عنوان (title):</label><input type="color" name="title-color" id="title-color" value="<?= htmlspecialchars($configs['colors']['title']) ?>"></div>
+                                <div class="form-group"><label for="primary">رنگ اصلی (primary):</label><input type="color" name="primary" id="primary" value="<?= htmlspecialchars($configs['colors']['primary']) ?>"></div>
+                                <div class="form-group"><label for="primary-hover">هاور رنگ اصلی (primary-hover):</label><input type="color" name="primary-hover" id="primary-hover" value="<?= htmlspecialchars($configs['colors']['primary-hover']) ?>"></div>
+                                <div class="form-group"><label for="card-bg">پس‌زمینه کارت (card-bg):</label><input type="color" name="card-bg" id="card-bg" value="<?= htmlspecialchars($configs['colors']['card-bg']) ?>"></div>
+                                <div class="form-group"><label for="placeholder">جایگاه‌ها (placeholder):</label><input type="color" name="placeholder" id="placeholder" value="<?= htmlspecialchars($configs['colors']['placeholder']) ?>"></div>
+                                <div class="form-group"><label for="placeholder-border">کادر جایگاه‌ها (placeholder-border):</label><input type="color" name="placeholder-border" id="placeholder-border" value="<?= htmlspecialchars($configs['colors']['placeholder-border']) ?>"></div>
+                                <div class="form-group"><label for="text">متن ساده (text):</label><input type="color" name="text" id="text" value="<?= htmlspecialchars($configs['colors']['text']) ?>"></div>
+                            </div>
+                            <div class="form-actions">
+                                 <button type="button" id="reset-colors-btn" class="btn btn-secondary"><span class="btn-text">بازگشت به پیش‌فرض</span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            
             <div id="users" class="tab-panel">
                 <div class="card-grid">
                     <?php if (is_owner()): ?>
                     <div class="card">
                         <h3>افزودن کاربر جدید</h3>
-                        <form id="add-user-form">
+                        <form id="add-user-form" class="standalone-form">
                             <input type="hidden" name="action" value="add_user">
                             <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                             <div class="form-group">
@@ -336,7 +339,7 @@ $users = get_all_users();
                     <div class="card">
                         <h3>بازیابی از نسخه پشتیبان (Import)</h3>
                         <p>فایل پشتیبان JSON را انتخاب کرده و مشخص کنید کدام بخش از رویداد فعلی را می‌خواهید جایگزین کنید.</p>
-                        <form id="restore-form" enctype="multipart/form-data">
+                        <form id="restore-form" class="standalone-form" enctype="multipart/form-data">
                             <input type="hidden" name="action" value="restore_backup">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
                             <div class="restore-target">
@@ -358,10 +361,60 @@ $users = get_all_users();
                     </div>
                 </div>
             </div>
-
         </main>
+        <div class="save-button-container">
+            <button type="submit" id="main-save-btn" form="settings-form" disabled><span class="btn-text">ذخیره تمام تغییرات</span></button>
+        </div>
     </div>
 
+    <!-- Templates for dynamic items -->
+    <template id="button-template">
+        <div class="sortable-item">
+            <div class="sortable-header">
+                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                <span class="item-title">دکمه #<span class="item-counter"></span></span>
+                <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
+            </div>
+            <div class="sortable-content">
+                <div class="form-group"><label>عنوان:</label><input type="text" name="button_title[]" value=""></div>
+                <div class="form-group"><label>لینک:</label><input type="url" name="button_link[]" value=""></div>
+            </div>
+        </div>
+    </template>
+    <template id="social-template">
+         <div class="sortable-item">
+            <div class="sortable-header">
+                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                <span class="item-title">آیتم #<span class="item-counter"></span></span>
+                <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
+            </div>
+            <div class="sortable-content">
+                <div class="form-group"><label>عنوان:</label><input type="text" name="social_title[]" value=""></div>
+                <div class="form-group"><label>لینک:</label><input type="url" name="social_link[]" value=""></div>
+                <div class="form-group image-group">
+                    <label>آیکن:</label>
+                    <div class="image-preview-container"><img src="" class="image-preview"></div>
+                    <input type="text" name="social_icon_url[]" placeholder="آدرس آیکن" value="" class="preview-url-input">
+                    <input type="file" name="social_icon_file[]" accept="image/*" class="preview-file-input">
+                    <input type="hidden" name="social_icon_old[]" value="">
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id="subtitle-template">
+        <div class="sortable-item">
+            <div class="sortable-header">
+                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                <span class="item-title">زیرنویس</span>
+                <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
+            </div>
+            <div class="sortable-content form-grid">
+                <div class="form-group"><label>متن:</label><input type="text" name="subtitle_text[]" value=""></div>
+                <div class="form-group"><label>لینک (اختیاری):</label><input type="url" name="subtitle_link[]" value=""></div>
+            </div>
+        </div>
+    </template>
+    
     <div id="toast-container"></div>
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-content">
@@ -369,7 +422,7 @@ $users = get_all_users();
             <p id="modal-text">آیا از انجام این کار مطمئن هستید؟</p>
             <div class="modal-buttons">
                 <button id="modal-confirm-btn" class="btn btn-danger"><span class="btn-text">تایید</span></button>
-                <button id="modal-cancel-btn" class="btn"><span class="btn-text">انصراف</span></button>
+                <button id="modal-cancel-btn" class="btn modal-cancel-btn"><span class="btn-text">انصراف</span></button>
             </div>
         </div>
     </div>
@@ -380,14 +433,14 @@ $users = get_all_users();
             <input type="text" id="prompt-input" class="prompt-input">
             <div class="modal-buttons">
                 <button id="prompt-confirm-btn" class="btn"><span class="btn-text">تایید</span></button>
-                <button id="prompt-cancel-btn" class="btn btn-secondary"><span class="btn-text">انصراف</span></button>
+                <button id="prompt-cancel-btn" class="btn btn-secondary modal-cancel-btn"><span class="btn-text">انصراف</span></button>
             </div>
         </div>
     </div>
     <div id="edit-user-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>ویرایش کاربر</h3>
-            <form id="edit-user-form">
+            <form id="edit-user-form" class="standalone-form">
                 <input type="hidden" name="action" value="update_user">
                 <input type="hidden" name="user_id" id="edit_user_id">
                 <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">

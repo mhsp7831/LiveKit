@@ -1,14 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
 
+    let isDirty = false; // FIX 7: Flag for unsaved changes
+
+    // --- Global Elements ---
+    const mainSaveBtn = document.getElementById('main-save-btn');
+    const saveButtonContainer = document.querySelector('.save-button-container');
+
     // --- Toast Notification Handler ---
     const showToast = (message, type = 'success') => {
         const container = document.getElementById('toast-container');
         if (!container) return;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        const icon = type === 'success' 
-            ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+        const icon = type === 'success' ?
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
         toast.innerHTML = `${icon}<span>${message}</span>`;
         container.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 100);
@@ -20,398 +26,420 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Generic AJAX Requester ---
     const sendRequest = async (formData) => {
-        // Automatically add CSRF token from any form on the page
         if (!formData.has('csrf_token')) {
             const token = document.querySelector('input[name="csrf_token"]')?.value;
             if (token) formData.append('csrf_token', token);
         }
-
-        const response = await fetch('ajax-handler.php', {
-            method: 'POST',
-            body: formData,
-            headers: { 'Accept': 'application/json' },
-        });
+        const response = await fetch('ajax-handler.php', { method: 'POST', body: formData, headers: { 'Accept': 'application/json' } });
         if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
         const result = await response.json();
         if (!result.success) throw new Error(result.message || 'An unknown server error occurred.');
         return result;
     };
 
-    // --- AJAX Form Submission Handler ---
-    const handleFormSubmit = async (event) => {
-        event.preventDefault();
-        const form = event.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        if (!submitButton) return;
-        
-        submitButton.classList.add('loading');
-        submitButton.disabled = true;
-
-        try {
-            const formData = new FormData(form);
-            const result = await sendRequest(formData);
-            
-            submitButton.classList.remove('loading');
-            submitButton.classList.add('success');
-            showToast(result.message, 'success');
-            
-            if (form.id === 'settings-form') {
-                // Clear file inputs
-                form.querySelectorAll('input[type="file"]').forEach(input => {
-                    input.value = '';
-                });
-
-                // **FIX 1: Robustly update URL fields with new values from the server response**
-                // The server response `result.updated_images` contains a map of 
-                // { input_name: new_url }. We can loop through this map.
-                if (result.updated_images) {
-                    for (const inputName in result.updated_images) {
-                        const urlInput = form.querySelector(`input[name="${inputName}"]`);
-                        if (urlInput) {
-                            urlInput.value = result.updated_images[inputName];
-                        }
-                    }
-                }
-                
-                // Clean up the URL
-                if (window.history.replaceState) {
-                    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                    window.history.replaceState({path: cleanUrl}, '', cleanUrl);
-                }
-            }
-
-            if (['add-user-form', 'edit-user-form'].includes(form.id)) {
-                setTimeout(() => window.location.reload(), 1500);
-            }
-            if (form.id === 'restore-form') {
-                setTimeout(() => window.location.reload(), 2000);
-            }
-
-        } catch (error) {
-            submitButton.classList.remove('loading');
-            showToast(error.message, 'error');
-        } finally {
-            setTimeout(() => {
-                submitButton.classList.remove('success');
-                submitButton.disabled = false;
-            }, 2000);
-        }
-    };
-    
-    document.querySelectorAll('form').forEach(form => form.addEventListener('submit', handleFormSubmit));
-
     // --- Modal Logic ---
-    const confirmModal = document.getElementById('confirm-modal');
-    const promptModal = document.getElementById('prompt-modal');
-    const editUserModal = document.getElementById('edit-user-modal');
-
-    const setupModal = (modal) => {
-        if (!modal) return { show: () => {}, hide: () => {} };
-        const hide = () => modal.classList.remove('active');
-        const show = () => modal.classList.add('active');
-        modal.addEventListener('click', e => { if (e.target === modal) hide(); });
-        modal.querySelectorAll('.modal-cancel-btn').forEach(btn => btn.addEventListener('click', hide));
+    const setupModal = (modalEl) => {
+        if (!modalEl) return { show: () => {}, hide: () => {} };
+        const hide = () => modalEl.classList.remove('active');
+        const show = () => modalEl.classList.add('active');
+        modalEl.addEventListener('click', e => { if (e.target === modalEl) hide(); });
+        modalEl.querySelectorAll('.modal-cancel-btn').forEach(btn => btn.addEventListener('click', hide));
         return { show, hide };
     };
 
-    const confirmHandler = setupModal(confirmModal);
-    const promptHandler = setupModal(promptModal);
-    const editUserHandler = setupModal(editUserModal);
-    
-    const showConfirm = (message) => {
-        return new Promise(resolve => {
-            const confirmBtn = confirmModal.querySelector('#modal-confirm-btn');
-            const cancelBtn = confirmModal.querySelector('#modal-cancel-btn');
-            confirmModal.querySelector('#modal-text').textContent = message;
+    const confirmModal = setupModal(document.getElementById('confirm-modal'));
+    const promptModal = setupModal(document.getElementById('prompt-modal'));
+    const editUserModal = setupModal(document.getElementById('edit-user-modal'));
 
+    const showConfirm = (title, message) => {
+        return new Promise(resolve => {
+            const modalEl = document.getElementById('confirm-modal');
+            modalEl.querySelector('#modal-title').textContent = title;
+            modalEl.querySelector('#modal-text').textContent = message;
+            const confirmBtn = modalEl.querySelector('#modal-confirm-btn');
             const newConfirmBtn = confirmBtn.cloneNode(true);
             confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-            const newCancelBtn = cancelBtn.cloneNode(true);
-            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
             
-            const hideAndResolve = (value) => {
-                confirmHandler.hide();
-                resolve(value);
-            };
-
-            newConfirmBtn.addEventListener('click', () => hideAndResolve(true), { once: true });
-            newCancelBtn.addEventListener('click', () => hideAndResolve(false), { once: true });
-
-            confirmHandler.show();
+            newConfirmBtn.addEventListener('click', () => { confirmModal.hide(); resolve(true); }, { once: true });
+            modalEl.querySelector('#modal-cancel-btn').onclick = () => { confirmModal.hide(); resolve(false); };
+            
+            confirmModal.show();
         });
     };
     
     const showPrompt = (config) => {
         return new Promise(resolve => {
-            promptModal.querySelector('#prompt-title').textContent = config.title;
-            promptModal.querySelector('#prompt-text').textContent = config.text;
-            const input = promptModal.querySelector('#prompt-input');
+            const modalEl = document.getElementById('prompt-modal');
+            modalEl.querySelector('#prompt-title').textContent = config.title;
+            modalEl.querySelector('#prompt-text').textContent = config.text;
+            const input = modalEl.querySelector('#prompt-input');
             input.value = config.value || '';
             input.pattern = config.pattern || '.*';
             input.title = config.patternHint || '';
-            
-            const confirmBtn = promptModal.querySelector('#prompt-confirm-btn');
-            const cancelBtn = promptModal.querySelector('#prompt-cancel-btn');
 
+            const confirmBtn = modalEl.querySelector('#prompt-confirm-btn');
             const newConfirmBtn = confirmBtn.cloneNode(true);
             confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-            const newCancelBtn = cancelBtn.cloneNode(true);
-            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-
-            const hideAndResolve = (value) => {
-                promptHandler.hide();
-                resolve(value);
-            };
 
             newConfirmBtn.addEventListener('click', () => {
-                if (!input.checkValidity()){
-                    input.reportValidity();
-                    return;
-                }
-                hideAndResolve(input.value.trim());
-            }, { once: true });
-            newCancelBtn.addEventListener('click', () => hideAndResolve(null), { once: true });
+                if (!input.checkValidity()) { input.reportValidity(); return; }
+                promptModal.hide();
+                resolve(input.value.trim());
+            });
+            modalEl.querySelector('#prompt-cancel-btn').onclick = () => { promptModal.hide(); resolve(null); };
 
-            promptHandler.show();
+            promptModal.show();
         });
     };
 
-
-    // --- User Management Logic ---
-    const usersList = document.getElementById('users-list');
-    if (usersList) {
-        usersList.addEventListener('click', async (e) => {
-            const target = e.target.closest('button');
-            if (!target) return;
-
-            const userId = target.dataset.id;
-            const username = target.dataset.username;
-
-            if (target.classList.contains('edit-user-btn')) {
-                document.getElementById('edit_user_id').value = userId;
-                document.getElementById('edit_username').value = username;
-                document.getElementById('edit_password').value = '';
-                editUserHandler.show();
-            } else if (target.classList.contains('delete-user-btn')) {
-                const isSelfDelete = target.hasAttribute('data-self-delete');
-                const message = isSelfDelete
-                    ? `آیا از حذف حساب کاربری خودتان ("${username}") مطمئن هستید؟ این عمل غیرقابل بازگشت است و از سیستم خارج خواهید شد.`
-                    : `آیا از حذف کاربر "${username}" مطمئن هستید؟`;
-
-                const confirmed = await showConfirm(message);
-
-                if (confirmed) {
-                    const formData = new FormData();
-                    formData.append('action', 'delete_user');
-                    formData.append('user_id', userId);
-                    try {
-                        const result = await sendRequest(formData);
-                        showToast(result.message, 'success');
-                        if (result.self_delete) {
-                            setTimeout(() => window.location.href = 'logout.php', 1500);
-                        } else {
-                            setTimeout(() => window.location.reload(), 1500);
-                        }
-                    } catch (error) {
-                        showToast(error.message, 'error');
-                    }
-                }
-            }
-        });
-    }
-
-    // --- Event Management ---
-    const eventSelector = document.getElementById('event-selector');
-    if (eventSelector) {
-        eventSelector.addEventListener('change', async () => {
-            const formData = new FormData();
-            formData.append('action', 'switch_event');
-            formData.append('event_id', eventSelector.value);
-            try {
-                await sendRequest(formData);
-                window.location.reload();
-            } catch (error) { showToast(error.message, 'error'); }
-        });
-
-        document.getElementById('create-event-btn')?.addEventListener('click', async () => {
-            const name = await showPrompt({
-                title: 'ساخت رویداد جدید',
-                text: 'یک نام برای رویداد جدید خود وارد کنید:'
-            });
-            if (!name) return;
-            const formData = new FormData();
-            formData.append('action', 'create_event');
-            formData.append('event_name', name);
-            try {
-                await sendRequest(formData);
-                window.location.reload(); 
-            } catch (error) { showToast(error.message, 'error'); }
-        });
-
-        document.getElementById('rename-event-btn')?.addEventListener('click', async () => {
-            const currentName = eventSelector.options[eventSelector.selectedIndex].text;
-            const newName = await showPrompt({
-                title: 'تغییر نام رویداد',
-                text: `نام جدیدی برای "${currentName}" وارد کنید:`,
-                value: currentName
-            });
-            if (!newName || newName === currentName) return;
-            const formData = new FormData();
-            formData.append('action', 'rename_event');
-            formData.append('event_id', eventSelector.value);
-            formData.append('event_name', newName);
-            try {
-                await sendRequest(formData);
-                showToast('نام رویداد با موفقیت تغییر کرد.', 'success');
-                eventSelector.options[eventSelector.selectedIndex].text = newName;
-            } catch (error) { showToast(error.message, 'error'); }
-        });
-        
-        document.getElementById('edit-event-id-btn')?.addEventListener('click', async () => {
-            const currentId = eventSelector.value;
-            const newId = await showPrompt({
-                title: 'ویرایش شناسه رویداد',
-                text: 'شناسه جدید باید منحصر به فرد باشد.',
-                value: currentId,
-                pattern: '^[a-zA-Z0-9_]+$',
-                patternHint: 'فقط حروف انگلیسی، اعداد و آندرلاین (_) مجاز است.'
-            });
-            if (!newId || newId === currentId) return;
-
-            const formData = new FormData();
-            formData.append('action', 'edit_event_id');
-            formData.append('current_event_id', currentId);
-            formData.append('new_event_id', newId);
-
-            try {
-                const result = await sendRequest(formData);
-                showToast(result.message, 'success');
-                setTimeout(() => window.location.reload(), 1500);
-            } catch (error) { showToast(error.message, 'error'); }
-        });
-
-        document.getElementById('delete-event-btn')?.addEventListener('click', async () => {
-            const eventName = eventSelector.options[eventSelector.selectedIndex].text;
-            const confirmed = await showConfirm(`آیا از حذف رویداد "${eventName}" مطمئن هستید؟ این عمل غیرقابل بازگشت است.`);
-            if (confirmed) {
-                const formData = new FormData();
-                formData.append('action', 'delete_event');
-                formData.append('event_id', eventSelector.value);
-                try {
-                    await sendRequest(formData);
-                    window.location.reload();
-                } catch (error) { showToast(error.message, 'error'); }
-            }
-        });
-
-        document.getElementById('copy-event-id-btn')?.addEventListener('click', () => {
-            const eventId = document.querySelector('.event-id-display code').textContent;
-            navigator.clipboard.writeText(eventId)
-                .then(() => showToast('شناسه رویداد کپی شد!', 'success'))
-                .catch(() => showToast('خطا در کپی کردن شناسه.', 'error'));
-        });
-    }
-
-
-    // --- Subtitle Management ---
-    const setupSubtitleItem = (item) => {
-        item.querySelector('.remove-btn')?.addEventListener('click', async () => {
-            const confirmed = await showConfirm('آیا از حذف این زیرنویس مطمئن هستید؟');
-            if (confirmed) item.remove();
-        });
+    // --- Form Dirty State & Unload Warning ---
+    const setDirty = () => {
+        if (!isDirty) isDirty = true;
+        mainSaveBtn.disabled = false;
     };
-    document.querySelectorAll('.subtitle-item').forEach(setupSubtitleItem);
-
-    document.getElementById('add-subtitle-btn')?.addEventListener('click', function() {
-        const container = document.getElementById('subtitles-container');
-        const newItem = document.createElement('div');
-        newItem.className = 'subtitle-item';
-        newItem.innerHTML = `<svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
-                             <input type="text" name="subtitle_text[]" placeholder="متن زیرنویس">
-                             <input type="url" name="subtitle_link[]" placeholder="لینک (اختیاری)">
-                             <button type="button" class="remove-btn"><span class="btn-text">حذف</span></button>`;
-        setupSubtitleItem(newItem);
-        container.appendChild(newItem);
-    });
-    
-    document.getElementById('remove-all-subtitles-btn')?.addEventListener('click', async () => {
-        const container = document.getElementById('subtitles-container');
-        if (container.children.length > 0) {
-            const confirmed = await showConfirm('آیا از حذف تمام زیرنویس‌ها مطمئن هستید؟');
-            if (confirmed) container.innerHTML = '';
+    const setClean = () => {
+        isDirty = false;
+        mainSaveBtn.disabled = true;
+    };
+    window.addEventListener('beforeunload', (e) => {
+        if (isDirty) {
+            e.preventDefault();
+            e.returnValue = '';
         }
     });
 
-    const subtitlesContainer = document.getElementById('subtitles-container');
-    if (subtitlesContainer) {
-        new Sortable(subtitlesContainer, { animation: 150, ghostClass: 'sortable-ghost', handle: '.drag-handle' });
+    // --- Image Preview Logic ---
+    const setupImagePreview = (urlInput, fileInput, previewImage) => {
+        const updatePreview = (src) => {
+            previewImage.src = src || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+            previewImage.style.display = src ? '' : 'none';
+        };
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (re) => updatePreview(re.target.result);
+                reader.readAsDataURL(file);
+            } else {
+                updatePreview(urlInput.value);
+            }
+        });
+        urlInput.addEventListener('input', () => updatePreview(urlInput.value));
+        updatePreview(urlInput.value);
+    };
+
+    // --- Dynamic Sortable List Manager ---
+    const setupSortableList = (containerId, addButtonId, templateId) => {
+        const container = document.getElementById(containerId);
+        const addButton = document.getElementById(addButtonId);
+        const template = document.getElementById(templateId);
+        if (!container || !template) return;
+
+        const setupItem = (item) => {
+            item.querySelectorAll('.image-group').forEach(group => {
+                setupImagePreview(
+                    group.querySelector('.preview-url-input'),
+                    group.querySelector('.preview-file-input'),
+                    group.querySelector('.image-preview')
+                );
+            });
+            updateItemCounters(containerId);
+        };
+        
+        container.querySelectorAll('.sortable-item').forEach(setupItem);
+
+        if(addButton) {
+            addButton.addEventListener('click', () => {
+                const newItem = template.content.cloneNode(true).firstElementChild;
+                container.appendChild(newItem);
+                setupItem(newItem);
+                setDirty();
+            });
+        }
+        
+        new Sortable(container, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            handle: '.drag-handle',
+            forceFallback: true,
+            onEnd: () => {
+                updateItemCounters(containerId);
+                setDirty();
+            }
+        });
+        updateItemCounters(containerId);
+    };
+    
+    const updateItemCounters = (containerId) => {
+        const container = document.getElementById(containerId);
+        container.querySelectorAll('.sortable-item').forEach((item, index) => {
+            const counter = item.querySelector('.item-counter');
+            if (counter) counter.textContent = index + 1;
+        });
     }
 
-    // --- Tab Switching ---
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelector('.tab-button.active')?.classList.remove('active');
-            document.querySelector('.tab-panel.active')?.classList.remove('active');
-            button.classList.add('active');
-            document.getElementById(button.dataset.tab)?.classList.add('active');
-        });
-    });
+    // --- MAIN FORM SUBMISSION ---
+    const settingsForm = document.getElementById('settings-form');
+    settingsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    mainSaveBtn.disabled = true;
+    mainSaveBtn.classList.add('loading');
 
-    // --- Colors Preview ---
-    const colorForm = document.getElementById('color-form');
-    if (colorForm) {
-        colorForm.querySelectorAll('input[type="color"]').forEach(input => {
-            input.addEventListener('input', (e) => {
-                let varName = e.target.name.replace('-color', '');
-                document.querySelector('.color-preview-area')?.style.setProperty('--' + varName, e.target.value);
+    try {
+        const formData = new FormData(settingsForm);
+        const result = await sendRequest(formData);
+
+        mainSaveBtn.classList.remove('loading');
+        mainSaveBtn.classList.add('success');
+        showToast(result.message);
+        setClean();
+
+        // --- FIX: START of new logic to update UI without reloading ---
+        if (result.updated_data && result.updated_data.configs) {
+            const newConfigs = result.updated_data.configs;
+
+            // Helper function to strip "config/" prefix, same as PHP
+            const getDashboardUrl = (path) => {
+                if (!path) return '';
+                return path.startsWith('config/') ? path.substring('config/'.length) : path;
+            };
+
+            // Update main image fields
+            ['logo', 'preBanner', 'endBanner', 'banner'].forEach(key => {
+                const group = document.querySelector(`input[name="${key}_file"]`).closest('.image-group');
+                if (group) {
+                    group.querySelector('.preview-url-input').value = getDashboardUrl(newConfigs[key]);
+                    group.querySelector('.image-preview').src = getDashboardUrl(newConfigs[key]);
+                    group.querySelector('.preview-file-input').value = ''; // Clear file input
+                    group.querySelector(`input[name="${key}_old"]`).value = newConfigs[key];
+                }
             });
-        });
-        document.getElementById('reset-colors-btn')?.addEventListener('click', (e) => {
-            const defaults = JSON.parse(e.currentTarget.dataset.defaults);
+
+            // Update social icon fields
+            const socialItems = document.querySelectorAll('#socials-container .sortable-item');
+            if (newConfigs.socials && socialItems.length === newConfigs.socials.length) {
+                socialItems.forEach((item, index) => {
+                    const newSocial = newConfigs.socials[index];
+                    item.querySelector('.preview-url-input').value = getDashboardUrl(newSocial.icon);
+                    item.querySelector('.image-preview').src = getDashboardUrl(newSocial.icon);
+                    item.querySelector('.preview-file-input').value = ''; // Clear file input
+                    item.querySelector('input[name="social_icon_old[]"]').value = newSocial.icon;
+                });
+            }
+        }
+        // --- FIX: END of new logic ---
+
+        setTimeout(() => {
+            mainSaveBtn.classList.remove('success');
+            // The reload is no longer needed
+            // window.location.reload(); 
+        }, 1500);
+
+    } catch (error) {
+        showToast(error.message, 'error');
+        mainSaveBtn.disabled = false;
+        mainSaveBtn.classList.remove('loading');
+    }
+});
+
+    // --- EVENT DELEGATION FOR ALL OTHER ACTIONS ---
+    document.body.addEventListener('click', async (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        // Dynamic item removal
+        if (button.classList.contains('remove-btn')) {
+            const item = button.closest('.sortable-item');
+            const listContainer = item ? item.closest('.sortable-list, .sortable-list-grid') : null;
+
+            if (item && listContainer && await showConfirm('تایید حذف', 'آیا از حذف این آیتم مطمئن هستید؟')) {
+                item.remove();
+                setDirty();
+                // Re-calculate counters
+                updateItemCounters(listContainer.id);
+            }
+        }
+        if (button.id === 'remove-all-subtitles-btn') {
+            if (await showConfirm('تایید حذف همه', 'آیا از حذف تمام زیرنویس‌ها مطمئن هستید؟')) {
+                document.getElementById('subtitles-container').innerHTML = '';
+                setDirty();
+            }
+        }
+
+        // Color reset
+        if (button.id === 'reset-colors-btn') {
+            const defaults = JSON.parse(button.dataset.defaults);
+            const colorForm = button.closest('.card');
             for (const key in defaults) {
                 const inputName = key.replace(/_/g, '-') === 'title' ? 'title-color' : key.replace(/_/g, '-');
                 const input = colorForm.querySelector(`input[name="${inputName}"]`);
                 if (input) {
                     input.value = defaults[key];
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('input', { bubbles: true })); // Trigger preview update
                 }
             }
-        });
-    }
+            setDirty();
+        }
 
-    // --- Image Preview ---
-    document.querySelectorAll('input[data-preview-target]').forEach(input => {
-        const previewImage = document.getElementById(input.dataset.previewTarget);
-        if (!previewImage) return;
-        const updatePreview = (src) => {
-            previewImage.src = src || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // Use transparent pixel for empty src
-        };
-        if (input.type === 'file') {
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (re) => updatePreview(re.target.result);
-                    reader.readAsDataURL(file);
-                } else {
-                    const urlInput = input.closest('.image-group').querySelector('input[type="text"]');
-                    updatePreview(urlInput.value);
+        // Header buttons
+        const eventSelector = document.getElementById('event-selector');
+        const currentEventId = eventSelector.value;
+        const currentEventName = eventSelector.options[eventSelector.selectedIndex].text;
+        
+        switch (button.id) {
+            case 'create-event-btn': {
+                const name = await showPrompt({ title: 'ساخت رویداد جدید', text: 'یک نام برای رویداد جدید خود وارد کنید:' });
+                if (name === null) return;
+                const formData = new FormData();
+                formData.append('action', 'create_event');
+                formData.append('event_name', name);
+                try {
+                    await sendRequest(formData);
+                    showToast('رویداد جدید با موفقیت ساخته شد.');
+                    window.location.reload();
+                } catch (error) { showToast(error.message, 'error'); }
+                break;
+            }
+            case 'rename-event-btn': {
+                const newName = await showPrompt({ title: 'تغییر نام رویداد', text: `نام جدیدی برای "${currentEventName}" وارد کنید:`, value: currentEventName });
+                if (newName === null || newName === currentEventName) return;
+                const formData = new FormData();
+                formData.append('action', 'rename_event');
+                formData.append('event_id', currentEventId);
+                formData.append('event_name', newName);
+                try {
+                    await sendRequest(formData);
+                    showToast('نام رویداد با موفقیت تغییر کرد.');
+                    eventSelector.options[eventSelector.selectedIndex].text = newName;
+                } catch (error) { showToast(error.message, 'error'); }
+                break;
+            }
+            case 'delete-event-btn': {
+                 if (await showConfirm('تایید حذف رویداد', `آیا از حذف رویداد "${currentEventName}" مطمئن هستید؟ این عمل غیرقابل بازگشت است.`)) {
+                    const formData = new FormData();
+                    formData.append('action', 'delete_event');
+                    formData.append('event_id', currentEventId);
+                    try {
+                        await sendRequest(formData);
+                        showToast('رویداد با موفقیت حذف شد.');
+                        window.location.reload();
+                    } catch (error) { showToast(error.message, 'error'); }
                 }
-            });
-        } else {
-            input.addEventListener('input', (e) => updatePreview(e.target.value));
+                break;
+            }
+            case 'copy-event-id-btn':
+                navigator.clipboard.writeText(document.querySelector('.event-id-display code').textContent)
+                    .then(() => showToast('شناسه رویداد کپی شد!'))
+                    .catch(() => showToast('خطا در کپی کردن شناسه.', 'error'));
+                break;
+            case 'edit-event-id-btn': {
+                const newId = await showPrompt({
+                    title: 'ویرایش شناسه رویداد',
+                    text: 'شناسه جدید باید منحصر به فرد باشد و فقط شامل حروف انگلیسی، اعداد و آندرلاین (_) باشد.',
+                    value: currentEventId,
+                    pattern: '^[a-zA-Z0-9_]+$',
+                    patternHint: 'فقط حروف انگلیسی، اعداد و آندرلاین (_) مجاز است.'
+                });
+                if (newId === null || newId === currentEventId) return;
+                const formData = new FormData();
+                formData.append('action', 'edit_event_id');
+                formData.append('current_event_id', currentEventId);
+                formData.append('new_event_id', newId);
+                try {
+                    await sendRequest(formData);
+                    showToast('شناسه با موفقیت تغییر کرد. صفحه بارگذاری مجدد می‌شود.');
+                    window.location.reload();
+                } catch (error) { showToast(error.message, 'error'); }
+                break;
+            }
+        }
+        
+        // User management buttons
+        if (button.closest('.user-item')) {
+            const userId = button.dataset.id;
+            const username = button.dataset.username;
+            if (button.classList.contains('edit-user-btn')) {
+                document.getElementById('edit_user_id').value = userId;
+                document.getElementById('edit_username').value = username;
+                document.getElementById('edit_password').value = '';
+                editUserModal.show();
+            } else if (button.classList.contains('delete-user-btn')) {
+                const message = button.hasAttribute('data-self-delete') ? `آیا از حذف حساب کاربری خودتان ("${username}") مطمئن هستید؟` : `آیا از حذف کاربر "${username}" مطمئن هستید؟`;
+                if (await showConfirm('تایید حذف کاربر', message)) {
+                    const formData = new FormData();
+                    formData.append('action', 'delete_user');
+                    formData.append('user_id', userId);
+                    try {
+                        const result = await sendRequest(formData);
+                        showToast(result.message);
+                        if(result.self_delete) {
+                             setTimeout(() => window.location.href = 'logout.php', 1500);
+                        } else {
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
+                    } catch (error) { showToast(error.message, 'error'); }
+                }
+            }
         }
     });
+    
+    // Standalone forms (user management, restore)
+    document.querySelectorAll('.standalone-form').forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.classList.add('loading');
+            try {
+                const result = await sendRequest(new FormData(form));
+                showToast(result.message);
+                setTimeout(() => window.location.reload(), 1500);
+            } catch (error) {
+                showToast(error.message, 'error');
+                submitButton.disabled = false;
+                submitButton.classList.remove('loading');
+            }
+        });
+    });
 
-    // --- Backup/Restore ---
-    const restoreForm = document.getElementById('restore-form');
-    if(restoreForm) {
-        const fileInput = document.getElementById('backup_file');
-        const previewEl = document.getElementById('json-preview');
-        const restoreBtn = document.getElementById('restore-btn');
-        fileInput.addEventListener('change', () => {
-            const file = fileInput.files[0];
+    // Event Selector Change
+    document.getElementById('event-selector').addEventListener('change', (e) => {
+        if(isDirty && !confirm('تغییرات ذخیره نشده از بین خواهند رفت. آیا مطمئن هستید؟')) {
+            e.target.value = e.target.querySelector('option[selected]').value; // Revert selection
+            return;
+        }
+        const formData = new FormData();
+        formData.append('action', 'switch_event');
+        formData.append('event_id', e.target.value);
+        sendRequest(formData).then(() => window.location.reload()).catch(err => showToast(err.message, 'error'));
+    });
+
+    // Tab Switching & Save Button Visibility
+    document.querySelectorAll('.sidebar-nav .tab-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelector('.sidebar-nav .active')?.classList.remove('active');
+            document.querySelector('.tab-panel.active')?.classList.remove('active');
+            button.classList.add('active');
+            const tabId = button.dataset.tab;
+            document.getElementById(tabId)?.classList.add('active');
+            
+            // FIX 6: Show/hide save button
+            if (['users', 'backup'].includes(tabId)) {
+                saveButtonContainer.style.display = 'none';
+            } else {
+                saveButtonContainer.style.display = '';
+            }
+        });
+    });
+    
+    // Backup Restore Preview
+    const backupFileInput = document.getElementById('backup_file');
+    if (backupFileInput) {
+        backupFileInput.addEventListener('change', () => {
+            const previewEl = document.getElementById('json-preview');
+            const restoreBtn = document.getElementById('restore-btn');
+            const file = backupFileInput.files[0];
             if (file && file.type === 'application/json') {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -432,4 +460,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Color preview update
+    document.querySelector('#appearance').addEventListener('input', (e) => {
+        if (e.target.type === 'color') {
+            let varName = e.target.name.replace('-color', '');
+            document.querySelector('.color-preview-area')?.style.setProperty('--' + varName, e.target.value);
+        }
+    });
+
+    // Mark form as dirty on any input
+    settingsForm.addEventListener('input', setDirty);
+
+    // Initial call to set up the dashboard state
+    const initializeDashboard = () => {
+        setupSortableList('buttons-container', 'add-button-btn', 'button-template');
+        setupSortableList('socials-container', 'add-social-btn', 'social-template');
+        setupSortableList('subtitles-container', 'add-subtitle-btn', 'subtitle-template');
+        
+        document.querySelectorAll('.image-group').forEach(group => {
+            setupImagePreview(
+                group.querySelector('.preview-url-input'),
+                group.querySelector('.preview-file-input'),
+                group.querySelector('.image-preview')
+            );
+        });
+    };
+
+    initializeDashboard();
 });
+

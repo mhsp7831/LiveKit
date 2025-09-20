@@ -1,5 +1,6 @@
 <?php
-require_once 'functions.php';
+// FIX 4: Correct require_once path
+require_once __DIR__ . '/functions.php';
 
 // If user is already logged in, redirect them to the dashboard
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
@@ -64,4 +65,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </body>
 </html>
-
