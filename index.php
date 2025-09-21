@@ -42,8 +42,22 @@ if (isset($configs) && !isset($configs['socials'])) $configs['socials'] = [];
 
 if (empty($configs) || !empty($error_message)):
 ?>
-<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8"><title>خطا</title><style>body{font-family:sans-serif;text-align:center;padding:40px;background:#fefefe;color:#333}h1{color:#d9534f;}</style></head><body><h1>خطا در بارگذاری رویداد</h1><p><?= htmlspecialchars($error_message ?: 'تنظیمات رویداد یافت نشد.') ?></p></body></html>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8">
+    <title>خطا</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+    body{font-family: 'Vazirmatn', sans-serif;text-align:center;padding:40px;background:#fefefe;color:#333}
+    h1{color:#d9534f;}
+    </style>
+    </head>
+    <body>
+      <h1>خطا در بارگذاری رویداد</h1>
+    <p><?= htmlspecialchars($error_message ?: 'تنظیمات رویداد یافت نشد.') ?></p></body></html>
 <?php exit; endif; ?>
+
 
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -136,7 +150,27 @@ if (empty($configs) || !empty($error_message)):
       <div id="endBanner" class="banner" style="display:none;"></div>
       <div id="subtitleBox"><span id="subtitleText"></span></div>
       <div id="countdown" class="countdown">در حال بارگذاری تایمر…</div>
-      <div class="banners" id="banners"><a href="https://tarbiatkadeh.ir/nazr/" target="_blank"><div class="banner"></div></a></div>
+      <?php
+          // FIX: Check if a banner image URL is set and not empty
+          $hasBannerImage = !empty(trim($configs['banner'] ?? ''));
+        
+          // Only render the banner's container div if an image is set
+          if ($hasBannerImage):
+      ?>
+      <div class="banners" id="banners">
+          <?php 
+              $bannerLink = trim($configs['bannerLink'] ?? '');
+              $hasLink = !empty($bannerLink);
+          ?>
+          <?php if ($hasLink): ?>
+              <a href="<?= htmlspecialchars($bannerLink) ?>" target="_blank" rel="noopener">
+                  <div class="banner"></div>
+              </a>
+          <?php else: ?>
+              <div class="banner"></div>
+          <?php endif; ?>
+      </div>
+      <?php endif; ?>
       
       <div class="actions">
         <?php foreach ($configs['buttons'] as $button): ?>
@@ -242,14 +276,33 @@ if (empty($configs) || !empty($error_message)):
     function showSubtitle(sub) {
       const textEl = document.getElementById("subtitleText");
       textEl.classList.remove("show");
+    
       setTimeout(() => {
+        // Clear previous content to prevent artifacts
+        textEl.innerHTML = '';
+      
         if (sub && sub.text) {
-          textEl.innerHTML = sub.link ? `<a href="${sub.link}" target="_blank" rel="noopener" style="color:#1b8e53;text-decoration:none;">${sub.text}</a>` : sub.text;
-        } else {
-          textEl.innerHTML = "";
+          if (sub.link) {
+            // If there's a link, create the elements programmatically and safely
+            const linkEl = document.createElement('a');
+            linkEl.href = sub.link;
+            linkEl.target = '_blank';
+            linkEl.rel = 'noopener';
+            linkEl.style.color = '#1b8e53';
+            linkEl.style.textDecoration = 'none';
+          
+            // CRITICAL FIX: Use textContent to safely insert the text, preventing XSS.
+            linkEl.textContent = sub.text;
+          
+            textEl.appendChild(linkEl);
+          } else {
+            // If there is no link, just set the text content directly.
+            textEl.textContent = sub.text;
+          }
         }
+      
         textEl.classList.add("show");
-      }, 600);
+      }, 600); // 600ms delay for the fade-out animation
     }
 
     function startSubtitleCycle() {

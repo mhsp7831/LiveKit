@@ -1,9 +1,10 @@
-<?php 
+<?php
 // FIX 4: Correct require_once path
-require_once __DIR__ . '/functions.php'; 
+require_once __DIR__ . '/functions.php';
 
 // FIX 5: Image URL helper for dashboard expects paths like "config/uploads/..."
-function get_dashboard_image_url($path) {
+function get_dashboard_image_url($path)
+{
     if (empty($path) || preg_match('/^(https?:)?\/\//', $path)) {
         return $path;
     }
@@ -17,10 +18,10 @@ if (empty($all_events)) {
     $first_event_id = 'event_' . uniqid();
     $all_events = [['id' => $first_event_id, 'name' => 'رویداد اول']];
     create_event_files($first_event_id, $defaultConfigs);
-    
+
     $events_json = json_encode($all_events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     safe_file_put_contents(EVENTS_FILE, $events_json);
-    
+
     $current_event_id = $first_event_id;
     $_SESSION['current_event_id'] = $current_event_id;
     $configsFile = EVENTS_DIR . $current_event_id . '/configs.json';
@@ -29,13 +30,18 @@ if (empty($all_events)) {
     $subtitles = json_decode(file_get_contents($subtitlesFile), true);
 }
 
-if (!isset($configs['buttons'])) { $configs['buttons'] = []; }
-if (!isset($configs['socials'])) { $configs['socials'] = []; }
+if (!isset($configs['buttons'])) {
+    $configs['buttons'] = [];
+}
+if (!isset($configs['socials'])) {
+    $configs['socials'] = [];
+}
 
 $users = get_all_users();
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,6 +52,7 @@ $users = get_all_users();
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
+
 <body>
 
     <aside class="sidebar">
@@ -53,25 +60,36 @@ $users = get_all_users();
             <h2>پنل مدیریت</h2>
             <ul>
                 <li><a href="#" class="tab-button active" data-tab="settings">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span>تنظیمات</span>
-                </a></li>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>تنظیمات</span>
+                    </a></li>
                 <li><a href="#" class="tab-button" data-tab="subtitles">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v1h-14v-1zM19 9h-14v10a2 2 0 002 2h10a2 2 0 002-2v-10z" /></svg>
-                    <span>زیرنویس</span>
-                </a></li>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v1h-14v-1zM19 9h-14v10a2 2 0 002 2h10a2 2 0 002-2v-10z" />
+                        </svg>
+                        <span>زیرنویس</span>
+                    </a></li>
                 <li><a href="#" class="tab-button" data-tab="appearance">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
-                    <span>ظاهر</span>
-                </a></li>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                        <span>ظاهر</span>
+                    </a></li>
                 <li><a href="#" class="tab-button" data-tab="users">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5 5 0 019 10a5 5 0 014 2.002m-4 0a4 4 0 100-5.292" /></svg>
-                    <span>کاربران</span>
-                </a></li>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5 5 0 019 10a5 5 0 014 2.002m-4 0a4 4 0 100-5.292" />
+                        </svg>
+                        <span>کاربران</span>
+                    </a></li>
                 <li><a href="#" class="tab-button" data-tab="backup">
-                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                    <span>پشتیبان‌گیری</span>
-                </a></li>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span>پشتیبان‌گیری</span>
+                    </a></li>
             </ul>
         </nav>
     </aside>
@@ -83,40 +101,57 @@ $users = get_all_users();
                     <label for="event-selector">رویداد فعلی:</label>
                     <select id="event-selector">
                         <?php foreach ($all_events as $event): ?>
-                            <option value="<?= htmlspecialchars($event['id']) ?>" <?= ($event['id'] === $current_event_id) ? 'selected' : '' ?> >
+                            <option value="<?= htmlspecialchars($event['id']) ?>" <?= ($event['id'] === $current_event_id) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($event['name']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                     <div class="event-actions">
-                         <button id="create-event-btn" class="btn btn-secondary btn-sm btn-icon" title="رویداد جدید">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        <button id="create-event-btn" class="btn btn-secondary btn-sm btn-icon" title="رویداد جدید">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
                             <span>جدید</span>
                         </button>
                         <button id="rename-event-btn" class="btn btn-secondary btn-sm btn-icon" title="تغییر نام رویداد فعلی">
-                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
+                            </svg>
                             <span>تغییر نام</span>
                         </button>
                         <button id="delete-event-btn" class="btn btn-danger btn-sm btn-icon" title="حذف رویداد فعلی">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                             <span>حذف</span>
                         </button>
                     </div>
                 </div>
                 <div class="event-id-display">
                     شناسه: <code><?= htmlspecialchars($current_event_id) ?></code>
-                    <button id="copy-event-id-btn" title="کپی شناسه"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 1.5A1.5 1.5 0 0 1 .5 0h3A1.5 1.5 0 0 1 5 1.5v1A1.5 1.5 0 0 1 3.5 4h-3A1.5 1.5 0 0 1-1 2.5v-1z"/></svg></button>
-                    <button id="edit-event-id-btn" title="ویرایش شناسه"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg></button>
+                    <button id="copy-event-id-btn" title="کپی شناسه"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                            <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 1.5A1.5 1.5 0 0 1 .5 0h3A1.5 1.5 0 0 1 5 1.5v1A1.5 1.5 0 0 1 3.5 4h-3A1.5 1.5 0 0 1-1 2.5v-1z" />
+                        </svg></button>
+                    <button id="edit-event-id-btn" title="ویرایش شناسه"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
+                        </svg></button>
                 </div>
             </div>
             <div class="header-right">
                 <span class="current-user">کاربر: <?= htmlspecialchars($_SESSION['username']) ?></span>
                 <a href="../index.php?event=<?= htmlspecialchars($current_event_id) ?>" target="_blank" class="btn btn-view-live">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
                     <span>مشاهده پخش زنده</span>
                 </a>
                 <a href="logout.php" class="logout-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                     خروج
                 </a>
             </div>
@@ -146,7 +181,9 @@ $users = get_all_users();
                                 <?php foreach ($configs['buttons'] as $index => $button): ?>
                                     <div class="sortable-item">
                                         <div class="sortable-header">
-                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+                                            </svg>
                                             <span class="item-title">دکمه #<span class="item-counter"><?= $index + 1 ?></span></span>
                                             <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
                                         </div>
@@ -165,7 +202,9 @@ $users = get_all_users();
                                 <?php foreach ($configs['socials'] as $index => $social): ?>
                                     <div class="sortable-item">
                                         <div class="sortable-header">
-                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+                                            </svg>
                                             <span class="item-title">آیتم #<span class="item-counter"><?= $index + 1 ?></span></span>
                                             <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
                                         </div>
@@ -194,7 +233,9 @@ $users = get_all_users();
                                 <?php foreach ($subtitles as $subtitle): ?>
                                     <div class="sortable-item">
                                         <div class="sortable-header">
-                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                                            <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+                                            </svg>
                                             <span class="item-title">زیرنویس</span>
                                             <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
                                         </div>
@@ -213,7 +254,7 @@ $users = get_all_users();
                     </div>
 
                     <div id="appearance" class="tab-panel">
-                         <div class="card">
+                        <div class="card">
                             <h3>تصاویر و بنرها</h3>
                             <div class="image-upload-grid">
                                 <div class="form-group image-group">
@@ -237,22 +278,28 @@ $users = get_all_users();
                                     <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input">
                                     <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
                                 </div>
-                                 <div class="form-group image-group">
+                                <div class="form-group image-group">
                                     <label for="banner_file">بنر:</label>
                                     <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="image-preview" id="banner_preview"></div>
-                                    <input type="text" name="banner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['banner']) ?>" class="preview-url-input">
+                                    <input type="text" name="banner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="preview-url-input">
                                     <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input">
                                     <input type="hidden" name="banner_old" value="<?= htmlspecialchars($configs['banner']) ?>">
+
+                                    <label for="bannerLink" style="margin-top: 1rem;">لینک بنر (اختیاری):</label>
+                                    <input type="url" name="bannerLink" id="bannerLink" placeholder="https://example.com" value="<?= htmlspecialchars($configs['bannerLink'] ?? '') ?>">
                                 </div>
                             </div>
                         </div>
                         <div class="card">
                             <h3>شخصی‌سازی تم رنگی</h3>
-                             <div class="color-preview-area" style="<?php foreach ($configs['colors'] as $name => $value) echo '--' . htmlspecialchars($name) . ':' . htmlspecialchars($value) . ';'; ?>">
+                            <div class="color-preview-area" style="<?php foreach ($configs['colors'] as $name => $value) echo '--' . htmlspecialchars($name) . ':' . htmlspecialchars($value) . ';'; ?>">
                                 <h4>این یک عنوان نمونه است</h4>
                                 <p>این یک متن نمونه برای نمایش رنگ فونت اصلی صفحه شما است.</p>
                                 <button type="button" class="preview-button"><span class="btn-text">دکمه اصلی</span></button>
-                                <div class="preview-card"><p>این یک کارت نمونه است:</p><div class="placeholder"></div></div>
+                                <div class="preview-card">
+                                    <p>این یک کارت نمونه است:</p>
+                                    <div class="placeholder"></div>
+                                </div>
                             </div>
                             <div class="form-grid">
                                 <div class="form-group"><label for="bg">پس‌زمینه (bg):</label><input type="color" name="bg" id="bg" value="<?= htmlspecialchars($configs['colors']['bg']) ?>"></div>
@@ -265,34 +312,34 @@ $users = get_all_users();
                                 <div class="form-group"><label for="text">متن ساده (text):</label><input type="color" name="text" id="text" value="<?= htmlspecialchars($configs['colors']['text']) ?>"></div>
                             </div>
                             <div class="form-actions">
-                                 <button type="button" id="reset-colors-btn" class="btn btn-secondary"><span class="btn-text">بازگشت به پیش‌فرض</span></button>
+                                <button type="button" id="reset-colors-btn" class="btn btn-secondary"><span class="btn-text">بازگشت به پیش‌فرض</span></button>
                             </div>
                         </div>
                     </div>
                 </div>
             </form>
-            
+
             <div id="users" class="tab-panel">
                 <div class="card-grid">
                     <?php if (is_owner()): ?>
-                    <div class="card">
-                        <h3>افزودن کاربر جدید</h3>
-                        <form id="add-user-form" class="standalone-form">
-                            <input type="hidden" name="action" value="add_user">
-                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-                            <div class="form-group">
-                                <label for="new_username">نام کاربری:</label>
-                                <input type="text" id="new_username" name="username" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="new_password">رمز عبور:</label>
-                                <input type="password" id="new_password" name="password" required>
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit"><span class="btn-text">افزودن کاربر</span></button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="card">
+                            <h3>افزودن کاربر جدید</h3>
+                            <form id="add-user-form" class="standalone-form">
+                                <input type="hidden" name="action" value="add_user">
+                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                                <div class="form-group">
+                                    <label for="new_username">نام کاربری:</label>
+                                    <input type="text" id="new_username" name="username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new_password">رمز عبور:</label>
+                                    <input type="password" id="new_password" name="password" required>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit"><span class="btn-text">افزودن کاربر</span></button>
+                                </div>
+                            </form>
+                        </div>
                     <?php endif; ?>
                     <div class="card" style="<?= !is_owner() ? 'grid-column: 1 / -1;' : '' ?>">
                         <h3>لیست کاربران</h3>
@@ -309,13 +356,13 @@ $users = get_all_users();
                                         <?php
                                         $is_current_user = ($user['id'] == $_SESSION['user_id']);
                                         if (is_owner() || $is_current_user) {
-                                            echo '<button class="btn btn-secondary btn-sm edit-user-btn" data-id="'.$user['id'].'" data-username="'.htmlspecialchars($user['username']).'">ویرایش</button>';
+                                            echo '<button class="btn btn-secondary btn-sm edit-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '">ویرایش</button>';
                                         }
                                         if (is_owner() && !$is_current_user) {
-                                            echo '<button class="btn btn-danger btn-sm delete-user-btn" data-id="'.$user['id'].'" data-username="'.htmlspecialchars($user['username']).'">حذف</button>';
+                                            echo '<button class="btn btn-danger btn-sm delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '">حذف</button>';
                                         }
                                         if ($is_current_user && !is_owner()) {
-                                            echo '<button class="btn btn-danger btn-sm delete-user-btn" data-id="'.$user['id'].'" data-username="'.htmlspecialchars($user['username']).'" data-self-delete="true">حذف حساب من</button>';
+                                            echo '<button class="btn btn-danger btn-sm delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '" data-self-delete="true">حذف حساب من</button>';
                                         }
                                         ?>
                                     </div>
@@ -325,7 +372,7 @@ $users = get_all_users();
                     </div>
                 </div>
             </div>
-            
+
             <div id="backup" class="tab-panel">
                 <div class="card-grid">
                     <div class="card">
@@ -371,7 +418,9 @@ $users = get_all_users();
     <template id="button-template">
         <div class="sortable-item">
             <div class="sortable-header">
-                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+                </svg>
                 <span class="item-title">دکمه #<span class="item-counter"></span></span>
                 <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
             </div>
@@ -382,9 +431,11 @@ $users = get_all_users();
         </div>
     </template>
     <template id="social-template">
-         <div class="sortable-item">
+        <div class="sortable-item">
             <div class="sortable-header">
-                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+                </svg>
                 <span class="item-title">آیتم #<span class="item-counter"></span></span>
                 <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
             </div>
@@ -404,7 +455,9 @@ $users = get_all_users();
     <template id="subtitle-template">
         <div class="sortable-item">
             <div class="sortable-header">
-                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" /></svg>
+                <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v10H5V5zm2 1a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+                </svg>
                 <span class="item-title">زیرنویس</span>
                 <button type="button" class="remove-btn btn-danger btn-sm"><span class="btn-text">حذف</span></button>
             </div>
@@ -414,7 +467,7 @@ $users = get_all_users();
             </div>
         </div>
     </template>
-    
+
     <div id="toast-container"></div>
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-content">
@@ -426,7 +479,7 @@ $users = get_all_users();
             </div>
         </div>
     </div>
-     <div id="prompt-modal" class="modal-overlay">
+    <div id="prompt-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="prompt-title">عنوان</h3>
             <p id="prompt-text">لطفا یک مقدار وارد کنید:</p>
@@ -463,5 +516,5 @@ $users = get_all_users();
 
     <script src="assets/js/dashboard.js"></script>
 </body>
-</html>
 
+</html>

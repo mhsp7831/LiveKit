@@ -24,7 +24,8 @@ if (!file_exists($htaccess_path)) {
 }
 
 // --- DATABASE MANAGEMENT ---
-function get_db_connection() {
+function get_db_connection()
+{
     try {
         $db = new PDO('sqlite:' . DB_FILE);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -39,7 +40,7 @@ function get_db_connection() {
 
         $stmt = $db->query("SELECT COUNT(id) as count FROM users");
         $user_count = $stmt->fetchColumn();
-        
+
         if ($user_count == 0) {
             $default_username = 'owner';
             $default_password = password_hash('123456', PASSWORD_DEFAULT);
@@ -57,21 +58,25 @@ function get_db_connection() {
 }
 
 // --- USER MANAGEMENT & PERMISSIONS ---
-function is_owner() {
+function is_owner()
+{
     return isset($_SESSION['role']) && $_SESSION['role'] === 'owner';
 }
-function get_all_users() {
+function get_all_users()
+{
     $db = get_db_connection();
     $stmt = $db->query("SELECT id, username, role FROM users ORDER BY role DESC, username ASC");
     return $stmt->fetchAll();
 }
-function add_user($username, $password) {
+function add_user($username, $password)
+{
     $db = get_db_connection();
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     $stmt = $db->prepare("INSERT INTO users (username, password) VALUES (:username, :password)");
     return $stmt->execute(['username' => $username, 'password' => $hashed_password]);
 }
-function update_user($id, $username, $password = null) {
+function update_user($id, $username, $password = null)
+{
     $db = get_db_connection();
     if (!empty($password)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
@@ -82,7 +87,8 @@ function update_user($id, $username, $password = null) {
         return $stmt->execute(['id' => $id, 'username' => $username]);
     }
 }
-function delete_user($id) {
+function delete_user($id)
+{
     $db = get_db_connection();
     $user_to_delete_stmt = $db->prepare("SELECT role FROM users WHERE id = :id");
     $user_to_delete_stmt->execute(['id' => $id]);
@@ -96,7 +102,8 @@ function delete_user($id) {
     $stmt = $db->prepare("DELETE FROM users WHERE id = :id");
     return $stmt->execute(['id' => $id]);
 }
-function get_user_by_username($username) {
+function get_user_by_username($username)
+{
     $db = get_db_connection();
     $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
     $stmt->execute(['username' => $username]);
@@ -104,7 +111,8 @@ function get_user_by_username($username) {
 }
 
 // --- LOGGING ---
-function write_log($level, $message) {
+function write_log($level, $message)
+{
     $message = trim(preg_replace('/\s+/', ' ', $message));
     $log_entry = sprintf(
         "[%s] [%s] [%s] %s\n",
@@ -118,21 +126,32 @@ function write_log($level, $message) {
 
 // --- DEFAULT CONFIGS (IMPROVED for dynamic lists) ---
 $defaultConfigs = [
-    "logo" => "", "homePage" => "", "title" => "پخش زنده جدید", "iframe" => "",
-    "preBanner" => "", "endBanner" => "", "liveStart" => "", "liveEnd" => "",
-    "fetchInterval" => 60000, "subtitleDelay" => 4000, "banner" => "",
-    "colors" => ["bg" => "#ffffff", "title" => "#000000", "primary" => "#4caf50", "primary-hover" => "#45a049", "card-bg" => "#f8f9fa", "placeholder" => "#e9ecef", "placeholder-border"=> "#ced4da", "text" => "#212529"],
-    "buttons" => [], // Now an empty array for dynamic items
-    "socials" => []  // Now an empty array for dynamic items
+    "title" => "پخش زنده جدید",
+    "homePage" => "",
+    "iframe" => "",
+    "liveStart" => "",
+    "liveEnd" => "",
+    "fetchInterval" => 60000,
+    "subtitleDelay" => 4000,
+    "buttons" => [],
+    "socials" => [], 
+    "logo" => "",
+    "preBanner" => "",
+    "endBanner" => "",
+    "banner" => "",
+    "bannerLink" => "",
+    "colors" => ["bg" => "#ffffff", "title" => "#000000", "primary" => "#4caf50", "primary-hover" => "#45a049", "card-bg" => "#f8f9fa", "placeholder" => "#e9ecef", "placeholder-border" => "#ced4da", "text" => "#212529"],
 ];
 
 // --- EVENT MANAGEMENT ---
-function get_events() {
+function get_events()
+{
     if (!file_exists(EVENTS_FILE)) return [];
     $json = file_get_contents(EVENTS_FILE);
     return json_decode($json, true) ?: [];
 }
-function is_valid_event_id($event_id) {
+function is_valid_event_id($event_id)
+{
     if (empty($event_id) || !preg_match('/^[a-zA-Z0-9_]+$/', $event_id)) {
         return false;
     }
@@ -144,10 +163,12 @@ function is_valid_event_id($event_id) {
     }
     return false;
 }
-function safe_file_put_contents($filename, $data) {
+function safe_file_put_contents($filename, $data)
+{
     return file_put_contents($filename, $data, LOCK_EX);
 }
-function create_event_files($event_id, $default_configs) {
+function create_event_files($event_id, $default_configs)
+{
     $event_path = EVENTS_DIR . $event_id;
     if (!is_dir($event_path)) mkdir($event_path, 0755, true);
     safe_file_put_contents($event_path . '/configs.json', json_encode($default_configs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -176,13 +197,15 @@ $configs = ($configsFile && file_exists($configsFile)) ? json_decode(file_get_co
 $subtitles = ($subtitlesFile && file_exists($subtitlesFile)) ? json_decode(file_get_contents($subtitlesFile), true) : [];
 
 // --- SECURITY & HELPERS ---
-function generate_csrf_token() {
+function generate_csrf_token()
+{
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
     return $_SESSION['csrf_token'];
 }
-function validate_csrf_token() {
+function validate_csrf_token()
+{
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         return false;
     }
@@ -200,7 +223,8 @@ if (basename($_SERVER['PHP_SELF']) === 'dashboard.php') {
  * - Sanitizes filenames, allowing Persian characters.
  * - Correctly deletes old files upon replacement.
  */
-function handle_upload($file_input, $url_input, $old_file_path) {
+function handle_upload($file_input, $url_input, $old_file_path)
+{
     global $current_event_id;
     $new_file_path = $url_input;
     $error_message = null;
@@ -213,16 +237,16 @@ function handle_upload($file_input, $url_input, $old_file_path) {
         $original_name = $file['name'];
         $path_info = pathinfo($original_name);
         // FIX 2.1: Allow Persian characters in filename
-        $base_name = preg_replace('/[^\p{L}\p{N}_-]/u', '_', $path_info['filename']); 
+        $base_name = preg_replace('/[^\p{L}\p{N}_-]/u', '_', $path_info['filename']);
         $extension = strtolower($path_info['extension'] ?? '');
-        
+
         if (preg_match('/\.(php|phtml|phar|pl|py|cgi|asp|js)\b/i', $original_name)) {
-             return ['path' => $url_input, 'error' => 'پسوند فایل آپلودی غیرمجاز است.'];
+            return ['path' => $url_input, 'error' => 'پسوند فایل آپلودی غیرمجاز است.'];
         }
         if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) {
             return ['path' => $url_input, 'error' => 'فرمت فایل آپلود شده مجاز نیست.'];
         }
-        
+
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime_type = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
@@ -237,7 +261,7 @@ function handle_upload($file_input, $url_input, $old_file_path) {
 
             $sanitized_name = $base_name . '_' . uniqid() . '.' . $extension;
             $target_file_abs = $event_upload_dir_abs . $sanitized_name;
-            
+
             if (move_uploaded_file($file['tmp_name'], $target_file_abs)) {
                 // FIX 5: Use correct web-accessible path
                 $new_file_path = 'config/uploads/' . $current_event_id . '/' . $sanitized_name;
@@ -266,7 +290,7 @@ if (isset($_GET['download']) && isset($_GET['event_id'])) {
         header("HTTP/1.0 404 Not Found");
         exit('رویداد نامعتبر است.');
     }
-    
+
     $event_id = $_GET['event_id'];
     $file_type = $_GET['download'];
     if ($file_type === 'configs') {
@@ -290,3 +314,28 @@ if (isset($_GET['download']) && isset($_GET['event_id'])) {
     }
 }
 
+function is_valid_image_url($url) {
+    $url = trim($url);
+    
+    if (empty($url)) {
+        return true; // Optional fields are valid if empty
+    }
+
+    $isStructurallyValid = false;
+
+    // First, check if the URL structure is valid.
+    if (preg_match('/^https?:\/\//i', $url)) {
+        // For absolute URLs, use the full validator.
+        $isStructurallyValid = (filter_var($url, FILTER_VALIDATE_URL) !== false);
+    } else {
+        // For relative URLs, we assume the structure is valid.
+        $isStructurallyValid = true;
+    }
+
+    if (!$isStructurallyValid) {
+        return false;
+    }
+
+    // If the structure is valid, now check for a valid image extension.
+    return preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $url);
+}

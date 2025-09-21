@@ -1,5 +1,39 @@
 document.addEventListener('DOMContentLoaded', function() {
 
+    // --- FIX: Add this URL validation helper function ---
+    const isValidUrl = (string) => {
+        // An empty string is valid because some link fields are optional.
+        string = string ? string.trim() : '';
+        if (!string) return true; 
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    };
+    const isValidImageUrl = (string) => {
+        string = string ? string.trim() : '';
+        if (!string) return true; // Optional fields are valid if empty
+
+        let isStructurallyValid = false;
+
+        // First, check if the URL structure is valid.
+        if (string.startsWith('http://') || string.startsWith('https://')) {
+            // For absolute URLs, use the full validator.
+            isStructurallyValid = isValidUrl(string);
+        } else {
+            // For relative URLs (like our uploads), we assume the structure is valid.
+            isStructurallyValid = true;
+        }
+
+        if (!isStructurallyValid) {
+            return false;
+        }
+
+        // If the structure is valid, now check for a valid image extension.
+        return /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(string);
+    };
     let isDirty = false; // FIX 7: Flag for unsaved changes
 
     // --- Global Elements ---
@@ -15,7 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const icon = type === 'success' ?
             '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' :
             '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
-        toast.innerHTML = `${icon}<span>${message}</span>`;
+        const tempEl = document.createElement("div");
+        tempEl.innerHTML = message;
+        toast.innerHTML = `${icon}<span>${tempEl.innerText}</span>`;
         container.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 100);
         setTimeout(() => {
@@ -182,6 +218,62 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsForm = document.getElementById('settings-form');
     settingsForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const liveStartValue = document.getElementById('liveStart').value;
+    const liveEndValue = document.getElementById('liveEnd').value;
+
+    // Only validate if both fields are filled out
+    if (liveStartValue && liveEndValue) {
+        if (new Date(liveStartValue) >= new Date(liveEndValue)) {
+            showToast('زمان شروع باید قبل از زمان پایان باشد.', 'error');
+            return; // Stop the submission
+        }
+    }
+
+    // --- FIX: START of new URL validation logic ---
+    try {
+        let invalidUrl = null;
+        let invalidInput = null;
+
+        // Find the first invalid URL across all relevant fields
+        document.querySelectorAll('input[name="homePage"], input[name="bannerLink"], [name="button_link[]"], [name="social_link[]"], [name="subtitle_link[]"]').forEach(input => {
+            if (!isValidUrl(input.value)) {
+                invalidUrl = input.value;
+                invalidInput = input;
+            }
+        });
+
+        if (invalidUrl !== null) {
+            showToast(`لینک وارد شده نامعتبر است: ${invalidUrl}`, 'error');
+            invalidInput.focus(); // Focus on the invalid field
+            return; // Stop the submission
+        }
+    } catch (err) {
+        // This handles cases where an input might not exist on the page
+        console.error("Error during URL validation:", err);
+    }
+    // --- FIX: END of new URL validation logic ---
+
+    try {
+        let invalidImageUrl = null;
+        let invalidImageInput = null;
+
+        // Select all text inputs for image URLs
+        document.querySelectorAll('input[name$="_url"]').forEach(input => {
+            if (!isValidImageUrl(input.value)) {
+                invalidImageUrl = input.value;
+                invalidImageInput = input;
+            }
+        });
+
+        if (invalidImageUrl !== null) {
+            showToast(`آدرس تصویر نامعتبر است: ${invalidImageUrl}`, 'error');
+            invalidImageInput.focus();
+            return; // Stop submission
+        }
+    } catch (err) {
+        console.error("Error during image URL validation:", err);
+    }
+
     mainSaveBtn.disabled = true;
     mainSaveBtn.classList.add('loading');
 

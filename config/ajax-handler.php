@@ -213,6 +213,9 @@ try {
                     foreach ($file_fields as $field) {
                         $url_input = $_POST[$field . '_url'] ?? '';
                         if (!empty($url_input) && strpos($url_input, 'uploads/') === 0 && strpos($url_input, 'config/') !== 0) { $url_input = 'config/' . $url_input; }
+                        if (!is_valid_image_url($url_input)) {
+                            throw new Exception("آدرس تصویر برای '$field' نامعتبر است. آدرس باید به یک فایل تصویر ختم شود.");
+                        }
                         $result = handle_upload($_FILES[$field . '_file'] ?? null, trim($url_input) ?? '', $_POST[$field . '_old'] ?? '');
                         $configs[$field] = $result['path']; 
                         if ($result['error']) { $upload_errors[] = $result['error']; }
@@ -251,6 +254,9 @@ try {
                                 trim($icon_url_input) ?? '',
                                 $_POST['social_icon_old'][$index] ?? ''
                             );
+                            if (!is_valid_image_url($icon_url_input)) {
+                                throw new Exception("آدرس آیکن برای '$title' نامعتبر است. آدرس باید به یک فایل تصویر ختم شود.");
+                            }
                             if ($icon_result['error']) { $upload_errors[] = $icon_result['error']; }
                             
                             $newSocials[] = [
@@ -262,12 +268,31 @@ try {
                     }
                     $configs['socials'] = $newSocials;
 
-                    $configs['homePage'] = filter_var(trim(filter_input(INPUT_POST, 'homePage', FILTER_UNSAFE_RAW)), FILTER_VALIDATE_URL) ?: '';
-                    // FIX 1: Replace deprecated FILTER_SANITIZE_STRING
-                    $configs['title'] = trim(htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES, 'UTF-8'));
+                    // FIX: Replace the existing 'homePage' line with this block for better validation
+                    $homePageUrl = trim($_POST['homePage'] ?? '');
+                    if (!empty($homePageUrl) && filter_var($homePageUrl, FILTER_VALIDATE_URL) === false) {
+                        throw new Exception('لینک صفحه اصلی نامعتبر است.');
+                    }
+                    $configs['homePage'] = $homePageUrl;
+                    $bannerLink = trim($_POST['bannerLink'] ?? '');
+                    if (!empty($bannerLink) && filter_var($bannerLink, FILTER_VALIDATE_URL) === false) {
+                        throw new Exception('لینک بنر نامعتبر است.');
+                    }
+                    $configs['bannerLink'] = $bannerLink;
+                    $configs['title'] = trim($_POST['title'] ?? '');
                     $configs['iframe'] = trim($_POST['iframe'] ?? '');
-                    $configs['liveStart'] = trim($_POST['liveStart'] ?? '');
-                    $configs['liveEnd'] = trim($_POST['liveEnd'] ?? '');
+                    $liveStart = trim($_POST['liveStart'] ?? '');
+                    $liveEnd = trim($_POST['liveEnd'] ?? '');
+
+                    // Only validate if both values have been provided
+                    if (!empty($liveStart) && !empty($liveEnd)) {
+                        if (strtotime($liveStart) >= strtotime($liveEnd)) {
+                            throw new Exception('زمان شروع باید قبل از زمان پایان باشد.');
+                        }
+                    }
+
+                    $configs['liveStart'] = $liveStart;
+                    $configs['liveEnd'] = $liveEnd;
                     $configs['fetchInterval'] = filter_input(INPUT_POST, 'fetchInterval', FILTER_VALIDATE_INT, ["options" => ["min_range" => 1000]]) ?: 60000;
                     $configs['subtitleDelay'] = filter_input(INPUT_POST, 'subtitleDelay', FILTER_VALIDATE_INT, ["options" => ["min_range" => 1000]]) ?: 4000;
                     
