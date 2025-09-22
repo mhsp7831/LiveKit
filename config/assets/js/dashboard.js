@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return { valid: true };
     
     };
-    
+
     let isDirty = false; // FIX 7: Flag for unsaved changes
 
     // --- Global Elements ---
@@ -330,8 +330,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     item.querySelector('input[name="social_icon_old[]"]').value = newSocial.icon;
                 });
             }
+            const fetchIntervalInput = document.getElementById('fetchInterval');
+            if (fetchIntervalInput && newConfigs.fetchInterval) {
+                fetchIntervalInput.value = newConfigs.fetchInterval;
+            }
+
+            const subtitleDelayInput = document.getElementById('subtitleDelay');
+            if (subtitleDelayInput && newConfigs.subtitleDelay) {
+                subtitleDelayInput.value = newConfigs.subtitleDelay;
+            }
         }
         // --- FIX: END of new logic ---
+
+
 
         setTimeout(() => {
             mainSaveBtn.classList.remove('success');
