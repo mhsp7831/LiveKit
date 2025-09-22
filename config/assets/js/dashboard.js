@@ -34,6 +34,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // If the structure is valid, now check for a valid image extension.
         return /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(string);
     };
+
+    const validateUsername = (username) => {
+    if (username.length < 3 || username.length > 20) {
+        return { valid: false, message: 'نام کاربری باید بین ۳ تا ۲۰ کاراکتر باشد.' };
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        return { valid: false, message: 'نام کاربری فقط می‌تواند شامل حروف انگلیسی، اعداد، خط تیره و آندرلاین باشد.' };
+    }
+    return { valid: true };
+    
+    };
+    
     let isDirty = false; // FIX 7: Flag for unsaved changes
 
     // --- Global Elements ---
@@ -479,6 +491,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.standalone-form').forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const usernameInput = form.querySelector('input[name="username"]');
+            if (usernameInput) {
+                const validationResult = validateUsername(usernameInput.value);
+                if (!validationResult.valid) {
+                    showToast(validationResult.message, 'error');
+                    return; // Stop the submission
+                }
+            }
             const submitButton = form.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             submitButton.classList.add('loading');

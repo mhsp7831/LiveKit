@@ -48,11 +48,11 @@ body { font-family: 'Vazirmatn', sans-serif; background-color: var(--grey-color)
 .logout-btn:hover { background-color: var(--danger-hover-color); }
 .logout-btn svg { margin-left: 8px; width: 18px; height: 18px; }
 .content-area { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; }
-.content-area > .tab-panel.active { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; order: -1}
+.content-area > .tab-panel.active { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; order: -1; padding: 2rem}
 .main-form { display: flex; flex-direction: column; flex-grow: 1; } /* FIX 1 */
 .form-content { flex-grow: 1; padding: 2rem; } /* FIX 1 */
 .card { background-color: var(--light-color); border-radius: var(--border-radius); box-shadow: var(--shadow); padding: 2rem; }
-.card:not(:last-child) { margin-bottom: 2rem; }
+/* .card:not(:last-child) { margin-bottom: 2rem; } */
 .card h3 { margin-bottom: 1.5rem; color: var(--dark-color); font-size: 1.2rem; }
 .card p { line-height: 1.7; margin-bottom: 1.5rem; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }

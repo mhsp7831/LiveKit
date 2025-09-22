@@ -134,7 +134,7 @@ $defaultConfigs = [
     "fetchInterval" => 60000,
     "subtitleDelay" => 4000,
     "buttons" => [],
-    "socials" => [], 
+    "socials" => [],
     "logo" => "",
     "preBanner" => "",
     "endBanner" => "",
@@ -299,6 +299,62 @@ if (isset($_GET['download']) && isset($_GET['event_id'])) {
     } elseif ($file_type === 'subtitles') {
         $file_path = EVENTS_DIR . $event_id . '/subtitles.json';
         $file_name = $event_id . '_subtitles_backup.json';
+    } elseif ($file_type === 'uploads') {
+        $event_uploads_dir = UPLOADS_DIR . $event_id;
+
+        if (!is_dir($event_uploads_dir) || count(scandir($event_uploads_dir)) <= 2) {
+            header("HTTP/1.0 404 Not Found");
+            exit('
+                <!DOCTYPE html>
+                <html lang="fa" dir="rtl">
+                  <head>
+                    <meta charset="UTF-8">
+                    <title>خطا</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                    body{font-family: "Vazirmatn", sans-serif;text-align:center;padding:40px;background:#fefefe;color:#333}
+                    h1{color:#d9534f;}
+                    </style>
+                    </head>
+                    <body>
+                        <h1>خطا در دانلود رویداد</h1>
+                      <p>هیچ فایل آپلودی برای این رویداد یافت نشد.</p>
+                    </body>
+                </html>
+            ');
+        }
+
+        $zip_file_path = tempnam(sys_get_temp_dir(), 'event_uploads_') . '.zip';
+        $zip = new ZipArchive();
+
+        if ($zip->open($zip_file_path, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
+            exit("خطا در ساخت فایل فشرده.");
+        }
+
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($event_uploads_dir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($files as $name => $file) {
+            if (!$file->isDir()) {
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($event_uploads_dir) + 1);
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+
+        $zip->close();
+
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $event_id . '_uploads_backup.zip"');
+        header('Content-Length: ' . filesize($zip_file_path));
+
+        readfile($zip_file_path);
+
+        // Clean up the temporary zip file
+        unlink($zip_file_path);
+        exit;
     }
 
     if (isset($file_path) && file_exists($file_path)) {
@@ -314,9 +370,10 @@ if (isset($_GET['download']) && isset($_GET['event_id'])) {
     }
 }
 
-function is_valid_image_url($url) {
+function is_valid_image_url($url)
+{
     $url = trim($url);
-    
+
     if (empty($url)) {
         return true; // Optional fields are valid if empty
     }
@@ -338,4 +395,45 @@ function is_valid_image_url($url) {
 
     // If the structure is valid, now check for a valid image extension.
     return preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $url);
+}
+
+function validate_username($username)
+{
+    if (strlen($username) < 3 || strlen($username) > 20) {
+        throw new Exception('نام کاربری باید بین ۳ تا ۲۰ کاراکتر باشد.');
+    }
+    if (!preg_match('/^[a-zA-Z0-9_-]+$/', $username)) {
+        throw new Exception('نام کاربری فقط می‌تواند شامل حروف انگلیسی، اعداد، خط تیره و آندرلاین باشد.');
+    }
+    return true;
+}
+
+function is_valid_backup_content($data, $type) {
+    if ($data === null) {
+        return false;
+    }
+
+    if ($type === 'configs') {
+        return isset($data['title']) &&
+               isset($data['colors']) && is_array($data['colors']) &&
+               isset($data['buttons']) && is_array($data['buttons']) &&
+               isset($data['socials']) && is_array($data['socials']);
+    }
+
+    if ($type === 'subtitles') {
+        // A valid subtitles file must be a list-style array.
+        // This check ensures it's not an associative array (like a config file).
+        if (!is_array($data) || (count($data) > 0 && array_keys($data) !== range(0, count($data) - 1))) {
+            return false;
+        }
+        
+        // If the array isn't empty, check the structure of the first item.
+        if (!empty($data) && (!is_array($data[0]) || !isset($data[0]['text']))) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    return false;
 }

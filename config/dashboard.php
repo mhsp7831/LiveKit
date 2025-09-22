@@ -267,14 +267,14 @@ $users = get_all_users();
                                 <div class="form-group image-group">
                                     <label for="preBanner_file">بنر قبل از پخش:</label>
                                     <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="image-preview" id="preBanner_preview"></div>
-                                    <input type="text" name="preBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['preBanner']) ?>" class="preview-url-input">
+                                    <input type="text" name="preBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="preview-url-input">
                                     <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input">
                                     <input type="hidden" name="preBanner_old" value="<?= htmlspecialchars($configs['preBanner']) ?>">
                                 </div>
                                 <div class="form-group image-group">
                                     <label for="endBanner_file">بنر بعد از پخش:</label>
                                     <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="image-preview" id="endBanner_preview"></div>
-                                    <input type="text" name="endBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars($configs['endBanner']) ?>" class="preview-url-input">
+                                    <input type="text" name="endBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="preview-url-input">
                                     <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input">
                                     <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
                                 </div>
@@ -381,6 +381,7 @@ $users = get_all_users();
                         <div class="form-actions">
                             <a href="?download=configs&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn">دانلود تنظیمات</a>
                             <a href="?download=subtitles&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn">دانلود زیرنویس‌ها</a>
+                            <a href="?download=uploads&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn">دانلود آپلودها</a>
                         </div>
                     </div>
                     <div class="card">

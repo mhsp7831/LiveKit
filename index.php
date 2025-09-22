@@ -54,8 +54,10 @@ if (empty($configs) || !empty($error_message)):
     </style>
     </head>
     <body>
-      <h1>خطا در بارگذاری رویداد</h1>
-    <p><?= htmlspecialchars($error_message ?: 'تنظیمات رویداد یافت نشد.') ?></p></body></html>
+        <h1>خطا در بارگذاری رویداد</h1>
+      <p><?= htmlspecialchars($error_message ?: 'تنظیمات رویداد یافت نشد.') ?></p>
+    </body>
+</html>
 <?php exit; endif; ?>
 
 

@@ -23,6 +23,7 @@ try {
             if (!is_owner()) throw new Exception('شما مجوز افزودن کاربر جدید را ندارید.');
             $username = trim($_POST['username'] ?? '');
             $password = $_POST['password'] ?? '';
+            validate_username($username);
             if (empty($username) || empty($password)) throw new Exception('نام کاربری و رمز عبور نمی‌توانند خالی باشند.');
             if (strlen($password) < 6) throw new Exception('رمز عبور باید حداقل ۶ کاراکتر باشد.');
             if (get_user_by_username($username)) throw new Exception('این نام کاربری قبلا ثبت شده است.');
@@ -37,48 +38,57 @@ try {
             $userId = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
             $username = trim($_POST['username'] ?? '');
             $password = $_POST['password'] ?? '';
-
+            validate_username($username);
             if (empty($userId) || empty($username)) throw new Exception('اطلاعات کاربر ناقص است.');
             if (!is_owner() && $userId != $_SESSION['user_id']) throw new Exception('شما فقط می‌توانید اطلاعات حساب کاربری خود را ویرایش کنید.');
             if (!empty($password) && strlen($password) < 6) throw new Exception('رمز عبور جدید باید حداقل ۶ کاراکتر باشد.');
-            
+
             $existingUser = get_user_by_username($username);
             if ($existingUser && $existingUser['id'] != $userId) throw new Exception('این نام کاربری قبلا ثبت شده است.');
 
             if (update_user($userId, $username, $password)) {
-                 write_log('INFO', "User ID {$userId} ('{$username}') updated by '{$_SESSION['username']}'.");
-                 $response = ['success' => true, 'message' => 'کاربر با موفقیت ویرایش شد.'];
+                // Check if the user being updated is the same as the logged-in user
+                if ($userId == $_SESSION['user_id']) {
+                    // If so, update the username in the session immediately
+                    $_SESSION['username'] = $username;
+                }
+                write_log('INFO', "User ID {$userId} ('{$username}') updated by '{$_SESSION['username']}'.");
+                $response = ['success' => true, 'message' => 'کاربر با موفقیت ویرایش شد.'];
             } else throw new Exception('خطا در ویرایش کاربر.');
             break;
-            
+
         case 'delete_user':
             $userId = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
             if (empty($userId)) throw new Exception('شناسه کاربر ارسال نشده است.');
-            
+
             $is_self_delete = ($userId == $_SESSION['user_id']);
-            if ($is_self_delete && is_owner()) { throw new Exception('کاربر Owner نمی‌تواند حساب کاربری خود را حذف کند.'); }
-            if (!is_owner() && !$is_self_delete) { throw new Exception('شما مجوز حذف سایر کاربران را ندارید.'); }
+            if ($is_self_delete && is_owner()) {
+                throw new Exception('کاربر Owner نمی‌تواند حساب کاربری خود را حذف کند.');
+            }
+            if (!is_owner() && !$is_self_delete) {
+                throw new Exception('شما مجوز حذف سایر کاربران را ندارید.');
+            }
 
             if (delete_user($userId)) {
-                 write_log('INFO', "User ID {$userId} deleted by '{$_SESSION['username']}'.");
-                 $response = ['success' => true, 'message' => 'کاربر با موفقیت حذف شد.'];
-                 if ($is_self_delete) {
+                write_log('INFO', "User ID {$userId} deleted by '{$_SESSION['username']}'.");
+                $response = ['success' => true, 'message' => 'کاربر با موفقیت حذف شد.'];
+                if ($is_self_delete) {
                     $response['self_delete'] = true;
                     session_unset();
                     session_destroy();
-                 }
+                }
             } else throw new Exception('خطا در حذف کاربر.');
             break;
 
         case 'create_event':
             // FIX 1: Replace deprecated FILTER_SANITIZE_STRING
-            $eventName = trim($_POST['event_name'] ?? ''); 
+            $eventName = trim($_POST['event_name'] ?? '');
             if (empty($eventName)) throw new Exception('نام رویداد نمی‌تواند خالی باشد.');
-            
+
             $events = get_events();
             $newEventId = 'event_' . uniqid();
             $events[] = ['id' => $newEventId, 'name' => $eventName];
-            
+
             create_event_files($newEventId, $defaultConfigs);
             safe_file_put_contents(EVENTS_FILE, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             $_SESSION['current_event_id'] = $newEventId;
@@ -89,7 +99,7 @@ try {
         case 'rename_event':
             $eventId = $_POST['event_id'] ?? '';
             // FIX 1: Replace deprecated FILTER_SANITIZE_STRING
-            $newName = trim($_POST['event_name'] ?? ''); 
+            $newName = trim($_POST['event_name'] ?? '');
             if (empty($newName)) throw new Exception('نام رویداد نمی‌تواند خالی باشد.');
             if (!is_valid_event_id($eventId)) throw new Exception('رویداد نامعتبر است.');
 
@@ -104,7 +114,7 @@ try {
             write_log('INFO', "Event renamed. ID: {$eventId}, New Name: {$newName}");
             $response = ['success' => true, 'message' => 'نام رویداد تغییر کرد.', 'renamed_event' => ['id' => $eventId, 'name' => $newName]];
             break;
-            
+
         // FIX 2: Implement edit_event_id logic
         case 'edit_event_id':
             $currentId = $_POST['current_event_id'] ?? '';
@@ -118,7 +128,7 @@ try {
             $events = get_events();
             foreach ($events as $event) {
                 if ($event['id'] === $newId) {
-                     throw new Exception('این شناسه قبلاً برای رویداد دیگری استفاده شده است.');
+                    throw new Exception('این شناسه قبلاً برای رویداد دیگری استفاده شده است.');
                 }
             }
 
@@ -155,7 +165,7 @@ try {
                 if (isset($eventConfigs['socials']) && is_array($eventConfigs['socials'])) {
                     foreach ($eventConfigs['socials'] as &$social) {
                         if (isset($social['icon']) && strpos($social['icon'], $oldUploadsRelativePath) === 0) {
-                           $social['icon'] = str_replace($oldUploadsRelativePath, $newUploadsRelativePath, $social['icon']);
+                            $social['icon'] = str_replace($oldUploadsRelativePath, $newUploadsRelativePath, $social['icon']);
                         }
                     }
                 }
@@ -167,7 +177,7 @@ try {
                 if ($event['id'] === $currentId) $event['id'] = $newId;
             }
             safe_file_put_contents(EVENTS_FILE, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            
+
             $_SESSION['current_event_id'] = $newId;
             write_log('INFO', "Event ID changed from '{$currentId}' to '{$newId}'.");
             $response = ['success' => true, 'message' => 'شناسه رویداد با موفقیت تغییر کرد.'];
@@ -181,14 +191,14 @@ try {
             $events = array_values(array_filter(get_events(), fn($e) => $e['id'] !== $eventId));
             $dirPath = EVENTS_DIR . $eventId;
             $uploadsPath = UPLOADS_DIR . $eventId;
-            foreach([$dirPath, $uploadsPath] as $pathToDelete) {
+            foreach ([$dirPath, $uploadsPath] as $pathToDelete) {
                 if (is_dir($pathToDelete)) {
                     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pathToDelete, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
                     foreach ($files as $fileinfo) ($fileinfo->isDir() ? 'rmdir' : 'unlink')($fileinfo->getRealPath());
                     rmdir($pathToDelete);
                 }
             }
-            
+
             safe_file_put_contents(EVENTS_FILE, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             $newCurrentEventId = $events[0]['id'] ?? null;
             $_SESSION['current_event_id'] = $newCurrentEventId;
@@ -208,20 +218,26 @@ try {
             switch ($action) {
                 case 'save_settings':
                     $upload_errors = [];
-                    
+
                     $file_fields = ['logo', 'preBanner', 'endBanner', 'banner'];
                     foreach ($file_fields as $field) {
                         $url_input = $_POST[$field . '_url'] ?? '';
-                        if (!empty($url_input) && strpos($url_input, 'uploads/') === 0 && strpos($url_input, 'config/') !== 0) { $url_input = 'config/' . $url_input; }
+                        if (!empty($url_input) && strpos($url_input, 'uploads/') === 0 && strpos($url_input, 'config/') !== 0) {
+                            $url_input = 'config/' . $url_input;
+                        }
                         if (!is_valid_image_url($url_input)) {
                             throw new Exception("آدرس تصویر برای '$field' نامعتبر است. آدرس باید به یک فایل تصویر ختم شود.");
                         }
                         $result = handle_upload($_FILES[$field . '_file'] ?? null, trim($url_input) ?? '', $_POST[$field . '_old'] ?? '');
-                        $configs[$field] = $result['path']; 
-                        if ($result['error']) { $upload_errors[] = $result['error']; }
+                        $configs[$field] = $result['path'];
+                        if ($result['error']) {
+                            $upload_errors[] = $result['error'];
+                        }
                     }
-                    if (!empty($upload_errors)) { throw new Exception(implode('<br>', $upload_errors)); }
-                    
+                    if (!empty($upload_errors)) {
+                        throw new Exception(implode('<br>', $upload_errors));
+                    }
+
                     $newButtons = [];
                     if (isset($_POST['button_title']) && is_array($_POST['button_title'])) {
                         foreach ($_POST['button_title'] as $index => $title) {
@@ -234,15 +250,24 @@ try {
                     }
                     $configs['buttons'] = $newButtons;
 
+                    $old_social_icons = array_filter(array_column($configs['socials'] ?? [], 'icon'));
+
                     $newSocials = [];
                     if (isset($_POST['social_title']) && is_array($_POST['social_title'])) {
                         foreach ($_POST['social_title'] as $index => $title) {
-                            $link = trim($_POST['social_link'][$index]) ?? '';
-                             if (!empty($link) && !filter_var($link, FILTER_VALIDATE_URL)) {
+                            $link = $_POST['social_link'][$index] ?? '';
+                            if (!empty($link) && !filter_var($link, FILTER_VALIDATE_URL)) {
                                 throw new Exception("لینک آیتم اجتماعی نامعتبر است: " . htmlspecialchars($link));
                             }
+
                             $icon_url_input = $_POST['social_icon_url'][$index] ?? '';
-                            if (!empty($icon_url_input) && strpos($icon_url_input, 'uploads/') === 0 && strpos($icon_url_input, 'config/') !== 0) { $icon_url_input = 'config/' . $icon_url_input; }
+                            if (!empty($icon_url_input) && strpos($icon_url_input, 'uploads/') === 0 && strpos($icon_url_input, 'config/') !== 0) {
+                                $icon_url_input = 'config/' . $icon_url_input;
+                            }
+                            if (!is_valid_image_url($icon_url_input)) {
+                                throw new Exception("آدرس آیکن برای '$title' نامعتبر است. آدرس باید به یک فایل تصویر ختم شود.");
+                            }
+
                             $icon_result = handle_upload(
                                 !empty($_FILES['social_icon_file']['name'][$index]) ? [
                                     'name' => $_FILES['social_icon_file']['name'][$index],
@@ -251,14 +276,13 @@ try {
                                     'error' => $_FILES['social_icon_file']['error'][$index],
                                     'size' => $_FILES['social_icon_file']['size'][$index],
                                 ] : null,
-                                trim($icon_url_input) ?? '',
+                                $icon_url_input,
                                 $_POST['social_icon_old'][$index] ?? ''
                             );
-                            if (!is_valid_image_url($icon_url_input)) {
-                                throw new Exception("آدرس آیکن برای '$title' نامعتبر است. آدرس باید به یک فایل تصویر ختم شود.");
+                            if ($icon_result['error']) {
+                                $upload_errors[] = $icon_result['error'];
                             }
-                            if ($icon_result['error']) { $upload_errors[] = $icon_result['error']; }
-                            
+
                             $newSocials[] = [
                                 'title' => trim($title),
                                 'link' => trim($link),
@@ -266,7 +290,25 @@ try {
                             ];
                         }
                     }
+
+                    // 2. Get a list of the icons that are still in use.
+                    $kept_social_icons = array_filter(array_column($newSocials, 'icon'));
+
+                    // 3. Find which icons were removed by comparing the old list to the new one.
+                    $icons_to_delete = array_diff($old_social_icons, $kept_social_icons);
+
+                    // 4. Securely delete the orphaned files.
+                    foreach ($icons_to_delete as $icon_path) {
+                        if (strpos($icon_path, 'config/uploads/') === 0) {
+                            $physical_path = PROJECT_ROOT . '/' . $icon_path;
+                            if (file_exists($physical_path)) {
+                                @unlink($physical_path);
+                            }
+                        }
+                    }
+
                     $configs['socials'] = $newSocials;
+
 
                     // FIX: Replace the existing 'homePage' line with this block for better validation
                     $homePageUrl = trim($_POST['homePage'] ?? '');
@@ -295,14 +337,16 @@ try {
                     $configs['liveEnd'] = $liveEnd;
                     $configs['fetchInterval'] = filter_input(INPUT_POST, 'fetchInterval', FILTER_VALIDATE_INT, ["options" => ["min_range" => 1000]]) ?: 60000;
                     $configs['subtitleDelay'] = filter_input(INPUT_POST, 'subtitleDelay', FILTER_VALIDATE_INT, ["options" => ["min_range" => 1000]]) ?: 4000;
-                    
-                    foreach($configs['colors'] as $key => &$value) {
-                         $post_key = str_replace('_', '-', $key) === 'title' ? 'title-color' : str_replace('_', '-', $key);
-                         $color_val = $_POST[$post_key] ?? '#000000';
-                         if (preg_match('/^#[a-f0-9]{6}$/i', $color_val)) { $value = $color_val; }
+
+                    foreach ($configs['colors'] as $key => &$value) {
+                        $post_key = str_replace('_', '-', $key) === 'title' ? 'title-color' : str_replace('_', '-', $key);
+                        $color_val = $_POST[$post_key] ?? '#000000';
+                        if (preg_match('/^#[a-f0-9]{6}$/i', $color_val)) {
+                            $value = $color_val;
+                        }
                     }
 
-                     $newSubtitles = [];
+                    $newSubtitles = [];
                     if (isset($_POST['subtitle_text']) && is_array($_POST['subtitle_text'])) {
                         foreach ($_POST['subtitle_text'] as $index => $text) {
                             if (!empty(trim($text))) {
@@ -315,29 +359,52 @@ try {
                         }
                     }
 
-                    if (safe_file_put_contents($configsFile, json_encode($configs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) &&
+                    if (
+                        safe_file_put_contents($configsFile, json_encode($configs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) &&
                         safe_file_put_contents($subtitlesFile, json_encode($newSubtitles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
                     ) {
                         $response = ['success' => true, 'message' => 'تنظیمات ذخیره شد.', 'updated_data' => ['configs' => $configs, 'subtitles' => $newSubtitles]];
                     } else throw new Exception('خطا در ذخیره فایل‌ها.');
                     break;
-                
+
+
                 case 'restore_backup':
                     $target = $_POST['restore_target'] ?? '';
                     $file = $_FILES['backup_file'] ?? null;
                     $targetFile = ($target === 'configs') ? $configsFile : (($target === 'subtitles') ? $subtitlesFile : '');
+
                     if (empty($targetFile)) throw new Exception('هدف بازیابی مشخص نشده است.');
 
-                    if ($file && $file['error'] === UPLOAD_ERR_OK) {
-                        if ($file['type'] === 'application/json' && pathinfo($file['name'], PATHINFO_EXTENSION) === 'json') {
-                            $content = file_get_contents($file['tmp_name']);
-                            if (json_decode($content) !== null) {
-                                if (safe_file_put_contents($targetFile, $content)) {
-                                    $response = ['success' => true, 'message' => 'بازیابی موفق بود. صفحه رفرش می‌شود.'];
-                                } else throw new Exception('خطا در ذخیره فایل بازیابی شده.');
-                            } else throw new Exception('فایل JSON معتبر نیست.');
-                        } else throw new Exception('فرمت فایل باید JSON باشد.');
-                    } else throw new Exception('خطا در آپلود فایل پشتیبان.');
+                    if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+                        throw new Exception('خطا در آپلود فایل پشتیبان.');
+                    }
+
+                    if ($file['type'] !== 'application/json' || pathinfo($file['name'], PATHINFO_EXTENSION) !== 'json') {
+                        throw new Exception('فرمت فایل باید JSON باشد.');
+                    }
+
+                    $content = file_get_contents($file['tmp_name']);
+                    $decoded_data = json_decode($content, true);
+
+                    // FIX: Use the new, stronger validation function
+                    if (is_valid_backup_content($decoded_data, $target)) {
+                        $content_to_save = $content;
+
+                        // For configs, merge with defaults to ensure all keys exist
+                        if ($target === 'configs') {
+                            global $defaultConfigs;
+                            $merged_config = array_replace_recursive($defaultConfigs, $decoded_data);
+                            $content_to_save = json_encode($merged_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                        }
+
+                        if (safe_file_put_contents($targetFile, $content_to_save)) {
+                            $response = ['success' => true, 'message' => 'بازیابی موفق بود. صفحه رفرش می‌شود.'];
+                        } else {
+                            throw new Exception('خطا در ذخیره فایل بازیابی شده.');
+                        }
+                    } else {
+                        throw new Exception('محتوای فایل پشتیبان نامعتبر است یا با نوع انتخابی مطابقت ندارد.');
+                    }
                     break;
             }
     }
@@ -348,4 +415,3 @@ try {
 
 echo json_encode($response);
 exit;
-
