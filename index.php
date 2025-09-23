@@ -80,6 +80,39 @@ if (empty($configs) || !empty($error_message)):
         --placeholder-border: <?= htmlspecialchars($configs["colors"]["placeholder-border"]) ?>;
         --text: <?= htmlspecialchars($configs["colors"]["text"]) ?>;
     }
+    /* ----- LOADER STYLES ----- */
+    #loader-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--bg); /* Use theme background */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.75s ease;
+    }
+    .loader-spinner {
+        border: 8px solid rgba(0,0,0,0.1);
+        border-top: 8px solid var(--primary); /* Use theme color */
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+    }
+    #loader-wrapper p {
+        margin-top: 20px;
+        font-size: 1.2rem;
+        color: var(--text);
+        font-weight: 500;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
     *{padding: 0;margin: 0;outline: none;box-sizing:border-box}
     body{margin:0;font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
     header{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.05);padding:.8rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
@@ -135,7 +168,14 @@ if (empty($configs) || !empty($error_message)):
   $LIVE_START_MS = !empty($LIVE_START_STR) ? strtotime($LIVE_START_STR) * 1000 : 0;
   $LIVE_END_MS   = !empty($LIVE_END_STR) ? strtotime($LIVE_END_STR) * 1000 : 0;
   $SERVER_NOW_MS = time() * 1000;
-?>
+  ?>
+
+<div id="loader-wrapper">
+    <div class="loader-spinner"></div>
+    <p>در حال بارگذاری...</p>
+</div>
+
+<div id="main-content" style="visibility: hidden; opacity: 0; transition: opacity 0.5s ease;">
   <header>
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>"><img src="<?= htmlspecialchars(get_image_url($configs["logo"])) ?>" alt="لوگو"></a>
     <h1><?= htmlspecialchars($configs["title"]) ?></h1>
@@ -212,8 +252,31 @@ if (empty($configs) || !empty($error_message)):
     </div>
   </main>
   <footer>© 2025 همه حقوق محفوظ است</footer>
+</div>
 
   <script>
+    // ----- LOADER SCRIPT -----
+    const livePlayerDiv = document.getElementById('livePlayer');
+    const iframeContent = livePlayerDiv.innerHTML; // Store the iframe's HTML
+    livePlayerDiv.innerHTML = ''; // Immediately remove it from the page to prevent it from loading
+    let playerLoaded = false; // A flag to ensure we only load the player once
+    window.addEventListener('DOMContentLoaded', function() {
+        const loader = document.getElementById('loader-wrapper');
+        const mainContent = document.getElementById('main-content');
+    
+        // Fade out the loader
+        loader.style.opacity = '0';
+
+        // Make the main content visible and fade it in
+        mainContent.style.visibility = 'visible';
+        mainContent.style.opacity = '1';
+    
+        // Hide the loader completely after the fade-out transition
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 750); // This should match the CSS transition duration
+    });
+
     var serverNow   = <?php echo $SERVER_NOW_MS; ?>;
     var liveStart   = <?php echo $LIVE_START_MS; ?>;
     var liveEnd     = <?php echo $LIVE_END_MS; ?>;
@@ -248,6 +311,10 @@ if (empty($configs) || !empty($error_message)):
       } else if (now >= liveStart && now < liveEnd){
         elPre.style.display  = "none"; elLive.style.display = "block"; elEnd.style.display  = "none";
         elCd.style.display = "none";
+        if (!playerLoaded) {
+            elLive.innerHTML = iframeContent;
+            playerLoaded = true;
+        }
       } else {
         elPre.style.display  = "none"; elLive.style.display = "none"; elEnd.style.display  = "block";
         elCd.style.display = "none";
@@ -290,7 +357,7 @@ if (empty($configs) || !empty($error_message)):
             linkEl.href = sub.link;
             linkEl.target = '_blank';
             linkEl.rel = 'noopener';
-            linkEl.style.color = '#1b8e53';
+            linkEl.style.color = 'var(--tilte)';
             linkEl.style.textDecoration = 'none';
           
             // CRITICAL FIX: Use textContent to safely insert the text, preventing XSS.

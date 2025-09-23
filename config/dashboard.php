@@ -46,6 +46,25 @@ $users = get_all_users();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>داشبورد مدیریت</title>
+    <script>
+    window.addEventListener('load', function() {
+        const loader = document.getElementById('loader-wrapper');
+        const pageContent = document.getElementById('page-content');
+
+        if (loader) {
+            // Fade out the loader
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500); // This duration must match the CSS transition time
+        }
+        if (pageContent) {
+            // Fade in the main content
+            pageContent.style.visibility = 'visible';
+            pageContent.style.opacity = '1';
+        }
+    });
+</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
@@ -54,7 +73,10 @@ $users = get_all_users();
 </head>
 
 <body>
-
+<div id="loader-wrapper">
+    <div class="loader-spinner"></div>
+</div>
+<div id="page-content" style="visibility: hidden; opacity: 0; transition: opacity 0.5s ease; display: flex; flex-grow: 1; width: 100%;">
     <aside class="sidebar">
         <nav class="sidebar-nav">
             <h2>پنل مدیریت</h2>
@@ -514,7 +536,7 @@ $users = get_all_users();
             </form>
         </div>
     </div>
-
+</div>
     <script src="assets/js/dashboard.js"></script>
 </body>
 
