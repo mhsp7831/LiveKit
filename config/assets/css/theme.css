@@ -1,0 +1,37 @@
+:root {
+    --primary-color: #4caf50;
+    --primary-hover-color: #45a049;
+    --success-color: #28a745;
+    --dark-color: #333;
+    --light-color: #fff;
+    --grey-color: #f4f7f6;
+    --text-color: #555;
+    --danger-color: #f44336;
+    --danger-hover-color: #d32f2f;
+    --secondary-color: #6c757d;
+    --secondary-hover-color: #5a6268;
+    --border-radius: 8px;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+    /* ----- FONTS ----- */
+    --font-family-base: 'Vazirmatn', sans-serif;
+    --font-size-sm: 0.8rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.2rem;
+    --font-weight-normal: 500;
+    --font-weight-bold: 700;
+
+    /* ----- SPACING ----- */
+    --spacing-xs: 0.25rem;  /* 4px */
+    --spacing-sm: 0.5rem;   /* 8px */
+    --spacing-md: 1rem;     /* 16px */
+    --spacing-lg: 1.5rem;   /* 24px */
+    --spacing-xl: 2rem;     /* 32px */
+
+    /* ----- BORDERS & SHADOWS ----- */
+    --border-radius: 8px;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+    /* ----- TRANSITIONS ----- */
+    --transition-speed: 0.3s;
+}
