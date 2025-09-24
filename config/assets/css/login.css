@@ -33,7 +33,7 @@ label {
     text-align: right;
     margin: 8px 0 4px;
     font-size: 14px;
-    color: #555;
+    color: var(--text-color);
 }
 
 input {
@@ -50,12 +50,12 @@ input {
 
 input:focus,
 input:hover {
-    border-color: #4caf50;
+    border-color: var(--primary-hover-color);
     outline: none;
 }
 
 button {
-    background: #4caf50;
+    background: var(--primary-color);
     color: white;
     padding: 10px;
     border: none;
@@ -68,13 +68,13 @@ button {
 }
 
 button:hover {
-    background: #43a047;
+    background: var(--primary-hover-color);
 }
 
 .error {
     color: #fff;
     font-size: 14px;
-    background-color: #e53935;
+    background-color: var(--danger-color);
     display: inline-block;
     padding: 3px 5px;
     border-radius: 5px;

@@ -1,24 +1,38 @@
 :root {
+    /* ----- COLORS ----- */
     --primary-color: #4caf50;
     --primary-hover-color: #45a049;
+    --primary-light-color: #c8ebfb; /* For highlights like sortable-ghost */
+    --primary-focus-shadow: rgba(76, 175, 80, 0.2);
+
     --success-color: #28a745;
-    --dark-color: #333;
-    --light-color: #fff;
-    --grey-color: #f4f7f6;
-    --text-color: #555;
     --danger-color: #f44336;
     --danger-hover-color: #d32f2f;
     --secondary-color: #6c757d;
     --secondary-hover-color: #5a6268;
-    --border-radius: 8px;
-    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+    --dark-color: #333;
+    --light-color: #fff;
+    --text-color: #555;
+    --text-light-color: #888;
+    
+    --grey-color: #f4f7f6;
+    --grey-light-color: #eee;
+    --grey-x-light-color: #f9f9f9;
+    --border-color: #ddd;
+    --border-color-hover: #ccc;
+    
+    --overlay-bg: rgba(0, 0, 0, 0.6);
+    --code-bg: #2d2d2d;
+    --code-fg: #f1f1f1;
+
 
     /* ----- FONTS ----- */
     --font-family-base: 'Vazirmatn', sans-serif;
     --font-size-sm: 0.8rem;
     --font-size-md: 1rem;
     --font-size-lg: 1.2rem;
-    --font-weight-normal: 500;
+    --font-weight-normal: 400;
     --font-weight-bold: 700;
 
     /* ----- SPACING ----- */
@@ -31,7 +45,74 @@
     /* ----- BORDERS & SHADOWS ----- */
     --border-radius: 8px;
     --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-lg: 0 5px 15px rgba(0,0,0,0.2);
 
     /* ----- TRANSITIONS ----- */
     --transition-speed: 0.3s;
+}
+
+/* ===== BUTTON SYSTEM ===== */
+
+/* 1. The Base Button Style */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: var(--spacing-sm) var(--spacing-lg); /* Default size */
+    border: none;
+    border-radius: var(--border-radius);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--transition-speed), transform var(--transition-speed);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.btn:hover {
+    transform: translateY(-2px); /* Add a subtle lift effect */
+}
+
+/* 2. Color Modifiers */
+.btn--primary {
+    background-color: var(--primary-color);
+    color: var(--light-color);
+}
+.btn--primary:hover {
+    background-color: var(--primary-hover-color);
+}
+
+.btn--secondary {
+    background-color: var(--secondary-color);
+    color: var(--light-color);
+}
+.btn--secondary:hover {
+    background-color: var(--secondary-hover-color);
+}
+
+.btn--danger {
+    background-color: var(--danger-color);
+    color: var(--light-color);
+}
+.btn--danger:hover {
+    background-color: var(--danger-hover-color);
+}
+
+/* 3. Size Modifier */
+.btn--sm {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
+}
+
+/* 4. Icon Style Modifier */
+.btn--icon {
+    gap: var(--spacing-sm);
+}
+.btn--icon svg {
+    width: 18px;
+    height: 18px;
 }
