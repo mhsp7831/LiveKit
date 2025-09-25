@@ -52,29 +52,43 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     const switchToTab = (tabId) => {
-        // Remove 'active' class from the currently active tab and button
-        document
-            .querySelector(".sidebar-nav .active")
-            ?.classList.remove("active");
-        document.querySelector(".tab-panel.active")?.classList.remove("active");
-
-        // Add 'active' class to the new tab and button
-        const newTabButton = document.querySelector(
-            `.sidebar-nav .tab-button[data-tab="${tabId}"]`
-        );
+        const currentActiveButton = document.querySelector('.sidebar-nav .active');
+        const currentActivePanel = document.querySelector('.tab-panel.active');
+        const newTabButton = document.querySelector(`.sidebar-nav .tab-button[data-tab="${tabId}"]`);
         const newTabPanel = document.getElementById(tabId);
 
-        if (newTabButton) newTabButton.classList.add("active");
-        if (newTabPanel) newTabPanel.classList.add("active");
+        // Do nothing if the clicked tab is already active or elements don't exist
+        if (!newTabButton || !newTabPanel || (currentActiveButton && currentActiveButton === newTabButton)) {
+            return;
+        }
 
-        // Show or hide the main "Save" button based on the tab
-        const saveButtonContainer = document.querySelector(
-            ".save-button-container"
-        );
-        if (["users", "backup"].includes(tabId)) {
-            saveButtonContainer.style.display = "none";
+        // Handle save button visibility immediately
+        const saveButtonContainer = document.querySelector('.save-button-container');
+        if (['users', 'backup'].includes(tabId)) {
+            saveButtonContainer.style.display = 'none';
         } else {
-            saveButtonContainer.style.display = "";
+            saveButtonContainer.style.display = '';
+        }
+
+        // Animate out the current panel if there is one
+        if (currentActivePanel) {
+            currentActivePanel.classList.add('is-exiting');
+
+            // Wait for the fade-out animation to finish before switching
+            setTimeout(() => {
+                currentActivePanel.classList.remove('active');
+                currentActivePanel.classList.remove('is-exiting'); // Clean up
+
+                currentActiveButton?.classList.remove('active');
+
+                // Activate the new tab and button
+                newTabButton.classList.add('active');
+                newTabPanel.classList.add('active');
+            }, 200); // This duration MUST match the CSS animation duration
+        } else {
+            // If no panel is active, just fade in the new one instantly
+            newTabButton.classList.add('active');
+            newTabPanel.classList.add('active');
         }
     };
 

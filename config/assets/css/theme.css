@@ -22,7 +22,7 @@
     --border-color: #ddd;
     --border-color-hover: #ccc;
     
-    --overlay-bg: rgba(0, 0, 0, 0.6);
+    --overlay-bg: rgba(0, 0, 0, 0.7);
     --code-bg: #2d2d2d;
     --code-fg: #f1f1f1;
 
@@ -52,7 +52,7 @@
     --transition-speed: 0.3s;
 }
 
-/* ===== BUTTON SYSTEM ===== */
+/* ===== BUTTON SYSTEM (ENHANCED) ===== */
 
 /* 1. The Base Button Style */
 .btn {
@@ -60,7 +60,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    padding: var(--spacing-sm) var(--spacing-lg); /* Default size */
+    padding: var(--spacing-sm) var(--spacing-lg);
     border: none;
     border-radius: var(--border-radius);
     font-family: var(--font-family-base);
@@ -68,50 +68,125 @@
     font-weight: var(--font-weight-bold);
     text-decoration: none;
     cursor: pointer;
-    transition: background-color var(--transition-speed), transform var(--transition-speed);
     text-align: center;
     white-space: nowrap;
+    /* Transition all properties for smooth effects */
+    transition: all var(--transition-speed) ease;
 }
 
+/* 2. Enhanced User Feedback on Hover/Active */
 .btn:hover {
-    transform: translateY(-2px); /* Add a subtle lift effect */
+    /* transform: translateY(-2px); */
+    /* Make the shadow slightly more prominent on hover */
+    /* box-shadow: 0 6px 14px rgba(0,0,0,0.1); */
+}
+.btn:active {
+    transform: translateY(1px);
+    /* "Press" the button by reducing the shadow */
+    /* box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
 }
 
-/* 2. Color Modifiers */
+/* 3. Solid Button Styles (Primary, Danger, etc.) */
 .btn--primary {
     background-color: var(--primary-color);
     color: var(--light-color);
+    box-shadow: var(--shadow);
 }
 .btn--primary:hover {
     background-color: var(--primary-hover-color);
 }
 
-.btn--secondary {
-    background-color: var(--secondary-color);
-    color: var(--light-color);
-}
-.btn--secondary:hover {
-    background-color: var(--secondary-hover-color);
-}
-
 .btn--danger {
     background-color: var(--danger-color);
     color: var(--light-color);
+    box-shadow: var(--shadow);
 }
 .btn--danger:hover {
     background-color: var(--danger-hover-color);
 }
 
-/* 3. Size Modifier */
+.btn--secondary {
+    background-color: var(--secondary-color);
+    color: var(--light-color);
+    box-shadow: var(--shadow);
+}
+.btn--secondary:hover {
+    background-color: var(--secondary-hover-color);
+}
+
+/* 4. (New) Outline Button Styles */
+.btn--outline {
+    background-color: transparent;
+    box-shadow: none;
+    border: 1px solid;
+}
+.btn--outline.btn--primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+.btn--outline.btn--primary:hover {
+    background-color: var(--primary-color);
+    color: var(--light-color);
+}
+.btn--outline.btn--danger {
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+}
+.btn--outline.btn--danger:hover {
+    background-color: var(--danger-color);
+    color: var(--light-color);
+}
+
+
+/* 5. Size Modifier */
 .btn--sm {
     padding: var(--spacing-xs) var(--spacing-md);
     font-size: var(--font-size-sm);
 }
 
-/* 4. Icon Style Modifier */
+.btn--xs {
+    padding: var(--spacing-xs) var(--spacing-md);
+}
+
+/* 6. Icon Style Modifier */
 .btn--icon {
     gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background-color: var(--light-color);
+    box-shadow: none;
+    border: 1px solid var(--border-color);
 }
+
+.btn--icon.btn--primary {
+    color: var(--primary-color)
+}
+
+.btn--icon.btn--secondary {
+    color: var(--secondary-color);
+}
+
+.btn--icon.btn--danger {
+    color: var(--danger-color);
+}
+
+.btn--icon.btn--primary:hover {
+    background-color: var(--primary-color);
+    color: var(--light-color);
+    border-color: var(--primary-color);
+}
+
+.btn--icon.btn--secondary:hover {
+    background-color: var(--secondary-color);
+    color: var(--light-color);
+    border-color: var(--secondary-color);
+}
+
+.btn--icon.btn--danger:hover {
+    background-color: var(--danger-color);
+    color: var(--light-color);
+    border-color: var(--danger-color);
+}
+
 .btn--icon svg {
     width: 18px;
     height: 18px;

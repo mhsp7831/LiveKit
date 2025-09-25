@@ -121,66 +121,72 @@ $users = get_all_users();
             <header class="header">
                 <div class="header-left">
                     <div class="event-manager">
-                        <label for="event-selector">رویداد فعلی:</label>
-                        <select id="event-selector">
-                            <?php foreach ($all_events as $event): ?>
-                                <option value="<?= htmlspecialchars($event['id']) ?>" <?= ($event['id'] === $current_event_id) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($event['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="event-actions">
-                            <button id="create-event-btn" class="btn btn--secondary btn--icon" title="رویداد جدید">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                <span>جدید</span>
-                            </button>
-                            <button id="rename-event-btn" class="btn btn--secondary btn--icon" title="تغییر نام رویداد فعلی">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
-                                </svg>
-                                <span>تغییر نام</span>
-                            </button>
-                            <button id="delete-event-btn" class="btn btn--danger btn--icon" title="حذف رویداد فعلی">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                <span>حذف</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="event-id-display">
-                        شناسه: <code><?= htmlspecialchars($current_event_id) ?></code>
-
-                        <button id="copy-event-id-btn" title="کپی شناسه">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2Zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6ZM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2Z" />
-                            </svg>
-                        </button>
-
-                        <button id="edit-event-id-btn" title="ویرایش شناسه">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
-                            </svg>
-                        </button>
+                            <div class="event-display">
+                                <div class="current-event">
+                                    <label for="event-selector">رویداد فعلی:</label>
+                                    <select id="event-selector">
+                                        <?php foreach ($all_events as $event): ?>
+                                            <option value="<?= htmlspecialchars($event['id']) ?>" <?= ($event['id'] === $current_event_id) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($event['name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="event-id-display">
+                                    شناسه: <code><?= htmlspecialchars($current_event_id) ?></code>
+        
+                                    <button id="copy-event-id-btn" title="کپی شناسه">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2Zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6ZM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2Z" />
+                                        </svg>
+                                    </button>
+        
+                                    <button id="edit-event-id-btn" title="ویرایش شناسه">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="event-actions">
+                                <div>
+                                    <button id="create-event-btn" class="btn btn--primary btn--icon" title="رویداد جدید">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                    </button>
+                                    <button id="rename-event-btn" class="btn btn--primary btn--icon" title="تغییر نام رویداد فعلی">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                    <div>
+                                    <a href="../index.php?event=<?= htmlspecialchars($current_event_id) ?>" title="مشاهده پخش زنده" target="_blank" class="btn btn--primary btn--icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </a>
+                                    <button id="delete-event-btn" class="btn btn--danger btn--icon" title="حذف رویداد فعلی">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                     </div>
                 </div>
                 <div class="header-right">
-                    <span class="current-user">کاربر: <?= htmlspecialchars($_SESSION['username']) ?></span>
-                    <a href="../index.php?event=<?= htmlspecialchars($current_event_id) ?>" target="_blank" class="btn btn--primary btn-view-live">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span>مشاهده پخش زنده</span>
-                    </a>
-                    <a href="logout.php" class="btn btn--danger logout-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        خروج
-                    </a>
+                    <div class="user-info">
+                        <span class="current-user">کاربر: <?= htmlspecialchars($_SESSION['username']) ?></span>
+                        <a href="logout.php" class="btn btn--danger btn--xs btn--outline logout-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            خروج
+                        </a>
+                    </div>
                 </div>
             </header>
 
@@ -203,7 +209,14 @@ $users = get_all_users();
                                 </div>
                             </div>
                             <div class="card">
-                                <h3>دکمه‌ها</h3>
+                                <div class="card-header">
+                                    <h3>دکمه‌ها</h3>
+                                    <button type="button" id="add-button-btn" class="btn btn--primary btn--icon" title="دکمه جدید">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                    </button>
+                                </div>    
                                 <div id="buttons-container" class="sortable-list-grid">
                                     <?php foreach ($configs['buttons'] as $index => $button): ?>
                                         <div class="sortable-item">
@@ -221,10 +234,16 @@ $users = get_all_users();
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
-                                <div class="form-actions"><button type="button" id="add-button-btn" class="btn btn--secondary"><span class="btn-text">افزودن دکمه</span></button></div>
                             </div>
                             <div class="card">
-                                <h3>صفحات اجتماعی</h3>
+                                <div class="card-header">
+                                    <h3>صفحات اجتماعی</h3>
+                                    <button type="button" id="add-social-btn" class="btn btn--primary btn--icon" title="افزودن آیتم اجتماعی">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                    </button>
+                                </div>    
                                 <div id="socials-container" class="sortable-list-grid">
                                     <?php foreach ($configs['socials'] as $index => $social): ?>
                                         <div class="sortable-item">
@@ -249,15 +268,23 @@ $users = get_all_users();
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
-                                <div class="form-actions"><button type="button" id="add-social-btn" class="btn btn--secondary"><span class="btn-text">افزودن آیتم اجتماعی</span></button></div>
                             </div>
                         </div>
 
                         <div id="subtitles" class="tab-panel">
                             <div class="card">
-                                <h3>مدیریت زیرنویس‌ها</h3>
-                                <div id="subtitles-container" class="sortable-list">
-                                    <?php foreach ($subtitles as $subtitle): ?>
+                                <div class="card-header">
+                                    <h3>مدیریت زیرنویس ها</h3>
+                                    <div>
+                                        <button type="button" id="remove-all-subtitles-btn" class="btn btn--danger btn--sm"><span class="btn-text">حذف همه</span></button>
+                                        <button type="button" id="add-subtitle-btn" class="btn btn--primary btn--icon" title="افزودن زیرنویس">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>    
+                                <div id="subtitles-container" class="sortable-list"><?php foreach ($subtitles as $subtitle): ?>
                                         <div class="sortable-item">
                                             <div class="sortable-header">
                                                 <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -271,12 +298,7 @@ $users = get_all_users();
                                                 <div class="form-group"><label>لینک (اختیاری):</label><input type="url" name="subtitle_link[]" value="<?= htmlspecialchars($subtitle['link'] ?? '') ?>"></div>
                                             </div>
                                         </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <div class="form-actions">
-                                    <button type="button" id="add-subtitle-btn" class="btn btn--secondary"><span class="btn-text">افزودن زیرنویس</span></button>
-                                    <button type="button" id="remove-all-subtitles-btn" class="btn btn--danger"><span class="btn-text">حذف همه</span></button>
-                                </div>
+                                        <?php endforeach; ?></div>
                             </div>
                         </div>
 
@@ -339,7 +361,7 @@ $users = get_all_users();
                                     <div class="form-group"><label for="text">متن ساده (text):</label><input type="color" name="text" id="text" value="<?= htmlspecialchars($configs['colors']['text']) ?>"></div>
                                 </div>
                                 <div class="form-actions">
-                                    <button type="button" id="reset-colors-btn" class="btn btn--secondary"><span class="btn-text">بازگشت به پیش‌فرض</span></button>
+                                    <button type="button" id="reset-colors-btn" class="btn btn--primary"><span class="btn-text">بازگشت به پیش‌فرض</span></button>
                                 </div>
                             </div>
                         </div>
@@ -363,7 +385,7 @@ $users = get_all_users();
                                         <input type="password" id="new_password" name="password" required>
                                     </div>
                                     <div class="form-actions">
-                                        <button class="btn btn--secondary" type="submit"><span class="btn-text">افزودن کاربر</span></button>
+                                        <button class="btn btn--primary" type="submit"><span class="btn-text">افزودن کاربر</span></button>
                                     </div>
                                 </form>
                             </div>
@@ -383,13 +405,13 @@ $users = get_all_users();
                                             <?php
                                             $is_current_user = ($user['id'] == $_SESSION['user_id']);
                                             if (is_owner() || $is_current_user) {
-                                                echo '<button class="btn btn--secondary btn--sm edit-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '">ویرایش</button>';
+                                                echo '<button class="btn btn--primary btn--icon edit-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg></button>';
                                             }
                                             if (is_owner() && !$is_current_user) {
-                                                echo '<button class="btn btn--danger btn--sm delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '">حذف</button>';
+                                                echo '<button class="btn btn--danger btn--icon delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>';
                                             }
                                             if ($is_current_user && !is_owner()) {
-                                                echo '<button class="btn btn--danger btn--sm delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '" data-self-delete="true">حذف حساب من</button>';
+                                                echo '<button class="btn btn--danger btn--sm delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '">حذف حساب من</button>';
                                             }
                                             ?>
                                         </div>
@@ -406,9 +428,9 @@ $users = get_all_users();
                             <h3>دریافت نسخه پشتیبان (Export)</h3>
                             <p>برای دریافت نسخه پشتیبان از تنظیمات رویداد فعلی، روی دکمه‌های زیر کلیک کنید.</p>
                             <div class="form-actions">
-                                <a href="?download=configs&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn">دانلود تنظیمات</a>
-                                <a href="?download=subtitles&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn">دانلود زیرنویس‌ها</a>
-                                <a href="?download=uploads&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn">دانلود آپلودها</a>
+                                <a href="?download=configs&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn btn--primary btn--outline">دانلود تنظیمات</a>
+                                <a href="?download=subtitles&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn btn--primary btn--outline">دانلود زیرنویس‌ها</a>
+                                <a href="?download=uploads&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn btn--primary btn--outline">دانلود آپلودها</a>
                             </div>
                         </div>
                         <div class="card">
@@ -430,7 +452,7 @@ $users = get_all_users();
                                     <pre id="json-preview"></pre>
                                 </div>
                                 <div class="form-actions">
-                                    <button type="submit" class="btn btn--secondary" id="restore-btn" disabled><span class="btn-text">تایید و بازیابی</span></button>
+                                    <button type="submit" class="btn btn--primary" id="restore-btn" disabled><span class="btn-text">تایید و بازیابی</span></button>
                                 </div>
                             </form>
                         </div>
@@ -502,8 +524,8 @@ $users = get_all_users();
                 <h3 id="modal-title">تایید عملیات</h3>
                 <p id="modal-text">آیا از انجام این کار مطمئن هستید؟</p>
                 <div class="modal-buttons">
-                    <button id="modal-confirm-btn" class="btn btn--danger btn--sm"><span class="btn-text">تایید</span></button>
-                    <button id="modal-cancel-btn" class="btn btn--secondary btn--sm"><span class="btn-text">انصراف</span></button>
+                    <button id="modal-confirm-btn" class="btn btn--danger"><span class="btn-text">تایید</span></button>
+                    <button id="modal-cancel-btn" class="btn btn--primary btn--outline"><span class="btn-text">انصراف</span></button>
                 </div>
             </div>
         </div>
@@ -514,7 +536,7 @@ $users = get_all_users();
                 <input type="text" id="prompt-input" class="prompt-input">
                 <div class="modal-buttons">
                     <button id="prompt-confirm-btn" class="btn btn--primary"><span class="btn-text">تایید</span></button>
-                    <button id="prompt-cancel-btn" class="btn btn--secondary"><span class="btn-text">انصراف</span></button>
+                    <button id="prompt-cancel-btn" class="btn btn--danger btn--outline"><span class="btn-text">انصراف</span></button>
                 </div>
             </div>
         </div>
@@ -536,7 +558,7 @@ $users = get_all_users();
                     </div>
                     <div class="modal-buttons">
                         <button type="submit" class="btn btn--primary"><span class="btn-text">ذخیره تغییرات</span></button>
-                        <button type="button" class="btn btn--secondary"><span class="btn-text">انصراف</span></button>
+                        <button type="button" class="btn btn--danger btn--outline modal-cancel-btn"><span class="btn-text">انصراف</span></button>
                     </div>
                 </form>
             </div>
