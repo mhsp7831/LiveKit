@@ -365,28 +365,72 @@ $users = get_all_users();
                                 <div class="card-header"><h3>تصاویر و بنرها</h3></div>
                                 <div class="image-upload-grid">
                                     <div class="form-group image-group">
-                                        <label for="logo_file">لوگو:</label>
+                                        <label for="logo_file">
+                                            لوگو:
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    فرمت‌های مجاز: JPG, PNG, GIF, SVG, WEBP<br />
+                                                    ابعاد پیشنهادی: 150×150 پیکسل
+                                                </span>
+                                            </div>
+                                        </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="image-preview" id="logo_preview"></div>
                                         <input type="text" name="logo_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="preview-url-input">
                                         <input type="file" name="logo_file" id="logo_file" accept="image/*" class="preview-file-input">
                                         <input type="hidden" name="logo_old" value="<?= htmlspecialchars($configs['logo']) ?>">
                                     </div>
                                     <div class="form-group image-group">
-                                        <label for="preBanner_file">بنر قبل از پخش‌زنده:</label>
+                                        <label for="preBanner_file">
+                                            بنر قبل از پخش‌زنده:
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    فرمت: JPG, PNG, GIF, SVG, WEBP<br />
+                                                    نسبت ابعاد: 16:9 (مثال: 1080×1920)
+                                                </span>
+                                            </div>
+                                        </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="image-preview" id="preBanner_preview"></div>
                                         <input type="text" name="preBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="preview-url-input">
                                         <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input">
                                         <input type="hidden" name="preBanner_old" value="<?= htmlspecialchars($configs['preBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
-                                        <label for="endBanner_file">بنر بعد از پخش‌زنده:</label>
+                                        <label for="endBanner_file">
+                                            بنر بعد از پخش‌زنده:
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    فرمت: JPG, PNG, GIF, SVG, WEBP<br />
+                                                    نسبت ابعاد: 16:9 (مثال: 1080×1920)
+                                                </span>
+                                            </div>
+                                        </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="image-preview" id="endBanner_preview"></div>
                                         <input type="text" name="endBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="preview-url-input">
                                         <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input">
                                         <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
-                                        <label for="banner_file">بنر زیر پخش‌شزنده:</label>
+                                        <label for="banner_file">
+                                            بنر زیر پخش‌زنده:
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    فرمت: JPG, PNG, GIF, SVG, WEBP<br />
+                                                    نسبت ابعاد: 64:19 (مثال: 1280×380)
+                                                </span>
+                                            </div>
+                                        </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="image-preview" id="banner_preview"></div>
                                         <input type="text" name="banner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="preview-url-input">
                                         <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input">

@@ -36,7 +36,7 @@ body { font-family: var(--font-family-base); background-color: var(--grey-color)
 .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: var(--spacing-xl); }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg); }
 .form-group { display: flex; flex-direction: column; }
-form label { display: flex; align-items: center; margin-bottom: var(--spacing-sm); font-weight: var(--font-weight-normal); color: var(--dark-color); }
+form label { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-sm); font-weight: var(--font-weight-normal); color: var(--dark-color); }
 form input[type="text"], form input[type="password"], form input[type="url"], form input[type="number"], form input[type="datetime-local"], form input[type="file"], form input[type="color"], .prompt-input, select { width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius); font-family: var(--font-family-base); transition: border-color var(--transition-speed), box-shadow var(--transition-speed); background-color: var(--light-color); }
 form input:focus, form input[type="password"]:focus, .prompt-input:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-focus-shadow); }
 form input[type="file"] { padding: var(--spacing-sm); }
@@ -246,7 +246,8 @@ to {
     position: absolute;
     bottom: 150%;
     left: 50%;
-    width: 350px;
+    max-width: 350px;
+    width: max-content;
     transform: translate(-50%, 5%) scale(0.95);
     background-color: var(--dark-color);
     color: var(--light-color);
@@ -255,6 +256,7 @@ to {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-normal);
     text-align: right;
+    
     z-index: 100;
     opacity: 0;
     visibility: hidden;
@@ -279,6 +281,14 @@ to {
     opacity: 1;
     visibility: visible;
     transform: translate(-50%, 0%) scale(1);
+}
+
+div.image-upload-grid > div:nth-child(4) .tooltip-text {
+  left: 500%;
+}
+
+div.image-upload-grid > div:nth-child(4) .tooltip-text::after {
+  left: 15%;
 }
 
 .alert-warning {
