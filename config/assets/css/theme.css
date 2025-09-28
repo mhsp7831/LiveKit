@@ -2,7 +2,7 @@
     /* ----- COLORS ----- */
     --primary-color: #4caf50;
     --primary-hover-color: #45a049;
-    --primary-light-color: #c8ebfb; /* For highlights like sortable-ghost */
+    --primary-light-color: #c8ebfb;
     --primary-focus-shadow: rgba(76, 175, 80, 0.2);
 
     --success-color: #28a745;
@@ -10,6 +10,8 @@
     --danger-hover-color: #d32f2f;
     --secondary-color: #6c757d;
     --secondary-hover-color: #5a6268;
+
+    
 
     --dark-color: #333;
     --light-color: #fff;
@@ -25,6 +27,19 @@
     --overlay-bg: rgba(0, 0, 0, 0.7);
     --code-bg: #2d2d2d;
     --code-fg: #f1f1f1;
+
+    --disabled-bg-color: #e0e0e0;
+    --disabled-text-color: #a8a8a8;
+    --disabled-border-color: #e0e0e0;
+
+    --subtle-hover-bg: rgba(0, 0, 0, 0.1);
+    --translucent-light-bg: rgba(255, 255, 255, 0.8);
+    --spinner-track-color: rgba(255, 255, 255, 0.3);
+
+    --warning-bg-color: #fff3cd;
+    --warning-text-color: #856404;
+    --warning-border-color: #ffeeba;
+    --warning-accent-color: #ffc107;
 
 
     /* ----- FONTS ----- */
@@ -49,7 +64,7 @@
     --shadow-lg: 0 5px 15px rgba(0,0,0,0.2);
 
     /* ----- TRANSITIONS ----- */
-    --transition-speed: 0.3s;
+    --transition-speed: .3s;
 }
 
 /* ===== BUTTON SYSTEM (ENHANCED) ===== */
@@ -74,12 +89,7 @@
     transition: all var(--transition-speed) ease;
 }
 
-/* 2. Enhanced User Feedback on Hover/Active */
-.btn:hover {
-    /* transform: translateY(-2px); */
-    /* Make the shadow slightly more prominent on hover */
-    /* box-shadow: 0 6px 14px rgba(0,0,0,0.1); */
-}
+/* 2. Enhanced User Feedback on Active */
 .btn:active {
     transform: translateY(1px);
     /* "Press" the button by reducing the shadow */
@@ -190,4 +200,16 @@
 .btn--icon svg {
     width: 18px;
     height: 18px;
+    transition: all var(--transition-speed) ease;
+}
+
+/* Disabled State */
+.btn:disabled,
+.btn[disabled] {
+    background-color: var(--disabled-bg-color);
+    color: var(--disabled-text-color);
+    border-color: var(--disabled-border-color);
+    cursor: not-allowed;
+    box-shadow: none; /* Remove any shadow */
+    transform: none; /* Remove any hover/active transforms */
 }

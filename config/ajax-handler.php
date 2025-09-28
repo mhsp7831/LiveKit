@@ -248,7 +248,7 @@ try {
                             $newButtons[] = ['title' => trim($title), 'link' => $link];
                         }
                     }
-                    $configs['buttons'] = $newButtons;
+                    $configs['buttons'] = array_reverse($newButtons);
 
                     $old_social_icons = array_filter(array_column($configs['socials'] ?? [], 'icon'));
 
@@ -307,7 +307,7 @@ try {
                         }
                     }
 
-                    $configs['socials'] = $newSocials;
+                    $configs['socials'] = array_reverse($newSocials);
 
 
                     // FIX: Replace the existing 'homePage' line with this block for better validation

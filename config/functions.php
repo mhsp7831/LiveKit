@@ -437,3 +437,4 @@ function is_valid_backup_content($data, $type) {
 
     return false;
 }
+ 

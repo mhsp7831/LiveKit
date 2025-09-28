@@ -143,7 +143,7 @@ if (empty($configs) || !empty($error_message)):
     .social a:hover{background:var(--placeholder)}
     .social a img{width: 35px;height:35px;object-fit:contain;}
     footer{text-align:center;color:var(--title);padding:1rem}
-    #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center}
+    #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center; display: none;}
     #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem;opacity:0;transition:opacity .6s ease;}
     #subtitleText.show{opacity:1}
     @media (max-width:600px){
@@ -178,7 +178,7 @@ if (empty($configs) || !empty($error_message)):
 <div id="main-content" style="visibility: hidden; opacity: 0; transition: opacity 0.5s ease;">
   <header>
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>"><img src="<?= htmlspecialchars(get_image_url($configs["logo"])) ?>" alt="لوگو"></a>
-    <h1><?= htmlspecialchars($configs["title"]) ?></h1>
+    <!-- <h1><?= htmlspecialchars($configs["title"]) ?></h1> -->
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>">صفحه اصلی</a>
   </header>
 
@@ -378,8 +378,10 @@ if (empty($configs) || !empty($error_message)):
       clearInterval(subtitleTimer);
       if (!subtitles.length) { 
           showSubtitle(null); 
+          subtitleBox.style.display = 'none';
           return; 
       }
+      subtitleBox.style.display = 'block';
       const cycle = () => {
         showSubtitle(subtitles[currentIndex]);
         currentIndex = (currentIndex + 1) % subtitles.length;

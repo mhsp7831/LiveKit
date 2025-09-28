@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function () {
             newTabPanel.classList.add('active');
         }
     };
-
+    
     let isDirty = false; // FIX 7: Flag for unsaved changes
 
     // --- Global Elements ---
@@ -304,9 +304,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const updateItemCounters = (containerId) => {
         const container = document.getElementById(containerId);
-        container.querySelectorAll(".sortable-item").forEach((item, index) => {
-            const counter = item.querySelector(".item-counter");
-            if (counter) counter.textContent = index + 1;
+        if (!container) return;
+
+        const items = container.querySelectorAll('.sortable-item');
+        const totalItems = items.length;
+
+        // Only apply reversed numbering to buttons and socials
+        const isReversed = ['buttons-container', 'socials-container'].includes(containerId);
+
+        items.forEach((item, index) => {
+            const counter = item.querySelector('.item-counter');
+            if (counter) {
+                counter.textContent = isReversed ? (totalItems - index) : (index + 1);
+            }
         });
     };
 
@@ -491,6 +501,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 updateItemCounters(listContainer.id);
             }
         }
+        if (button.id === 'remove-all-buttons-btn') {
+            if (await showConfirm('تایید حذف همه', 'آیا از حذف تمام دکمه‌ها مطمئن هستید؟')) {
+                document.getElementById('buttons-container').innerHTML = '';
+                setDirty();
+            }
+        }
+        if (button.id === 'remove-all-socials-btn') {
+            if (await showConfirm('تایید حذف همه', 'آیا از حذف تمام آیتم‌های اجتماعی مطمئن هستید؟')) {
+                document.getElementById('socials-container').innerHTML = '';
+                setDirty();
+            }
+        }
         if (button.id === "remove-all-subtitles-btn") {
             if (
                 await showConfirm(
@@ -505,24 +527,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Color reset
         if (button.id === "reset-colors-btn") {
-            const defaults = JSON.parse(button.dataset.defaults);
-            const colorForm = button.closest(".card");
-            for (const key in defaults) {
-                const inputName =
-                    key.replace(/_/g, "-") === "title"
-                        ? "title-color"
-                        : key.replace(/_/g, "-");
-                const input = colorForm.querySelector(
-                    `input[name="${inputName}"]`
-                );
-                if (input) {
-                    input.value = defaults[key];
-                    input.dispatchEvent(new Event("input", { bubbles: true })); // Trigger preview update
+            if (await showConfirm('بازنشانی رنگ‌ها', 'آیا از بازنشانی تمام رنگ‌ها به مقادیر پیش‌فرض مطمئن هستید؟')) {
+                const defaults = JSON.parse(button.dataset.defaults);
+                const colorForm = button.closest(".card");
+                for (const key in defaults) {
+                    const inputName =
+                        key.replace(/_/g, "-") === "title"
+                            ? "title-color"
+                            : key.replace(/_/g, "-");
+                    const input = colorForm.querySelector(
+                        `input[name="${inputName}"]`
+                    );
+                    if (input) {
+                        input.value = defaults[key];
+                        input.dispatchEvent(new Event("input", { bubbles: true })); // Trigger preview update
+                    }
                 }
+                setDirty();
             }
-            setDirty();
         }
-
+        
         // Header buttons
         const eventSelector = document.getElementById("event-selector");
         const currentEventId = eventSelector.value;

@@ -197,25 +197,60 @@ $users = get_all_users();
                             <input type="hidden" name="action" value="save_settings">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
                             <div class="card">
-                                <h3>تنظیمات اصلی</h3>
+                                <div class="card-header">
+                                    <h3>تنظیمات اصلی</h3>
+                                </div>
                                 <div class="form-grid">
                                     <div class="form-group"><label for="title">عنوان پخش زنده:</label><input required type="text" name="title" id="title" value="<?= htmlspecialchars($configs['title']) ?>"></div>
-                                    <div class="form-group"><label for="homePage">صفحه اصلی:</label><input type="url" name="homePage" id="homePage" value="<?= htmlspecialchars($configs['homePage']) ?>"></div>
-                                    <div class="form-group"><label for="iframe">ای‌فریم:</label><input type="text" name="iframe" id="iframe" value="<?= htmlspecialchars($configs['iframe']) ?>"></div>
+                                    <div class="form-group"><label for="homePage">لینک صفحه اصلی:</label><input type="url" name="homePage" id="homePage" value="<?= htmlspecialchars($configs['homePage']) ?>"></div>
+                                    <div class="form-group"><label for="iframe">کد ای‌فریم (iframe):</label><input type="text" name="iframe" id="iframe" value="<?= htmlspecialchars($configs['iframe']) ?>"></div>
                                     <div class="form-group"><label for="liveStart">زمان شروع:</label><input type="datetime-local" name="liveStart" id="liveStart" value="<?= htmlspecialchars($configs['liveStart']) ?>"></div>
                                     <div class="form-group"><label for="liveEnd">زمان پایان:</label><input type="datetime-local" name="liveEnd" id="liveEnd" value="<?= htmlspecialchars($configs['liveEnd']) ?>"></div>
-                                    <div class="form-group"><label for="fetchInterval">فاصله زمانی زیرنویس (ms):</label><input type="number" name="fetchInterval" id="fetchInterval" value="<?= htmlspecialchars($configs['fetchInterval']) ?>"></div>
-                                    <div class="form-group"><label for="subtitleDelay">زمان نمایش زیرنویس (ms):</label><input type="number" name="subtitleDelay" id="subtitleDelay" value="<?= htmlspecialchars($configs['subtitleDelay']) ?>"></div>
+                                    <div class="form-group">
+                                        <label for="fetchInterval">
+                                            فاصله زمانی به‌روزرسانی زیرنویس (ms):
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    این عدد مشخص می‌کند که صفحه پخش زنده، هر چند میلی‌ثانیه یک‌بار برای دریافت زیرنویس‌های جدید، سرور را بررسی کند. عدد کمتر به معنی به‌روزرسانی سریع‌تر و بار بیشتر روی سرور است. (مقدار پیش‌فرض: 60000)
+                                                </span>
+                                            </div>
+                                        </label>
+                                        <input type="number" name="fetchInterval" id="fetchInterval" value="<?= htmlspecialchars($configs['fetchInterval']) ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="subtitleDelay">
+                                            زمان نمایش زیرنویس (ms):
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    این عدد مشخص می‌کند که هر زیرنویس، چند میلی‌ثانیه روی صفحه باقی بماند تا زیرنویس بعدی نمایش داده شود. (مقدار پیش‌فرض: 4000)
+                                                </span>
+                                            </div>
+                                        </label>
+                                        <input type="number" name="subtitleDelay" id="subtitleDelay" value="<?= htmlspecialchars($configs['subtitleDelay']) ?>">
+                                    </div>
                                 </div>
                             </div>
                             <div class="card">
                                 <div class="card-header">
                                     <h3>دکمه‌ها</h3>
-                                    <button type="button" id="add-button-btn" class="btn btn--primary btn--icon" title="دکمه جدید">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                    </button>
+                                    <div>
+                                        <button type="button" id="remove-all-buttons-btn" class="btn btn--danger btn--icon remove-all-btn" title="حذف همه دکمه ها">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                        <button type="button" id="add-button-btn" class="btn btn--primary btn--icon" title="دکمه جدید">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>    
                                 <div id="buttons-container" class="sortable-list-grid">
                                     <?php foreach ($configs['buttons'] as $index => $button): ?>
@@ -225,7 +260,11 @@ $users = get_all_users();
                                                     <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
                                                 </svg>
                                                 <span class="item-title">دکمه #<span class="item-counter"><?= $index + 1 ?></span></span>
-                                                <button type="button" class="btn btn--danger btn--sm remove-btn"><span class="btn-text">حذف</span></button>
+                                                <button type="button" class="btn btn--danger btn--icon remove-btn" title="حذف این آیتم">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                             <div class="sortable-content">
                                                 <div class="form-group"><label>عنوان:</label><input type="text" name="button_title[]" value="<?= htmlspecialchars($button['title']) ?>"></div>
@@ -238,11 +277,18 @@ $users = get_all_users();
                             <div class="card">
                                 <div class="card-header">
                                     <h3>صفحات اجتماعی</h3>
-                                    <button type="button" id="add-social-btn" class="btn btn--primary btn--icon" title="افزودن آیتم اجتماعی">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                    </button>
+                                    <div>
+                                        <button type="button" id="remove-all-socials-btn" class="btn btn--danger btn--icon remove-all-btn" title="حذف همه صفحات اجتماعی">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                        <button type="button" id="add-social-btn" class="btn btn--primary btn--icon" title="افزودن آیتم اجتماعی">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>    
                                 <div id="socials-container" class="sortable-list-grid">
                                     <?php foreach ($configs['socials'] as $index => $social): ?>
@@ -252,7 +298,11 @@ $users = get_all_users();
                                                     <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
                                                 </svg>
                                                 <span class="item-title">آیتم #<span class="item-counter"><?= $index + 1 ?></span></span>
-                                                <button type="button" class="btn btn--danger btn--sm remove-btn"><span class="btn-text">حذف</span></button>
+                                                <button type="button" class="btn btn--danger btn--icon remove-btn" title="حذف این آیتم">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                             <div class="sortable-content">
                                                 <div class="form-group"><label>عنوان:</label><input type="text" name="social_title[]" value="<?= htmlspecialchars($social['title']) ?>"></div>
@@ -270,13 +320,17 @@ $users = get_all_users();
                                 </div>
                             </div>
                         </div>
-
+ 
                         <div id="subtitles" class="tab-panel">
                             <div class="card">
                                 <div class="card-header">
                                     <h3>مدیریت زیرنویس ها</h3>
                                     <div>
-                                        <button type="button" id="remove-all-subtitles-btn" class="btn btn--danger btn--sm"><span class="btn-text">حذف همه</span></button>
+                                        <button type="button" id="remove-all-subtitles-btn" class="btn btn--danger btn--icon remove-all-btn" title="حذف همه زیرنویس ها">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
                                         <button type="button" id="add-subtitle-btn" class="btn btn--primary btn--icon" title="افزودن زیرنویس">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -290,8 +344,12 @@ $users = get_all_users();
                                                 <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                                                     <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
                                                 </svg>
-                                                <span class="item-title">زیرنویس</span>
-                                                <button type="button" class="btn btn--danger btn--sm remove-btn"><span class="btn-text">حذف</span></button>
+                                                <span class="item-title">زیرنویس #<span class="item-counter"></span></span>
+                                                <button type="button" class="btn btn--danger btn--icon remove-btn" title="حذف این آیتم">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                             <div class="sortable-content form-grid">
                                                 <div class="form-group"><label>متن:</label><input type="text" name="subtitle_text[]" value="<?= htmlspecialchars($subtitle['text']) ?>"></div>
@@ -304,7 +362,7 @@ $users = get_all_users();
 
                         <div id="appearance" class="tab-panel">
                             <div class="card">
-                                <h3>تصاویر و بنرها</h3>
+                                <div class="card-header"><h3>تصاویر و بنرها</h3></div>
                                 <div class="image-upload-grid">
                                     <div class="form-group image-group">
                                         <label for="logo_file">لوگو:</label>
@@ -314,21 +372,21 @@ $users = get_all_users();
                                         <input type="hidden" name="logo_old" value="<?= htmlspecialchars($configs['logo']) ?>">
                                     </div>
                                     <div class="form-group image-group">
-                                        <label for="preBanner_file">بنر قبل از پخش:</label>
+                                        <label for="preBanner_file">بنر قبل از پخش‌زنده:</label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="image-preview" id="preBanner_preview"></div>
                                         <input type="text" name="preBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="preview-url-input">
                                         <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input">
                                         <input type="hidden" name="preBanner_old" value="<?= htmlspecialchars($configs['preBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
-                                        <label for="endBanner_file">بنر بعد از پخش:</label>
+                                        <label for="endBanner_file">بنر بعد از پخش‌زنده:</label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="image-preview" id="endBanner_preview"></div>
                                         <input type="text" name="endBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="preview-url-input">
                                         <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input">
                                         <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
-                                        <label for="banner_file">بنر:</label>
+                                        <label for="banner_file">بنر زیر پخش‌شزنده:</label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="image-preview" id="banner_preview"></div>
                                         <input type="text" name="banner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="preview-url-input">
                                         <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input">
@@ -340,7 +398,7 @@ $users = get_all_users();
                                 </div>
                             </div>
                             <div class="card">
-                                <h3>شخصی‌سازی تم رنگی</h3>
+                                <div class="card-header"><h3>شخصی‌سازی تم رنگی</h3></div>
                                 <div class="color-preview-area" style="<?php foreach ($configs['colors'] as $name => $value) echo '--' . htmlspecialchars($name) . ':' . htmlspecialchars($value) . ';'; ?>">
                                     <h4>این یک عنوان نمونه است</h4>
                                     <p>این یک متن نمونه برای نمایش رنگ فونت اصلی صفحه شما است.</p>
@@ -361,7 +419,7 @@ $users = get_all_users();
                                     <div class="form-group"><label for="text">متن ساده (text):</label><input type="color" name="text" id="text" value="<?= htmlspecialchars($configs['colors']['text']) ?>"></div>
                                 </div>
                                 <div class="form-actions">
-                                    <button type="button" id="reset-colors-btn" class="btn btn--primary"><span class="btn-text">بازگشت به پیش‌فرض</span></button>
+                                    <button type="button" id="reset-colors-btn" class="btn btn--primary" data-defaults='<?= htmlspecialchars(json_encode($defaultConfigs['colors'])) ?>'><span class="btn-text">بازگشت به پیش‌فرض</span></button>
                                 </div>
                             </div>
                         </div>
@@ -372,7 +430,7 @@ $users = get_all_users();
                     <div class="card-grid">
                         <?php if (is_owner()): ?>
                             <div class="card">
-                                <h3>افزودن کاربر جدید</h3>
+                                <div class="card-header"><h3>افزودن کاربر جدید</h3></div>
                                 <form id="add-user-form" class="standalone-form">
                                     <input type="hidden" name="action" value="add_user">
                                     <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
@@ -391,7 +449,7 @@ $users = get_all_users();
                             </div>
                         <?php endif; ?>
                         <div class="card" style="<?= !is_owner() ? 'grid-column: 1 / -1;' : '' ?>">
-                            <h3>لیست کاربران</h3>
+                            <div class="card-header"><h3>لیست کاربران</h3></div>    
                             <div id="users-list" class="users-list">
                                 <?php foreach ($users as $user): ?>
                                     <div class="user-item">
@@ -405,13 +463,13 @@ $users = get_all_users();
                                             <?php
                                             $is_current_user = ($user['id'] == $_SESSION['user_id']);
                                             if (is_owner() || $is_current_user) {
-                                                echo '<button class="btn btn--primary btn--icon edit-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg></button>';
+                                                echo '<button class="btn btn--primary btn--icon edit-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '" tite="ویرایش کاربر"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg></button>';
                                             }
                                             if (is_owner() && !$is_current_user) {
-                                                echo '<button class="btn btn--danger btn--icon delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>';
+                                                echo '<button class="btn btn--danger btn--icon delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '" title="حذف کاربر"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>';
                                             }
                                             if ($is_current_user && !is_owner()) {
-                                                echo '<button class="btn btn--danger btn--sm delete-user-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '">حذف حساب من</button>';
+                                                echo '<button class="btn btn--danger btn--icon delete-user-btn delete-my-account-btn" data-id="' . $user['id'] . '" data-username="' . htmlspecialchars($user['username']) . '" title="حذف حساب من"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>';
                                             }
                                             ?>
                                         </div>
@@ -425,7 +483,7 @@ $users = get_all_users();
                 <div id="backup" class="tab-panel">
                     <div class="card-grid">
                         <div class="card">
-                            <h3>دریافت نسخه پشتیبان (Export)</h3>
+                            <div class="card-header"><h3>دریافت نسخه پشتیبان (Export)</h3></div>
                             <p>برای دریافت نسخه پشتیبان از تنظیمات رویداد فعلی، روی دکمه‌های زیر کلیک کنید.</p>
                             <div class="form-actions">
                                 <a href="?download=configs&event_id=<?= htmlspecialchars($current_event_id) ?>" class="btn btn--primary btn--outline">دانلود تنظیمات</a>
@@ -434,16 +492,25 @@ $users = get_all_users();
                             </div>
                         </div>
                         <div class="card">
-                            <h3>بازیابی از نسخه پشتیبان (Import)</h3>
+                            <div class="card-header"><h3>بازیابی از نسخه پشتیبان (Import)</h3></div>
                             <p>فایل پشتیبان JSON را انتخاب کرده و مشخص کنید کدام بخش از رویداد فعلی را می‌خواهید جایگزین کنید.</p>
                             <form id="restore-form" class="standalone-form" enctype="multipart/form-data">
                                 <input type="hidden" name="action" value="restore_backup">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
                                 <div class="restore-target">
-                                    <label><input type="radio" name="restore_target" value="configs" checked> تنظیمات</label>
-                                    <label><input type="radio" name="restore_target" value="subtitles"> زیرنویس‌ها</label>
+                                    <label>
+                                        <input type="radio" name="restore_target" value="configs" checked>
+                                        <p>تنظیمات</p>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="restore_target" value="subtitles">
+                                        <p>زیرنویس‌ها</p>
+                                    </label>
                                 </div>
                                 <div class="form-group">
+                                    <div class="alert-warning">
+                                        <p><strong>نکته مهم:</strong> فرآیند بازیابی فقط تنظیمات را بازگردانی می‌کند و شامل فایل‌های آپلود شده (لوگو، بنرها و آیکون‌ها) نمی‌شود. پس از بازیابی، لطفاً تصاویر را به صورت دستی مجدداً آپلود نمایید.</p>
+                                    </div>
                                     <label for="backup_file">فایل پشتیبان (فقط JSON):</label>
                                     <input type="file" name="backup_file" id="backup_file" accept=".json,application/json">
                                 </div>
@@ -472,7 +539,11 @@ $users = get_all_users();
                         <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
                     </svg>
                     <span class="item-title">دکمه #<span class="item-counter"></span></span>
-                    <button type="button" class="btn btn--danger btn--sm remove-btn"><span class="btn-text">حذف</span></button>
+                    <button type="button" class="btn btn--danger btn--icon remove-btn" title="حذف این آیتم">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
                 </div>
                 <div class="sortable-content">
                     <div class="form-group"><label>عنوان:</label><input type="text" name="button_title[]" value=""></div>
@@ -487,7 +558,11 @@ $users = get_all_users();
                         <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
                     </svg>
                     <span class="item-title">آیتم #<span class="item-counter"></span></span>
-                    <button type="button" class="btn btn--danger btn--sm remove-btn"><span class="btn-text">حذف</span></button>
+                    <button type="button" class="btn btn--danger btn--icon remove-btn" title="حذف این آیتم">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
                 </div>
                 <div class="sortable-content">
                     <div class="form-group"><label>عنوان:</label><input type="text" name="social_title[]" value=""></div>
@@ -508,8 +583,12 @@ $users = get_all_users();
                     <svg class="drag-handle" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
                     </svg>
-                    <span class="item-title">زیرنویس</span>
-                    <button type="button" class="btn btn--danger btn--sm remove-btn"><span class="btn-text">حذف</span></button>
+                    <span class="item-title">زیرنویس #<span class="item-counter"></span></span>
+                    <button type="button" class="btn btn--danger btn--icon remove-btn" title="حذف این آیتم">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
                 </div>
                 <div class="sortable-content form-grid">
                     <div class="form-group"><label>متن:</label><input type="text" name="subtitle_text[]" value=""></div>
