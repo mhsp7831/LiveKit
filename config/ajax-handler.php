@@ -307,7 +307,7 @@ try {
                         }
                     }
 
-                    $configs['socials'] = array_reverse($newSocials);
+                    $configs['socials'] = $newSocials;
 
 
                     // FIX: Replace the existing 'homePage' line with this block for better validation
