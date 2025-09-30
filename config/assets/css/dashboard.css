@@ -291,6 +291,14 @@ div.image-upload-grid > div:nth-child(4) .tooltip-text::after {
   left: 15%;
 }
 
+div.form-grid > div:nth-child(8) .tooltip-text{
+    left: 850%;
+}
+
+div.form-grid > div:nth-child(8) .tooltip-text::after{
+    left: 8.5%;
+}
+
 .alert-warning {
     background-color: var(--warning-bg-color);
     color: var(--warning-text-color);

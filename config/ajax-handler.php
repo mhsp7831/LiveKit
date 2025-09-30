@@ -335,6 +335,11 @@ try {
 
                     $configs['liveStart'] = $liveStart;
                     $configs['liveEnd'] = $liveEnd;
+                    $playerRevealOffset = filter_input(INPUT_POST, 'playerRevealOffset', FILTER_VALIDATE_INT);
+                    if ($playerRevealOffset === false || $playerRevealOffset < 0) {
+                        $playerRevealOffset = 0; // Sanitize to a non-negative integer
+                    }
+                    $configs['playerRevealOffset'] = $playerRevealOffset;
                     $configs['fetchInterval'] = filter_input(INPUT_POST, 'fetchInterval', FILTER_VALIDATE_INT, ["options" => ["min_range" => 1000]]) ?: 60000;
                     $configs['subtitleDelay'] = filter_input(INPUT_POST, 'subtitleDelay', FILTER_VALIDATE_INT, ["options" => ["min_range" => 1000]]) ?: 4000;
 

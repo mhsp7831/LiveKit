@@ -167,6 +167,7 @@ if (empty($configs) || !empty($error_message)):
   $LIVE_END_STR   = $configs["liveEnd"];
   $LIVE_START_MS = !empty($LIVE_START_STR) ? strtotime($LIVE_START_STR) * 1000 : 0;
   $LIVE_END_MS   = !empty($LIVE_END_STR) ? strtotime($LIVE_END_STR) * 1000 : 0;
+  $PLAYER_REVEAL_OFFSET = !empty($configs['playerRevealOffset']) ? intval($configs['playerRevealOffset']) : 0;
   $SERVER_NOW_MS = time() * 1000;
   ?>
 
@@ -280,6 +281,7 @@ if (empty($configs) || !empty($error_message)):
     var serverNow   = <?php echo $SERVER_NOW_MS; ?>;
     var liveStart   = <?php echo $LIVE_START_MS; ?>;
     var liveEnd     = <?php echo $LIVE_END_MS; ?>;
+    var playerRevealOffset = <?php echo $PLAYER_REVEAL_OFFSET; ?>;
     var clientNow   = Date.now();
     var timeOffset  = serverNow - clientNow;
 
@@ -295,31 +297,63 @@ if (empty($configs) || !empty($error_message)):
       var result = '';
       if(d > 0) result += `<div><span>${numberToPersian(d)}<span>روز</span></span></div>`;
       if(h > 0 || d > 0) result += `<div><span>${numberToPersian(h)}<span>ساعت</span></span></div>`;
-      result += `<div><span>${numberToPersian(m)}<span>دقیقه</span></span></div>`;
+      if(m > 0 || h > 0 || d > 0) result += `<div><span>${numberToPersian(m)}<span>دقیقه</span></span></div>`;
       result += `<div><span>${numberToPersian(s)}<span>ثانیه</span></span></div>`;
       return result;
     }
 
     var elPre = document.getElementById("preBanner"), elLive = document.getElementById("livePlayer"), elEnd = document.getElementById("endBanner"), elCd = document.getElementById("countdown");
-    function tick(){
-      var now = Date.now() + timeOffset;
-      if (liveStart === 0 || now < liveStart){
-        elPre.style.display  = "block"; elLive.style.display = "none"; elEnd.style.display  = "none";
-        elCd.style.display = 'flex';
-        var distance = liveStart - now;
-        elCd.innerHTML = (liveStart === 0) ? "پخش زنده هنوز زمان‌بندی نشده است." : "زمان باقی‌مانده تا شروع: " + fmt(distance);
-      } else if (now >= liveStart && now < liveEnd){
-        elPre.style.display  = "none"; elLive.style.display = "block"; elEnd.style.display  = "none";
-        elCd.style.display = "none";
-        if (!playerLoaded) {
-            elLive.innerHTML = iframeContent;
-            playerLoaded = true;
+    function tick() {
+        var now = Date.now() + timeOffset;
+        var playerRevealTime = liveStart - playerRevealOffset;
+
+        // State 1: Before Player is Revealed
+        if (liveStart === 0 || now < playerRevealTime) {
+            elPre.style.display  = "block";
+            elLive.style.display = "none";
+            elEnd.style.display  = "none";
+            elCd.style.display = "flex";
+            
+            var distance = liveStart - now;
+            elCd.innerHTML = (liveStart === 0 || distance < 0) ? "پخش زنده هنوز زمان‌بندی نشده است." : "زمان باقی‌مانده تا شروع: " + fmt(distance);
+        } 
+        // State 2: Player Revealed, Countdown Running
+        else if (now >= playerRevealTime && now < liveStart) {
+            elPre.style.display  = "none";
+            elLive.style.display = "block";
+            elEnd.style.display  = "none";
+            elCd.style.display = "flex"; // Keep countdown visible
+
+            // Inject the iframe if it hasn't been loaded yet
+            if (!playerLoaded) {
+                elLive.innerHTML = iframeContent;
+                playerLoaded = true;
+            }
+
+            // Keep updating the countdown timer
+            var distance = liveStart - now;
+            elCd.innerHTML = (liveStart === 0 || distance < 0) ? "پخش زنده هنوز زمان‌بندی نشده است." : "زمان باقی‌مانده تا شروع: " + fmt(distance);
         }
-      } else {
-        elPre.style.display  = "none"; elLive.style.display = "none"; elEnd.style.display  = "block";
-        elCd.style.display = "none";
-        clearInterval(timer);
-      }
+        // State 3: Live Has Started, Countdown Hidden
+        else if (now >= liveStart && now < liveEnd) {
+            elPre.style.display  = "none";
+            elLive.style.display = "block";
+            elEnd.style.display  = "none";
+            elCd.style.display = "none"; // Hide countdown
+
+            // Inject the iframe if it hasn't been loaded yet
+            if (!playerLoaded) {
+                elLive.innerHTML = iframeContent;
+                playerLoaded = true;
+            }
+        } 
+        // State 4: Live Has Ended
+        else {
+            elPre.style.display  = "none";
+            elLive.style.display = "none";
+            elEnd.style.display  = "block";
+            elCd.style.display = "none";
+        }
     }
     tick();
     var timer = setInterval(tick, 1000);

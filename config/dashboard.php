@@ -207,6 +207,21 @@ $users = get_all_users();
                                     <div class="form-group"><label for="liveStart">زمان شروع:</label><input type="datetime-local" name="liveStart" id="liveStart" value="<?= htmlspecialchars($configs['liveStart']) ?>"></div>
                                     <div class="form-group"><label for="liveEnd">زمان پایان:</label><input type="datetime-local" name="liveEnd" id="liveEnd" value="<?= htmlspecialchars($configs['liveEnd']) ?>"></div>
                                     <div class="form-group">
+                                        <label for="playerRevealOffset">
+                                            نمایش پلیر قبل از شروع (ms)
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    این عدد مشخص می‌کند که چند میلی‌ثانیه زودتر از زمان شروع، پلیر نمایش داده شود اما شمارنده به کار خود ادامه دهد. <br />
+                                                    (مقدار پیش‌فرض: 0)
+                                                </span>
+                                            </div>
+                                        </label>
+                                        <input type="number" name="playerRevealOffset" id="playerRevealOffset" placeholder="0" value="<?= htmlspecialchars($configs['playerRevealOffset'] ?? 0) ?>">
+                                    </div>
+                                    <div class="form-group">
                                         <label for="fetchInterval">
                                             فاصله زمانی به‌روزرسانی زیرنویس (ms):
                                             <div class="label-tooltip">
@@ -214,7 +229,8 @@ $users = get_all_users();
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
                                                 <span class="tooltip-text">
-                                                    این عدد مشخص می‌کند که صفحه پخش زنده، هر چند میلی‌ثانیه یک‌بار برای دریافت زیرنویس‌های جدید، سرور را بررسی کند. عدد کمتر به معنی به‌روزرسانی سریع‌تر و بار بیشتر روی سرور است. (مقدار پیش‌فرض: 60000)
+                                                    این عدد مشخص می‌کند که صفحه پخش زنده، هر چند میلی‌ثانیه یک‌بار برای دریافت زیرنویس‌های جدید، سرور را بررسی کند. عدد کمتر به معنی به‌روزرسانی سریع‌تر و بار بیشتر روی سرور است. <br />
+                                                    (مقدار پیش‌فرض: 60000)
                                                 </span>
                                             </div>
                                         </label>
@@ -228,7 +244,8 @@ $users = get_all_users();
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
                                                 <span class="tooltip-text">
-                                                    این عدد مشخص می‌کند که هر زیرنویس، چند میلی‌ثانیه روی صفحه باقی بماند تا زیرنویس بعدی نمایش داده شود. (مقدار پیش‌فرض: 4000)
+                                                    این عدد مشخص می‌کند که هر زیرنویس، چند میلی‌ثانیه روی صفحه باقی بماند تا زیرنویس بعدی نمایش داده شود. <br />
+                                                    (مقدار پیش‌فرض: 4000)
                                                 </span>
                                             </div>
                                         </label>

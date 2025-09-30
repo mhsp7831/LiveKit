@@ -131,6 +131,7 @@ $defaultConfigs = [
     "iframe" => "",
     "liveStart" => "",
     "liveEnd" => "",
+    "playerRevealOffset" => 0,
     "fetchInterval" => 60000,
     "subtitleDelay" => 4000,
     "buttons" => [],
