@@ -134,6 +134,7 @@ $defaultConfigs = [
     "playerRevealOffset" => 0,
     "fetchInterval" => 60000,
     "subtitleDelay" => 4000,
+    "copyright" => "",
     "buttons" => [],
     "socials" => [],
     "logo" => "",

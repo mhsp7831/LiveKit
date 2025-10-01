@@ -251,6 +251,7 @@ $users = get_all_users();
                                         </label>
                                         <input type="number" name="subtitleDelay" id="subtitleDelay" value="<?= htmlspecialchars($configs['subtitleDelay']) ?>">
                                     </div>
+                                    <div class="form-group"><label for="copyright">کپی‌رایت:</label><input type="text" name="copyright" id="copyright" value="<?= htmlspecialchars($configs['copyright']) ?>"></div>
                                 </div>
                             </div>
                             <div class="card">

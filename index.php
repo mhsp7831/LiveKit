@@ -252,7 +252,9 @@ if (empty($configs) || !empty($error_message)):
 
     </div>
   </main>
-  <footer>© 2025 همه حقوق محفوظ است</footer>
+  <?php if (!empty($configs['copyright'])): ?>
+    <footer><?= htmlspecialchars($configs['copyright']); ?></footer>
+  <?php endif; ?>
 </div>
 
   <script>
