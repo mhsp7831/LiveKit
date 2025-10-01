@@ -307,17 +307,17 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!container) return;
 
         const items = container.querySelectorAll('.sortable-item');
-        // const totalItems = items.length;
+        const totalItems = items.length;
 
         // Only apply reversed numbering to buttons and socials
         // const isReversed = ['buttons-container', 'socials-container'].includes(containerId);
 
-        // items.forEach((item, index) => {
-        //     const counter = item.querySelector('.item-counter');
-        //     if (counter) {
-        //         counter.textContent = isReversed ? (totalItems - index) : (index + 1);
-        //     }
-        // });
+        items.forEach((item, index) => {
+            const counter = item.querySelector('.item-counter');
+            if (counter) {
+                counter.textContent = index + 1;
+            }
+        });
     };
 
     // --- MAIN FORM SUBMISSION ---
