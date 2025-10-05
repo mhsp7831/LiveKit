@@ -158,6 +158,14 @@ if (empty($configs) || !empty($error_message)):
       #subtitleText{font-size: .8rem;}
     }
   </style>
+  <?php
+  $customCSSFile = EVENTS_DIR . $event_id . '/custom.css';
+  if (file_exists($customCSSFile) && filesize($customCSSFile) > 0):
+    ?>
+    <style id="custom-css">
+      <?= file_get_contents($customCSSFile) ?>
+    </style>
+  <?php endif; ?>
 </head>
 <body>
 <?php

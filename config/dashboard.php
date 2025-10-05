@@ -68,6 +68,7 @@ $users = get_all_users();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="assets/css/theme.css">
     <link rel="stylesheet" href="assets/css/dashboard.css">
@@ -484,6 +485,35 @@ $users = get_all_users();
                                     <button type="button" id="reset-colors-btn" class="btn btn--primary" data-defaults='<?= htmlspecialchars(json_encode($defaultConfigs['colors'])) ?>'><span class="btn-text">بازگشت به پیش‌فرض</span></button>
                                 </div>
                             </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>CSS سفارشی</h3>
+                                </div>
+                                <div class="alert-warning">
+                                    <p><strong>توجه:</strong> تغییرات CSS فقط روی صفحه پخش زنده تأثیر می‌گذارد. تغییرات با کلیک روی دکمه "ذخیره تمام تغییرات" اعمال می‌شود.</p>
+                                </div>
+                                <div class="form-group">
+                                    <label>ویرایشگر CSS:</label>
+                                    <textarea id="custom-css-editor" 
+                                            name="custom_css" 
+                                            style="display: none;"><?php
+                                            $customCSSFile = EVENTS_DIR . $current_event_id . '/custom.css';
+                                            echo file_exists($customCSSFile)
+                                                ? htmlspecialchars(file_get_contents($customCSSFile))
+                                                : " /* مثال‌های CSS سفارشی:\n\n.card {\n    border-radius: 20px;\n    box-shadow: 0 10px 30px rgba(0,0,0,0.2);\n}\n\n.video {\n    border: 3px solid var(--primary);\n}\n\nh1 {\n    font-size: 2.5rem;\n}\n\n*/";
+                                            ?></textarea>
+                                </div>
+                                
+                                <!-- CSS Reference -->
+                                <div class="css-reference">
+                                    <h4>متغیرهای رنگی قابل استفاده:</h4>
+                                    <code>var(--bg), var(--title), var(--primary), var(--primary-hover), var(--card-bg), var(--placeholder), var(--text)</code>
+                                    
+                                    <h4>کلاس‌های اصلی:</h4>
+                                    <code>.card, .video, .banner, .btn, .countdown, .social, header, main, footer</code>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -706,6 +736,16 @@ $users = get_all_users();
         </div>
     </div>
     <script src="assets/js/dashboard.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
 </body>
 
 </html>

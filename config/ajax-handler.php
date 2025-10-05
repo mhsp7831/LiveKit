@@ -212,7 +212,6 @@ try {
             $_SESSION['current_event_id'] = $eventId;
             $response = ['success' => true];
             break;
-
         default:
             if (empty($current_event_id) || !is_valid_event_id($current_event_id)) throw new Exception("هیچ رویداد معتبری انتخاب نشده است.");
             switch ($action) {
@@ -237,6 +236,30 @@ try {
                     if (!empty($upload_errors)) {
                         throw new Exception(implode('<br>', $upload_errors));
                     }
+
+                    $customCSS = $_POST['custom_css'] ?? '';
+
+                    // Validate custom CSS
+                    $dangerous_patterns = [
+                        '/<script/i',
+                        '/<\/script/i',
+                        '/javascript:/i',
+                        '/expression\(/i',
+                        '/-moz-binding/i',
+                        '/behavior:/i',
+                        '/<iframe/i',
+                        '/on(click|error|load|mouse|key)/i'
+                    ];
+
+                    foreach ($dangerous_patterns as $pattern) {
+                        if (preg_match($pattern, $customCSS)) {
+                            throw new Exception('کد CSS حاوی محتوای غیرمجاز است.');
+                        }
+                    }
+
+                    // Save custom CSS
+                    $customCSSFile = EVENTS_DIR . $current_event_id . '/custom.css';
+                    safe_file_put_contents($customCSSFile, $customCSS);
 
                     $newButtons = [];
                     if (isset($_POST['button_title']) && is_array($_POST['button_title'])) {

@@ -44,6 +44,7 @@
 
     /* ----- FONTS ----- */
     --font-family-base: 'Vazirmatn', sans-serif;
+    --font-family-monospace: 'JetBrains Mono', 'Courier New', monospace;
     --font-size-sm: 0.8rem;
     --font-size-md: 1rem;
     --font-size-lg: 1.2rem;

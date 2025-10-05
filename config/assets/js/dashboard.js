@@ -1,4 +1,63 @@
 document.addEventListener("DOMContentLoaded", function () {
+    let cssEditor = null;
+
+    // Fix: Initialize CodeMirror properly
+    function initializeCSSEditor() {
+      if (cssEditor) return; // Already initialized
+
+      const textarea = document.getElementById("custom-css-editor");
+      if (!textarea) return;
+
+      cssEditor = CodeMirror.fromTextArea(textarea, {
+        mode: "css",
+        theme: "monokai",
+        lineNumbers: true,
+        lineWrapping: true,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        smartIndent: true,
+        indentUnit: 4,
+        tabSize: 4,
+        direction: "ltr",
+        viewportMargin: Infinity,
+        extraKeys: {
+          "Ctrl-Space": "autocomplete",
+        },
+        hintOptions: {
+          completeSingle: false,
+          closeOnUnfocus: true,
+        },
+      });
+
+      // FIX: Refresh after initialization to fix layout issues
+      setTimeout(() => {
+        if (cssEditor) {
+          cssEditor.refresh();
+        }
+      }, 100);
+
+      // Mark form as dirty when CSS changes
+      cssEditor.on("change", function () {
+        setDirty();
+      });
+
+      // FIX: Enable autocomplete on typing
+      cssEditor.on("inputRead", function (cm, change) {
+        if (change.text[0] && /[a-zA-Z-]/.test(change.text[0])) {
+          cm.showHint({ completeSingle: false });
+        }
+      });
+    }
+    const savedTabId = localStorage.getItem("activeDashboardTab");
+    if (
+      savedTabId === "appearance" ||
+      document.querySelector("#appearance.active")
+    ) {
+      setTimeout(() => {
+        initializeCSSEditor();
+      }, 200);
+    }
+
     // --- FIX: Add this URL validation helper function ---
     const isValidUrl = (string) => {
         // An empty string is valid because some link fields are optional.
@@ -333,6 +392,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 showToast("زمان شروع باید قبل از زمان پایان باشد.", "error");
                 return; // Stop the submission
             }
+        }
+
+        if (cssEditor) {
+            const textarea = document.getElementById('custom-css-editor');
+            textarea.value = cssEditor.getValue();
         }
 
         // --- FIX: START of new URL validation logic ---
@@ -745,6 +809,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Use our new function to switch to the tab
             switchToTab(tabId);
+
+            if (tabId === 'appearance') {
+                setTimeout(() => {
+                    initializeCSSEditor();
+                }, 100);
+            }
         });
     });
 

@@ -18,7 +18,7 @@ body { font-family: var(--font-family-base); background-color: var(--grey-color)
 .current-event { display: flex; align-items: center; justify-content: center; gap: var(--spacing-xs); font-size: var(--font-size-sm); position: relative; }
 .current-event label { position: absolute; right: var(--spacing-md); }
 .event-id-display { display: flex; align-items: center; justify-content: center; gap: var(--spacing-xs); font-size: var(--font-size-sm); background-color: var(--light-color); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--border-radius); border: 1px solid var(--border-color); }
-.event-id-display code { font-family: monospace; font-weight: var(--font-weight-bold); color: var(--primary-color); direction: ltr; text-align: left; }
+.event-id-display code { font-family: var(--font-family-monospace); font-weight: var(--font-weight-bold); color: var(--primary-color); direction: ltr; text-align: left; }
 #copy-event-id-btn, #edit-event-id-btn { background: none; border: none; cursor: pointer; padding: var(--spacing-xs); display: flex; align-items: center; justify-content: center; color: var(--secondary-color); border-radius: 4px; }
 #copy-event-id-btn:hover, #edit-event-id-btn:hover { color: var(--dark-color); background-color: var(--subtle-hover-bg); }
 #edit-event-id-btn { font-family: var(--font-family-base); font-size: var(--font-size-sm); }
@@ -409,4 +409,62 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
     100% {
         box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
     }
+}
+
+
+/* Custom CSS Editor Styles */
+.css-reference {
+    background: var(--grey-x-light-color);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    line-height: 2;
+    margin-top: var(--spacing-lg);
+}
+
+.css-reference h4 {
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    color: var(--dark-color);
+    font-size: var(--font-size-md);
+}
+
+.css-reference h4:first-child {
+    margin-top: 0;
+}
+
+.css-reference code {
+    display: block;
+    background: var(--light-color);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family-monospace);
+    font-size: var(--font-size-sm);
+    direction: ltr;
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.CodeMirror {
+    height: 400px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    font-family: var(--font-family-monospace) !important;
+}
+
+.CodeMirror-scroll {
+    min-height: 400px;
+}
+
+/* Fix RTL issues with CodeMirror */
+.CodeMirror, .CodeMirror * {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+/* Ensure line numbers stay aligned */
+.CodeMirror-linenumber {
+    text-align: right !important;
+    padding-right: 5px !important;
 }
