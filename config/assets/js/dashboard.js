@@ -455,10 +455,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     fetchIntervalInput.value = newConfigs.fetchInterval;
                 }
 
-                const subtitleDelayInput =
-                    document.getElementById("subtitleDelay");
-                if (subtitleDelayInput && newConfigs.subtitleDelay) {
-                    subtitleDelayInput.value = newConfigs.subtitleDelay;
+                const scrollSpeedInput =
+                    document.getElementById("scrollSpeed");
+                if (scrollSpeedInput && newConfigs.scrollSpeed) {
+                    scrollSpeedInput.value = newConfigs.scrollSpeed;
                 }
             }
             // --- FIX: END of new logic ---

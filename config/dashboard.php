@@ -237,19 +237,19 @@ $users = get_all_users();
                                         <input type="number" name="fetchInterval" id="fetchInterval" value="<?= htmlspecialchars($configs['fetchInterval']) ?>">
                                     </div>
                                     <div class="form-group">
-                                        <label for="subtitleDelay">
-                                            زمان نمایش زیرنویس (ms):
+                                        <label for="scrollSpeed">
+                                            سرعت نمایش زیرنویس (px/s):
                                             <div class="label-tooltip">
                                                 <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
                                                 <span class="tooltip-text">
-                                                    این عدد مشخص می‌کند که هر زیرنویس، چند میلی‌ثانیه روی صفحه باقی بماند تا زیرنویس بعدی نمایش داده شود. <br />
-                                                    (مقدار پیش‌فرض: 4000)
+                                                   این عدد مشخص می‌کند که هر زیرنویس با چه سرعتی (بر حسب پیکسل در ثانیه) روی صفحه حرکت کند تا زیرنویس بعدی نمایش داده شود.<br />
+                                                    (مقدار پیش‌فرض: 50px/s)
                                                 </span>
                                             </div>
                                         </label>
-                                        <input type="number" name="subtitleDelay" id="subtitleDelay" value="<?= htmlspecialchars($configs['subtitleDelay']) ?>">
+                                        <input type="number" name="scrollSpeed" id="scrollSpeed" value="<?= htmlspecialchars($configs['scrollSpeed']) ?>">
                                     </div>
                                     <div class="form-group"><label for="copyright">کپی‌رایت:</label><input type="text" name="copyright" id="copyright" value="<?= htmlspecialchars($configs['copyright']) ?>"></div>
                                 </div>

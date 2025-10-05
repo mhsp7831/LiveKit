@@ -69,7 +69,7 @@ if (empty($configs) || !empty($error_message)):
   <title><?= htmlspecialchars($configs["title"] ?? 'پخش زنده') ?></title>
   <link rel="icon" href="<?= htmlspecialchars(get_image_url($configs["logo"] ?? '')) ?>" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-  <style>
+  <style id="dynamic-style">
     :root {
         --bg: <?= htmlspecialchars($configs["colors"]["bg"]) ?>;
         --title: <?= htmlspecialchars($configs["colors"]["title"]) ?>;
@@ -143,9 +143,8 @@ if (empty($configs) || !empty($error_message)):
     .social a:hover{background:var(--placeholder)}
     .social a img{width: 35px;height:35px;object-fit:contain;}
     footer{text-align:center;color:var(--title);padding:1rem}
-    #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center; display: none;}
-    #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem;opacity:0;transition:opacity .6s ease;}
-    #subtitleText.show{opacity:1}
+    #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center; display: none; position: relative; overflow: hidden;align-items: center;}
+    #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem; text-wrap: nowrap; position: absolute;}
     @media (max-width:600px){
       h1{font-size:1rem}
       header a{font-size: .7rem;}
@@ -360,74 +359,121 @@ if (empty($configs) || !empty($error_message)):
     tick();
     var timer = setInterval(tick, 1000);
 
-    const fetchInterval = <?= intval($configs["fetchInterval"] ?? 60000) ?>;
-    const subtitleDelay = <?= intval($configs["subtitleDelay"] ?? 4000) ?>;
-    let subtitles = [], currentIndex = 0, subtitleTimer = null;
 
-    async function loadSubtitles() {
-      try {
-        const subtitlesPath = 'config/events/<?= htmlspecialchars($event_id) ?>/subtitles.json?nocache=' + Date.now();
-        const res = await fetch(subtitlesPath);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (JSON.stringify(data) !== JSON.stringify(subtitles)) {
-          subtitles = data;
-          currentIndex = 0;
-          startSubtitleCycle();
-        }
-      } catch (err) { console.error("Error loading or parsing subtitles:", err); }
+const fetchInterval = <?= intval($configs["fetchInterval"] ?? 60000) ?>;
+const scrollSpeed = <?= intval($configs["scrollSpeed"] ?? 50) ?>; // pixels per second
+let subtitles = [], currentIndex = 0, cycleTimeout = null;
+
+async function loadSubtitles() {
+  try {
+    const subtitlesPath = 'config/events/<?= htmlspecialchars($event_id) ?>/subtitles.json?nocache=' + Date.now();
+    const res = await fetch(subtitlesPath);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (JSON.stringify(data) !== JSON.stringify(subtitles)) {
+      subtitles = data;
+      currentIndex = 0;
+      startSubtitleCycle();
     }
+  } catch (err) { console.error("Error loading or parsing subtitles:", err); }
+}
 
-    function showSubtitle(sub) {
-      const textEl = document.getElementById("subtitleText");
-      textEl.classList.remove("show");
+function removeKeyframesRule(name) {
+  const styleEl = document.getElementById("dynamic-style");
+  if (!styleEl || !styleEl.sheet) return false;
+
+  const sheet = styleEl.sheet;
+  const rules = sheet.cssRules;
+
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
+    if (rule.type === CSSRule.KEYFRAMES_RULE && rule.name === name) {
+      sheet.deleteRule(i);
+      return true;
+    }
+  }
+  return false;
+}
+
+function startSubtitleCycle() {
+  // Clear any pending cycle timeout
+  if (cycleTimeout) {
+    clearTimeout(cycleTimeout);
+    cycleTimeout = null;
+  }
+  
+  const subtitleBoxEl = document.getElementById("subtitleBox");
+  const textEl = document.getElementById("subtitleText");
+  
+  if (!subtitles.length) { 
+    removeKeyframesRule("marquee");
+    textEl.innerHTML = '';
+    textEl.style.animation = 'none';
+    subtitleBoxEl.style.display = 'none';
+    return; 
+  }
+
+  const cycle = () => {
+    // Check if subtitles still exist
+    if (!subtitles.length || currentIndex >= subtitles.length) {
+      removeKeyframesRule("marquee");
+      textEl.innerHTML = '';
+      textEl.style.animation = 'none';
+      subtitleBoxEl.style.display = 'none';
+      return;
+    }
     
-      setTimeout(() => {
-        // Clear previous content to prevent artifacts
-        textEl.innerHTML = '';
-      
-        if (sub && sub.text) {
-          if (sub.link) {
-            // If there's a link, create the elements programmatically and safely
-            const linkEl = document.createElement('a');
-            linkEl.href = sub.link;
-            linkEl.target = '_blank';
-            linkEl.rel = 'noopener';
-            linkEl.style.color = 'var(--tilte)';
-            linkEl.style.textDecoration = 'none';
-          
-            // CRITICAL FIX: Use textContent to safely insert the text, preventing XSS.
-            linkEl.textContent = sub.text;
-          
-            textEl.appendChild(linkEl);
-          } else {
-            // If there is no link, just set the text content directly.
-            textEl.textContent = sub.text;
-          }
-        }
-      
-        textEl.classList.add("show");
-      }, 600); // 600ms delay for the fade-out animation
+    const sub = subtitles[currentIndex];
+    
+    // Clear and prepare
+    removeKeyframesRule("marquee");
+    textEl.innerHTML = '';
+    textEl.style.animation = 'none';
+    subtitleBoxEl.style.display = 'flex';
+
+    // Create content
+    if (sub.link) {
+      const linkEl = document.createElement('a');
+      linkEl.href = sub.link;
+      linkEl.target = '_blank';
+      linkEl.rel = 'noopener';
+      linkEl.style.color = 'var(--title)';
+      linkEl.style.textDecoration = 'none';
+      linkEl.textContent = sub.text;
+      textEl.appendChild(linkEl);
+    } else {
+      textEl.textContent = sub.text;
     }
 
-    function startSubtitleCycle() {
-      clearInterval(subtitleTimer);
-      if (!subtitles.length) { 
-          showSubtitle(null); 
-          subtitleBox.style.display = 'none';
-          return; 
-      }
-      subtitleBox.style.display = 'block';
-      const cycle = () => {
-        showSubtitle(subtitles[currentIndex]);
+    // Calculate and animate
+    requestAnimationFrame(() => {
+      const textWidth = textEl.offsetWidth;
+      const subtitleBoxWidth = subtitleBoxEl.offsetWidth;
+      const totalDistance = textWidth + subtitleBoxWidth;
+      const animDuration = totalDistance / scrollSpeed;
+
+      const sheet = document.getElementById("dynamic-style").sheet;
+      const rule = `@keyframes marquee {
+        0% { left: -${textWidth}px; }
+        100% { left: 100%; }
+      }`;
+      sheet.insertRule(rule, sheet.cssRules.length);
+
+      textEl.style.animation = `marquee ${animDuration}s linear forwards`;
+      
+      // Move to next subtitle after animation completes
+      cycleTimeout = setTimeout(() => {
         currentIndex = (currentIndex + 1) % subtitles.length;
-      };
-      cycle();
-      subtitleTimer = setInterval(cycle, subtitleDelay);
-    }
+        cycle();
+      }, animDuration * 1000);
+    });
+  };
 
-    loadSubtitles();
-    setInterval(loadSubtitles, fetchInterval);
+  cycle();
+}
+
+loadSubtitles();
+setInterval(loadSubtitles, fetchInterval);
   </script>
 </body>
 </html>
