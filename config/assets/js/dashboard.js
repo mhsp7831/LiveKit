@@ -901,4 +901,62 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     initializeDashboard();
+    // --- KEYBOARD SHORTCUTS ---
+    document.addEventListener('keydown', (e) => {
+        // Use a variable to track if we handled the shortcut
+        let shortcutHandled = false; 
+
+        // --- Shortcuts with CTRL key ---
+        if (e.ctrlKey) {
+            switch (e.key.toLowerCase()) {
+                case 's': // Ctrl + S: Save changes
+                    document.getElementById('main-save-btn')?.click();
+                    shortcutHandled = true;
+                    break;
+                
+                case 'e': // Ctrl + N: Create New event
+                    document.getElementById('create-event-btn')?.click();
+                    shortcutHandled = true;
+                    break;
+
+                case 'l': // Ctrl + L: View Live page in new tab
+                    const liveLink = document.querySelector('a[href*="../index.php?event="]');
+                    if (liveLink) {
+                        window.open(liveLink.href, '_blank');
+                    }
+                    shortcutHandled = true;
+                    break;
+                
+                // Ctrl + 1, 2, 3... to switch tabs
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                    const tabIndex = parseInt(e.key) - 1;
+                    const tabButtons = document.querySelectorAll('.sidebar-nav .tab-button');
+                    if (tabButtons[tabIndex]) {
+                        tabButtons[tabIndex].click();
+                        shortcutHandled = true;
+                    }
+                    break;
+            }
+        }
+
+        // --- Shortcuts without CTRL key ---
+        switch (e.key) {
+             case 'F2': // F2: Rename current event
+                // Check if the focus is not on an input field to avoid conflicts
+                if (document.activeElement.tagName.toLowerCase() !== 'input') {
+                    document.getElementById('rename-event-btn')?.click();
+                    shortcutHandled = true;
+                }
+                break;
+        }
+
+        // If we handled the shortcut, prevent the browser's default action (like saving the page)
+        if (shortcutHandled) {
+            e.preventDefault();
+        }
+    });
 });
