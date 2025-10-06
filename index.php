@@ -368,22 +368,50 @@ if (empty($configs) || !empty($error_message)):
     var timer = setInterval(tick, 1000);
 
 
-const fetchInterval = <?= intval($configs["fetchInterval"] ?? 60000) ?>;
+const fetchInterval = <?= intval($configs["fetchInterval"] ?? 8000) ?>;
 const scrollSpeed = <?= intval($configs["scrollSpeed"] ?? 50) ?>; // pixels per second
 let subtitles = [], currentIndex = 0, cycleTimeout = null;
+let lastETag = ''; // Variable to store the last ETag from the server
 
 async function loadSubtitles() {
   try {
-    const subtitlesPath = 'config/events/<?= htmlspecialchars($event_id) ?>/subtitles.json?nocache=' + Date.now();
-    const res = await fetch(subtitlesPath);
-    if (!res.ok) return;
-    const data = await res.json();
+    // The new URL points to our PHP script
+    const subtitlesUrl = 'config/get-subtitles.php?event=<?= $event_id ?>';
+    
+    // Send the request with the 'If-None-Match' header containing our last known ETag
+    const response = await fetch(subtitlesUrl, {
+        headers: {
+            'If-None-Match': lastETag 
+        }
+    });
+
+    // If the status is 304, it means the file hasn't changed.
+    // We do nothing and save bandwidth.
+    if (response.status === 304) {
+        return; 
+    }
+    
+    if (!response.ok) {
+        console.error("Failed to fetch subtitles, status:", response.status);
+        return;
+    }
+
+    // If we received a full response (status 200), we update our data.
+    // First, we store the new ETag from the response headers for the next request.
+    lastETag = response.headers.get('ETag');
+    
+    // Then, we get the new subtitle data.
+    const data = await response.json();
+
+    // The rest of the logic is the same: update only if data has changed.
     if (JSON.stringify(data) !== JSON.stringify(subtitles)) {
       subtitles = data;
       currentIndex = 0;
       startSubtitleCycle();
     }
-  } catch (err) { console.error("Error loading or parsing subtitles:", err); }
+  } catch (err) { 
+    console.error("Error loading or parsing subtitles:", err); 
+  }
 }
 
 function removeKeyframesRule(name) {
