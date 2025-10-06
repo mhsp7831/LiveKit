@@ -358,11 +358,7 @@ try {
 
                     $configs['liveStart'] = $liveStart;
                     $configs['liveEnd'] = $liveEnd;
-                    $playerRevealOffset = filter_input(INPUT_POST, 'playerRevealOffset', FILTER_VALIDATE_INT);
-                    if ($playerRevealOffset === false || $playerRevealOffset < 0) {
-                        $playerRevealOffset = 0; // Sanitize to a non-negative integer
-                    }
-                    $configs['playerRevealOffset'] = $playerRevealOffset;
+                    $configs['playerRevealOffset'] = filter_input(INPUT_POST, 'playerRevealOffset', FILTER_VALIDATE_INT, ["options" => ["min_range" => 0]]) ?: 0;
                     $configs['fetchInterval'] = filter_input(INPUT_POST, 'fetchInterval', FILTER_VALIDATE_INT, ["options" => ["min_range" => 0]]) ?: 8000;
                     $configs['scrollSpeed'] = filter_input(INPUT_POST, 'scrollSpeed', FILTER_VALIDATE_INT, ["options" => ["min_range" => 0]]) ?: 50;
                     $configs['copyright'] = trim($_POST['copyright'] ?? '');

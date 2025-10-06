@@ -524,6 +524,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (scrollSpeedInput && newConfigs.scrollSpeed) {
                     scrollSpeedInput.value = newConfigs.scrollSpeed;
                 }
+
+                const playerRevealOffsetInput =
+                    document.getElementById("playerRevealOffset");
+                if (
+                    playerRevealOffsetInput &&
+                    newConfigs.playerRevealOffset !== undefined
+                ) {
+                    playerRevealOffsetInput.value =
+                        newConfigs.playerRevealOffset;
+                }
             }
             // --- FIX: END of new logic ---
 
