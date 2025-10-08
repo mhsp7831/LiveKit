@@ -135,10 +135,10 @@ if (empty($configs) || !empty($error_message)):
     .banner{width:100%;background:var(--placeholder);border-radius:12px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-weight:700}
     #preBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["preBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
     #endBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["endBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
-    .actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:1.5rem}
+    .actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:1.5rem;direction:ltr;}
     .btn{padding:.4rem .5rem;border-radius:7px;background:var(--primary);color:#fff;text-decoration:none;font-weight:700;font-size:.7rem;transition:.25s;border:none;display:inline-block;word-spacing: -2px;}
     .btn:hover{background:var(--primary-hover);transform:translateY(-2px)}
-    .social{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+    .social{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;direction:ltr;}
     .social a{padding:.5rem .9rem;border-radius:8px;background:var(--bg);color:var(--title);text-decoration:none;font-size:.95rem;transition:.2s;border:1px solid var(--placeholder-border);display: flex;flex-direction: column;justify-content: space-around;align-items: center;gap: .2rem;line-height: 14px;}
     .social a:hover{background:var(--placeholder)}
     .social a img{width: 35px;height:35px;object-fit:contain;}

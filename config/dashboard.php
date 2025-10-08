@@ -619,7 +619,16 @@ $users = get_all_users();
                 </div>
             </main>
             <div class="save-button-container">
-                <button type="submit" class="btn btn--primary" id="main-save-btn" form="settings-form" disabled><span class="btn-text">ذخیره تمام تغییرات</span></button>
+                <button type="button" id="preview-btn" class="btn btn--primary btn--outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span class="btn-text">پیش‌نمایش</span>
+                </button>
+                <button type="submit" class="btn btn--primary" id="main-save-btn" form="settings-form" disabled>
+                    <span class="btn-text">ذخیره تمام تغییرات</span>
+                </button>
             </div>
         </div>
 
@@ -735,6 +744,31 @@ $users = get_all_users();
             </div>
         </div>
     </div>
+
+    <div id="preview-modal" class="modal-overlay preview-modal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <h3>پیش‌نمایش صفحه پخش زنده</h3>
+                <div class="preview-badge">حالت پیش‌نمایش</div>
+                <div class="preview-controls">
+                    <select id="preview-state">
+                        <option value="pre">قبل از شروع</option>
+                        <option value="live" selected>در حال پخش</option>
+                        <option value="end">پایان یافته</option>
+                    </select>
+                    <button type="button" id="close-preview-btn" class="btn btn--danger btn--icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="preview-modal-body">
+                <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts"></iframe>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/dashboard.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">

@@ -271,7 +271,7 @@ try {
                             $newButtons[] = ['title' => trim($title), 'link' => $link];
                         }
                     }
-                    $configs['buttons'] = array_reverse($newButtons);
+                    $configs['buttons'] = $newButtons;
 
                     $old_social_icons = array_filter(array_column($configs['socials'] ?? [], 'icon'));
 

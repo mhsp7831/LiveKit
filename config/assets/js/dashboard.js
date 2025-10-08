@@ -48,6 +48,540 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
     }
+
+function generatePreviewHTML(previewState = 'live') {
+    // Collect form data
+    const formData = new FormData(document.getElementById('settings-form'));
+    
+    // Get CodeMirror content if available
+    if (cssEditor) {
+        formData.set('custom_css', cssEditor.getValue());
+    }
+    
+    // Build configuration object from form
+    const config = {
+        title: formData.get('title') || 'پخش زنده',
+        homePage: formData.get('homePage') || '#',
+        iframe: formData.get('iframe') || '',
+        copyright: formData.get('copyright') || '',
+        liveStart: formData.get('liveStart'),
+        scrollSpeed: formData.get('scrollSpeed') || 50,
+        logo: formData.get('logo_url') || '',
+        preBanner: formData.get('preBanner_url') || '',
+        endBanner: formData.get('endBanner_url') || '',
+        banner: formData.get('banner_url') || '',
+        bannerLink: formData.get('bannerLink') || '',
+        colors: {
+            bg: formData.get('bg') || '#ffffff',
+            title: formData.get('title-color') || '#000000',
+            primary: formData.get('primary') || '#4caf50',
+            'primary-hover': formData.get('primary-hover') || '#45a049',
+            'card-bg': formData.get('card-bg') || '#f8f9fa',
+            placeholder: formData.get('placeholder') || '#e9ecef',
+            'placeholder-border': formData.get('placeholder-border') || '#ced4da',
+            text: formData.get('text') || '#212529'
+        }
+    };
+    
+    // Collect buttons
+    config.buttons = [];
+    const buttonTitles = formData.getAll('button_title[]');
+    const buttonLinks = formData.getAll('button_link[]');
+    for (let i = 0; i < buttonTitles.length; i++) {
+        if (buttonTitles[i].trim()) {
+            config.buttons.push({
+                title: buttonTitles[i],
+                link: buttonLinks[i] || '#'
+            });
+        }
+    }
+    
+    // Collect socials
+    config.socials = [];
+    const socialTitles = formData.getAll('social_title[]');
+    const socialLinks = formData.getAll('social_link[]');
+    const socialIcons = formData.getAll('social_icon_url[]');
+    for (let i = 0; i < socialTitles.length; i++) {
+        if (socialTitles[i].trim()) {
+            config.socials.push({
+                title: socialTitles[i],
+                link: socialLinks[i] || '#',
+                icon: socialIcons[i] || ''
+            });
+        }
+    }
+    
+    // Collect subtitles
+    config.subtitles = [];
+    const subtitleTexts = formData.getAll('subtitle_text[]');
+    const subtitleLinks = formData.getAll('subtitle_link[]');
+    for (let i = 0; i < subtitleTexts.length; i++) {
+        if (subtitleTexts[i].trim()) {
+            config.subtitles.push({
+                text: subtitleTexts[i],
+                link: subtitleLinks[i] || ''
+            });
+        }
+    }
+    
+    // Get custom CSS
+    const customCSS = formData.get('custom_css') || '';
+    
+    // Generate HTML
+    return generatePreviewHTMLTemplate(config, customCSS, previewState);
+}
+
+function generatePreviewHTMLTemplate(config, customCSS, state) {
+    // Helper to escape HTML
+    const escape = (str) => {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    };
+    
+    // Determine what to show based on state
+    const showPre = state === 'pre';
+    const showLive = state === 'live';
+    const showEnd = state === 'end';
+    
+    return `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escape(config.title)} - پیش‌نمایش</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style id="dynamic-style">
+        :root {
+            --bg: ${config.colors.bg};
+            --title: ${config.colors.title};
+            --primary: ${config.colors.primary};
+            --primary-hover: ${config.colors["primary-hover"]};
+            --card-bg: ${config.colors["card-bg"]};
+            --placeholder: ${config.colors.placeholder};
+            --placeholder-border: ${config.colors["placeholder-border"]};
+            --text: ${config.colors.text};
+        }
+        * { padding: 0; margin: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Vazirmatn', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header { 
+            background: #fff; 
+            box-shadow: 0 2px 6px rgba(0,0,0,.05); 
+            padding: 0.8rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        header img { height: 50px; margin-left: 50px; }
+        header a { 
+            color: var(--title); 
+            text-decoration: none; 
+            font-weight: 700; 
+            transition: .25s; 
+        }
+        header a:hover { color: var(--primary-hover); }
+        main { 
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start; 
+            padding: 2rem 1rem;
+        }
+        .card { 
+            background: var(--card-bg); 
+            width: 100%; 
+            max-width: 920px; 
+            border-radius: 18px; 
+            box-shadow: 0 12px 32px rgba(0,0,0,.06); 
+            padding: 1rem;
+            text-align: center;
+        }
+        h1 { color: var(--title); font-size: 1.85rem; margin-bottom: 10px; }
+        .video { 
+            width: 100%; 
+            aspect-ratio: 16/9; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            margin-bottom: 1rem;
+        }
+        .video iframe { width: 100%; height: 100%; border: none; }
+        .banner { 
+            width: 100%; 
+            background: var(--placeholder); 
+            border-radius: 12px; 
+            aspect-ratio: 16/9; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin-bottom: 1rem;
+        }
+        .banners { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem; }
+        .banners .banner { aspect-ratio: 64/19; }
+        .actions { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 0.5rem; 
+            justify-content: center; 
+            margin-bottom: 1.5rem;
+            direction: ltr;
+        }
+        .btn { 
+            padding: 0.4rem 0.5rem; 
+            border-radius: 7px; 
+            background: var(--primary); 
+            color: #fff; 
+            text-decoration: none; 
+            font-weight: 700; 
+            font-size: 0.7rem; 
+            transition: .25s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        .social { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 0.5rem; 
+            justify-content: center;
+            direction: ltr;
+        }
+        .social a { 
+            padding: 0.5rem 0.9rem; 
+            border-radius: 8px; 
+            background: var(--bg); 
+            color: var(--title); 
+            text-decoration: none; 
+            font-size: 0.95rem; 
+            transition: .2s;
+            border: 1px solid var(--placeholder-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        .social a:hover { background: var(--placeholder); }
+        .social a img { width: 35px; height: 35px; object-fit: contain; }
+        footer { text-align: center; color: var(--title); padding: 1rem; }
+        h3 { font-size: 1rem; font-weight: 700; color: var(--title); margin: 1rem 0; }
+        #subtitleBox { 
+            margin: 1rem 0; 
+            padding: 0.75rem 1rem; 
+            background: #f9f9f9; 
+            border-radius: 10px;
+            min-height: 40px;
+            text-align: center;
+        }
+            .countdown, h3{font-size:1rem;font-weight:700;color:var(--title);margin:1rem 0 1rem}
+    .countdown{display: flex;justify-content: center;align-items: center;gap: 5px;}
+    .countdown div{display: flex;flex-direction: column;justify-content: center;align-items: center;gap: 5px;}
+    .countdown div span{background-color:var(--primary);color: var(--card-bg);padding: .5rem .8rem;border-radius: 8px;font-weight: bold;font-size: 2rem;width: 65px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+    .countdown div span span{padding: 0;font-size: 1rem;margin-top: -8px;line-height:1.2;}
+        #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center; display: none; position: relative; overflow: hidden;align-items: center;}
+        #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem; text-wrap: nowrap; position: absolute;}
+        #subtitleText a { color: var(--title); text-decoration: none; }
+        ${customCSS ? `\n/* Custom CSS */\n${customCSS}` : ""}
+    </style>
+</head>
+<body>
+    
+    <header>
+        <a href="${escape(config.homePage)}">
+            ${
+              config.logo
+                ? `<img src="${escape(config.logo)}" alt="لوگو">`
+                : "<span>لوگو</span>"
+            }
+        </a>
+        <a href="${escape(config.homePage)}">صفحه اصلی</a>
+    </header>
+    
+    <main>
+        <div class="card">
+            <h1>${escape(config.title)}</h1>
+            
+            ${
+              showPre
+                ? `
+                <div class="banner" style="background-image: url(${escape(
+                  config.preBanner
+                )})"></div>
+            `
+                : ""
+            }
+            
+            ${
+              showLive
+                ? `
+                <div class="video">
+                    ${
+                      config.iframe ||
+                      '<div style="background: #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff;">پخش‌کننده ویدیو</div>'
+                    }
+                </div>
+            `
+                : ""
+            }
+            
+            ${
+              showEnd
+                ? `
+                <div class="banner" style="background-image: url(${escape(
+                  config.endBanner
+                )})"></div>
+            `
+                : ""
+            }
+            
+            ${
+                config.subtitles.length > 0
+                ? `
+                <div id="subtitleBox">
+                <span id="subtitleText">
+                        ${
+                          config.subtitles[0].link
+                            ? `<a href="${escape(
+                                config.subtitles[0].link
+                              )}" target="_blank">${escape(
+                                config.subtitles[0].text
+                              )}</a>`
+                            : escape(config.subtitles[0].text)
+                        }
+                    </span>
+                    </div>
+            `
+                : ""
+            }
+
+            ${
+              showPre
+                ? `
+                <div id="countdown" class="countdown">در حال بارگذاری تایمر…</div>
+            `
+                : ""
+            }
+            
+            ${
+              config.banner
+                ? `
+                <div class="banners">
+                    ${
+                      config.bannerLink
+                        ? `<a href="${escape(
+                            config.bannerLink
+                          )}" target="_blank"><div class="banner" style="background-image: url(${escape(
+                            config.banner
+                          )})"></div></a>`
+                        : `<div class="banner" style="background-image: url(${escape(
+                            config.banner
+                          )})"></div>`
+                    }
+                </div>
+            `
+                : ""
+            }
+            
+            ${
+              config.buttons.length > 0
+                ? `
+                <div class="actions">
+                    ${config.buttons
+                      .map(
+                        (btn) =>
+                          `<a class="btn" href="${escape(
+                            btn.link
+                          )}" target="_blank">${escape(btn.title)}</a>`
+                      )
+                      .join("")}
+                </div>
+            `
+                : ""
+            }
+            
+            ${
+              config.socials.length > 0
+                ? `
+                <h3>صفحات اجتماعی:</h3>
+                <div class="social">
+                    ${config.socials
+                      .map(
+                        (social) => `
+                        <a href="${escape(social.link)}" target="_blank">
+                            ${
+                              social.icon
+                                ? `<img src="${escape(
+                                    social.icon
+                                  )}" alt="${escape(social.title)}">`
+                                : ""
+                            }
+                            <span>${escape(social.title)}</span>
+                        </a>
+                    `
+                      )
+                      .join("")}
+                </div>
+            `
+                : ""
+            }
+        </div>
+    </main>
+    
+    <footer>${config.copyright}</footer>
+    
+    <script>
+        // --- DATA FROM PHP ---
+        const liveStartMs = new Date('${config.liveStart || ''}').getTime();
+        const scrollSpeed = ${parseInt(config.scrollSpeed, 10) || 50};
+        const subtitles = ${JSON.stringify(config.subtitles || [])};
+        const previewState = '${state}';
+
+        // --- ELEMENTS ---
+        const countdownEl = document.getElementById('countdown');
+        const subtitleBoxEl = document.getElementById('subtitleBox');
+        const subtitleTextEl = document.getElementById('subtitleText');
+
+        let currentIndex = 0;
+        let cycleTimeout = null;
+
+        // --- UTILITY FUNCTIONS ---
+        function numberToPersian(n) {
+            return n.toString().padStart(2, '0').replace(/\\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+        }
+
+        function formatCountdown(ms) {
+            if (isNaN(ms)) { return "پخش زنده هنوز زمان‌بندی نشده است." }
+            if (ms < 0) { return "پخش زنده در حال پخش است."; }
+            const d = Math.floor(ms / 86400000);
+            const h = Math.floor((ms % 86400000) / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            let result = '';
+            if (d > 0) result += '<div><span>' + numberToPersian(d) + '<span>روز</span></span></div>';
+            if (h > 0 || d > 0) result += '<div><span>' + numberToPersian(h) + '<span>ساعت</span></span></div>';
+            if (m > 0 || h > 0 || d > 0) result += '<div><span>' + numberToPersian(m) + '<span>دقیقه</span></span></div>';
+            result += '<div><span>' + numberToPersian(s) + '<span>ثانیه</span></span></div>';
+            return "زمان باقی‌مانده تا شروع: " + result;
+        }
+
+        // --- SUBTITLE MARQUEE LOGIC ---
+        function removeKeyframesRule(name) {
+            const styleEl = document.getElementById("dynamic-style");
+            if (!styleEl || !styleEl.sheet) return;
+            const sheet = styleEl.sheet;
+            for (let i = 0; i < sheet.cssRules.length; i++) {
+                const rule = sheet.cssRules[i];
+                if (rule.type === CSSRule.KEYFRAMES_RULE && rule.name === name) {
+                    sheet.deleteRule(i);
+                    break;
+                }
+            }
+        }
+
+        function startSubtitleCycle() {
+            if (cycleTimeout) clearTimeout(cycleTimeout);
+            if (!subtitleTextEl || !subtitles.length) {
+                if (subtitleBoxEl) subtitleBoxEl.style.display = 'none';
+                return;
+            }
+
+            const cycle = () => {
+                if (currentIndex >= subtitles.length) currentIndex = 0;
+                const sub = subtitles[currentIndex];
+                
+                removeKeyframesRule("marquee");
+                subtitleTextEl.innerHTML = '';
+                subtitleTextEl.style.animation = 'none';
+                if (subtitleBoxEl) subtitleBoxEl.style.display = 'flex';
+
+                if (sub.link) {
+                    subtitleTextEl.innerHTML = '<a href="' + sub.link + '" target="_blank" rel="noopener">' + sub.text + '</a>';
+                } else {
+                    subtitleTextEl.textContent = sub.text;
+                }
+
+                requestAnimationFrame(() => {
+                    const textWidth = subtitleTextEl.offsetWidth;
+                    const boxWidth = subtitleBoxEl.offsetWidth;
+                    const totalDistance = textWidth + boxWidth;
+                    const duration = totalDistance / scrollSpeed;
+
+                    const sheet = document.getElementById("dynamic-style").sheet;
+                    const rule = '@keyframes marquee { 0% { left: -' + textWidth + 'px; } 100% { left: 100%; } }';
+                    sheet.insertRule(rule, sheet.cssRules.length);
+
+                    subtitleTextEl.style.animation = 'marquee ' + duration + 's linear forwards';
+                    
+                    cycleTimeout = setTimeout(() => {
+                        currentIndex++;
+                        cycle();
+                    }, duration * 1000);
+                });
+            };
+            cycle();
+        }
+
+        // --- COUNTDOWN & STATE LOGIC ---
+        function initializePreview() {
+            if (previewState === 'pre' && countdownEl) {
+                const tick = () => {
+                    const distance = liveStartMs - Date.now();
+                    countdownEl.innerHTML = formatCountdown(distance);
+                };
+                tick();
+                setInterval(tick, 1000);
+            } else if (countdownEl) {
+                countdownEl.style.display = 'none';
+            }
+            
+            startSubtitleCycle();
+            
+        }
+
+        initializePreview();
+    </script>
+</body>
+</html>`;
+}
+
+// Preview button click handler
+document.getElementById('preview-btn')?.addEventListener('click', function() {
+    const previewModal = setupModal(document.getElementById('preview-modal'));
+    const previewFrame = document.getElementById('preview-frame');
+    const previewState = document.getElementById('preview-state');
+    
+    // Generate and load preview
+    function loadPreview() {
+        const html = generatePreviewHTML(previewState.value);
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        previewFrame.src = url;
+        
+        // Clean up blob URL after loading
+        previewFrame.onload = () => URL.revokeObjectURL(url);
+    }
+    
+    loadPreview();
+    previewModal.show();
+    
+    // Update preview when state changes
+    previewState.onchange = loadPreview;
+});
+
+// Close preview button
+document.getElementById('close-preview-btn')?.addEventListener('click', function() {
+    const previewModal = document.getElementById('preview-modal');
+    previewModal.classList.remove('active');
+});
+
     const savedTabId = localStorage.getItem("activeDashboardTab");
     if (
       savedTabId === "appearance" ||
