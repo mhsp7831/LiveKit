@@ -114,6 +114,12 @@ $users = get_all_users();
                             </svg>
                             <span>پشتیبان‌گیری</span>
                         </a></li>
+                    <li><a href="#" class="tab-button" data-tab="versions">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>تاریخچه نسخه‌ها</span>
+                    </a></li>
                 </ul>
             </nav>
         </aside>
@@ -617,6 +623,23 @@ $users = get_all_users();
                         </div>
                     </div>
                 </div>
+                <div id="versions" class="tab-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>تاریخچه نسخه‌های تنظیمات</h3>
+                            <button type="button" id="refresh-versions-btn" class="btn btn--primary btn--icon" title="بارگذاری مجدد">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p>آخرین ۱۰ نسخه از تنظیمات رویداد ذخیره می‌شود. می‌توانید به هر نسخه برگردید یا نسخه‌ها را مقایسه کنید.</p>
+
+                        <div id="versions-list" class="versions-list">
+                            <div class="loading-versions">در حال بارگذاری...</div>
+                        </div>
+                    </div>
+                </div>
             </main>
             <div class="save-button-container">
                 <button type="button" id="preview-btn" class="btn btn--primary btn--outline">
@@ -705,7 +728,7 @@ $users = get_all_users();
                 <p id="modal-text">آیا از انجام این کار مطمئن هستید؟</p>
                 <div class="modal-buttons">
                     <button id="modal-confirm-btn" class="btn btn--danger"><span class="btn-text">تایید</span></button>
-                    <button id="modal-cancel-btn" class="btn btn--primary btn--outline"><span class="btn-text">انصراف</span></button>
+                    <button id="modal-cancel-btn" class="btn btn--primary btn--outline modal-cancel-btn"><span class="btn-text">انصراف</span></button>
                 </div>
             </div>
         </div>
@@ -765,6 +788,29 @@ $users = get_all_users();
             </div>
             <div class="preview-modal-body">
                 <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="compare-modal" class="modal-overlay compare-modal">
+        <div class="compare-modal-content">
+            <div class="compare-modal-header">
+                <h3>مقایسه نسخه‌ها</h3>
+                <button type="button" class="btn btn--danger btn--icon modal-cancel-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="compare-modal-body">
+                <div class="compare-column">
+                    <h4 id="compare-v1-title">نسخه #1</h4>
+                    <div id="compare-v1-content" class="compare-content"></div>
+                </div>
+                <div class="compare-column">
+                    <h4 id="compare-v2-title">نسخه #2</h4>
+                    <div id="compare-v2-content" class="compare-content"></div>
+                </div>
             </div>
         </div>
     </div>

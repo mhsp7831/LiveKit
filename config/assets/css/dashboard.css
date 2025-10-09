@@ -561,3 +561,172 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
         justify-content: space-between;
     }
 }
+
+/* Version History Styles */
+.versions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+.version-item {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    background: var(--grey-x-light-color);
+    transition: all var(--transition-speed);
+}
+.version-item.current-version {
+    border-color: var(--primary-color);
+    background: var(--primary-light-color);
+}
+.version-item:hover {
+    box-shadow: var(--shadow);
+}
+.version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+.version-info {
+    flex-grow: 1;
+}
+.version-number {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+}
+.version-meta {
+    font-size: var(--font-size-sm);
+    color: var(--text-light-color);
+    margin-top: var(--spacing-xs);
+}
+.version-description {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+}
+.version-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+.current-badge {
+    display: inline-block;
+    background: var(--success-color);
+    color: var(--light-color);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 12px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+}
+.loading-versions {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-light-color);
+}
+
+/* Compare Modal Styles */
+.compare-modal .modal-content {
+    max-width: none;
+    width: 95vw;
+    height: 90vh;
+    padding: 0;
+}
+.compare-modal-content {
+    width: 95vw;
+    height: 90vh;
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all var(--transition-speed) ease;
+    transform: scale(0.97);
+}
+.compare-modal.active .compare-modal-content {
+    transform: scale(1);
+}
+.compare-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--grey-color);
+    border-bottom: 1px solid var(--border-color);
+}
+.compare-modal-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    overflow: auto;
+}
+.compare-column {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+.compare-column h4 {
+    background: var(--grey-color);
+    padding: var(--spacing-md);
+    margin: 0;
+    font-size: var(--font-size-md);
+    border-bottom: 1px solid var(--border-color);
+}
+.compare-content {
+    padding: var(--spacing-md);
+    max-height: calc(90vh - 200px);
+    overflow-y: auto;
+    background: var(--light-color);
+}
+.compare-section {
+    margin-bottom: var(--spacing-lg);
+}
+.compare-section h5 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-md);
+}
+.compare-field {
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--grey-x-light-color);
+    border-radius: var(--border-radius);
+}
+.compare-field strong {
+    display: block;
+    color: var(--dark-color);
+    margin-bottom: var(--spacing-xs);
+}
+.compare-field code {
+    display: block;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: var(--spacing-xs);
+    border-radius: 4px;
+    font-size: var(--font-size-sm);
+    direction: ltr;
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+@media (max-width: 768px) {
+    .compare-modal-body {
+        grid-template-columns: 1fr;
+    }
+    
+    .version-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    
+    .version-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

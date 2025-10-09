@@ -50,11 +50,34 @@ function get_db_connection()
             write_log('INFO', 'Database created and default owner user was added.');
         }
 
+        create_version_history_table($db);
+
         return $db;
     } catch (PDOException $e) {
         write_log('CRITICAL', 'Database connection failed: ' . $e->getMessage());
         die("Fatal Error: Could not connect to the database. Please check file permissions.");
     }
+}
+
+// Create version history table
+function create_version_history_table($db) {
+    
+    $db->exec("CREATE TABLE IF NOT EXISTS config_versions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id TEXT NOT NULL,
+        version_number INTEGER NOT NULL,
+        configs_data TEXT NOT NULL,
+        subtitles_data TEXT NOT NULL,
+        custom_css TEXT,
+        changed_by TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        description TEXT,
+        UNIQUE(event_id, version_number)
+    )");
+    
+    // Create index for faster queries
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_event_versions 
+               ON config_versions(event_id, version_number DESC)");
 }
 
 // --- USER MANAGEMENT & PERMISSIONS ---
@@ -439,4 +462,131 @@ function is_valid_backup_content($data, $type) {
 
     return false;
 }
- 
+
+
+/**
+ * Save a new version of event configuration
+ */
+function save_config_version($event_id, $configs, $subtitles, $custom_css = '', $description = '') {
+    $db = get_db_connection();
+    
+    // Get current max version number
+    $stmt = $db->prepare("SELECT MAX(version_number) as max_ver FROM config_versions WHERE event_id = :event_id");
+    $stmt->execute(['event_id' => $event_id]);
+    $result = $stmt->fetch();
+    $next_version = ($result['max_ver'] ?? 0) + 1;
+    
+    // Insert new version
+    $stmt = $db->prepare("INSERT INTO config_versions 
+        (event_id, version_number, configs_data, subtitles_data, custom_css, changed_by, created_at, description) 
+        VALUES (:event_id, :version_number, :configs_data, :subtitles_data, :custom_css, :changed_by, :created_at, :description)");
+    
+    $stmt->execute([
+        'event_id' => $event_id,
+        'version_number' => $next_version,
+        'configs_data' => json_encode($configs, JSON_UNESCAPED_UNICODE),
+        'subtitles_data' => json_encode($subtitles, JSON_UNESCAPED_UNICODE),
+        'custom_css' => $custom_css,
+        'changed_by' => $_SESSION['username'] ?? 'system',
+        'created_at' => time(),
+        'description' => $description
+    ]);
+    
+    // Keep only last 10 versions
+    cleanup_old_versions($event_id);
+    
+    return $next_version;
+}
+
+/**
+ * Keep only the last 10 versions per event
+ */
+function cleanup_old_versions($event_id, $keep_count = 10) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("DELETE FROM config_versions 
+        WHERE event_id = :event_id 
+        AND version_number NOT IN (
+            SELECT version_number FROM config_versions 
+            WHERE event_id = :event_id 
+            ORDER BY version_number DESC 
+            LIMIT :keep_count
+        )");
+    
+    $stmt->execute([
+        'event_id' => $event_id,
+        'keep_count' => $keep_count
+    ]);
+}
+
+/**
+ * Get all versions for an event
+ */
+function get_config_versions($event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("SELECT id, version_number, changed_by, created_at, description 
+        FROM config_versions 
+        WHERE event_id = :event_id 
+        ORDER BY version_number DESC");
+    
+    $stmt->execute(['event_id' => $event_id]);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Get a specific version
+ */
+function get_config_version($event_id, $version_number) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("SELECT * FROM config_versions 
+        WHERE event_id = :event_id AND version_number = :version_number");
+    
+    $stmt->execute([
+        'event_id' => $event_id,
+        'version_number' => $version_number
+    ]);
+    
+    return $stmt->fetch();
+}
+
+/**
+ * Restore a specific version
+ */
+function restore_config_version($event_id, $version_number) {
+    $version = get_config_version($event_id, $version_number);
+    
+    if (!$version) {
+        throw new Exception('نسخه مورد نظر یافت نشد.');
+    }
+    
+    // Decode data
+    $configs = json_decode($version['configs_data'], true);
+    $subtitles = json_decode($version['subtitles_data'], true);
+    $custom_css = $version['custom_css'];
+    
+    // Save to files
+    $event_path = EVENTS_DIR . $event_id;
+    safe_file_put_contents($event_path . '/configs.json', json_encode($configs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    safe_file_put_contents($event_path . '/subtitles.json', json_encode($subtitles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    safe_file_put_contents($event_path . '/custom.css', $custom_css);
+    
+    // Save as new version with description
+    save_config_version($event_id, $configs, $subtitles, $custom_css, "بازگردانی از نسخه #{$version_number}");
+    
+    return true;
+}
+
+/**
+ * Get current version number
+ */
+function get_current_version($event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("SELECT MAX(version_number) as current_ver FROM config_versions WHERE event_id = :event_id");
+    $stmt->execute(['event_id' => $event_id]);
+    $result = $stmt->fetch();
+    
+    return $result['current_ver'] ?? 0;
+}

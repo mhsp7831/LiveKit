@@ -212,6 +212,103 @@ try {
             $_SESSION['current_event_id'] = $eventId;
             $response = ['success' => true];
             break;
+        
+        // Add new cases for version management
+        case 'get_versions':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است.');
+
+            $versions = get_config_versions($current_event_id);
+            $current_version = get_current_version($current_event_id);
+
+            $response = [
+                'success' => true,
+                'versions' => $versions,
+                'current_version' => $current_version
+            ];
+            break;
+
+        case 'get_version_data':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است.');
+
+            $version_number = filter_input(INPUT_POST, 'version_number', FILTER_VALIDATE_INT);
+            if (!$version_number)
+                throw new Exception('شماره نسخه نامعتبر است.');
+
+            $version = get_config_version($current_event_id, $version_number);
+            if (!$version)
+                throw new Exception('نسخه یافت نشد.');
+
+            $response = [
+                'success' => true,
+                'version' => [
+                    'version_number' => $version['version_number'],
+                    'changed_by' => $version['changed_by'],
+                    'created_at' => $version['created_at'],
+                    'description' => $version['description'],
+                    'configs' => json_decode($version['configs_data'], true),
+                    'subtitles' => json_decode($version['subtitles_data'], true),
+                    'custom_css' => $version['custom_css']
+                ]
+            ];
+            break;
+
+        case 'restore_version':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است.');
+
+            $version_number = filter_input(INPUT_POST, 'version_number', FILTER_VALIDATE_INT);
+            if (!$version_number)
+                throw new Exception('شماره نسخه نامعتبر است.');
+
+            restore_config_version($current_event_id, $version_number);
+
+            write_log('INFO', "Version {$version_number} restored for event {$current_event_id}");
+
+            $response = [
+                'success' => true,
+                'message' => "نسخه #{$version_number} با موفقیت بازگردانی شد. صفحه رفرش می‌شود."
+            ];
+            break;
+
+        case 'compare_versions':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است.');
+
+            $version1 = filter_input(INPUT_POST, 'version1', FILTER_VALIDATE_INT);
+            $version2 = filter_input(INPUT_POST, 'version2', FILTER_VALIDATE_INT);
+
+            if (!$version1 || !$version2)
+                throw new Exception('شماره نسخه‌ها نامعتبر است.');
+
+            $v1 = get_config_version($current_event_id, $version1);
+            $v2 = get_config_version($current_event_id, $version2);
+
+            if (!$v1 || !$v2)
+                throw new Exception('یکی از نسخه‌ها یافت نشد.');
+
+            $response = [
+                'success' => true,
+                'version1' => [
+                    'version_number' => $v1['version_number'],
+                    'changed_by' => $v1['changed_by'],
+                    'created_at' => $v1['created_at'],
+                    'configs' => json_decode($v1['configs_data'], true),
+                    'subtitles' => json_decode($v1['subtitles_data'], true),
+                    'custom_css' => $v1['custom_css']
+                ],
+                'version2' => [
+                    'version_number' => $v2['version_number'],
+                    'changed_by' => $v2['changed_by'],
+                    'created_at' => $v2['created_at'],
+                    'configs' => json_decode($v2['configs_data'], true),
+                    'subtitles' => json_decode($v2['subtitles_data'], true),
+                    'custom_css' => $v2['custom_css']
+                ]
+            ];
+            break;
+        
         default:
             if (empty($current_event_id) || !is_valid_event_id($current_event_id)) throw new Exception("هیچ رویداد معتبری انتخاب نشده است.");
             switch ($action) {
@@ -388,7 +485,8 @@ try {
                         safe_file_put_contents($configsFile, json_encode($configs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) &&
                         safe_file_put_contents($subtitlesFile, json_encode($newSubtitles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
                     ) {
-                        $response = ['success' => true, 'message' => 'تنظیمات ذخیره شد.', 'updated_data' => ['configs' => $configs, 'subtitles' => $newSubtitles]];
+                        $version_number = save_config_version($current_event_id, $configs, $newSubtitles, $customCSS, 'ذخیره تنظیمات');
+                        $response = ['success' => true, 'message' => 'تنظیمات ذخیره شد.', 'updated_data' => ['configs' => $configs, 'subtitles' => $newSubtitles], 'version_number' => $version_number];
                     } else throw new Exception('خطا در ذخیره فایل‌ها.');
                     break;
 

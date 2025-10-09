@@ -644,6 +644,8 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
         return { valid: true };
     };
 
+    let selectedVersionsForCompare = [];
+
     const switchToTab = (tabId) => {
         const currentActiveButton = document.querySelector('.sidebar-nav .active');
         const currentActivePanel = document.querySelector('.tab-panel.active');
@@ -653,6 +655,12 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
         // Do nothing if the clicked tab is already active or elements don't exist
         if (!newTabButton || !newTabPanel || (currentActiveButton && currentActiveButton === newTabButton)) {
             return;
+        }
+
+        if (tabId !== 'versions') {
+            if (selectedVersionsForCompare.length) {
+                selectedVersionsForCompare = [];
+            }
         }
 
         // Handle save button visibility immediately
@@ -1503,4 +1511,258 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
             e.preventDefault();
         }
     });
+
+    let currentVersions = [];
+    const compareModal = setupModal(document.getElementById('compare-modal'));
+
+    // Load versions when tab is opened or refreshed
+    document.querySelector('[data-tab="versions"]')?.addEventListener('click', () => setTimeout(loadVersions, 100));
+    document.getElementById('refresh-versions-btn')?.addEventListener('click', loadVersions);
+
+    if (
+      savedTabId === "versions" ||
+      document.querySelector("#versions.active")
+    ) {
+      setTimeout(() => {
+        loadVersions();
+      }, 100);
+    }
+
+    async function loadVersions() {
+        const versionsList = document.getElementById('versions-list');
+        versionsList.innerHTML = '<div class="loading-versions">در حال بارگذاری...</div>';
+        
+        try {
+            const formData = new FormData();
+            formData.append('action', 'get_versions');
+            
+            const result = await sendRequest(formData);
+            currentVersions = result.versions;
+            const currentVersion = result.current_version;
+            
+            if (currentVersions.length === 0) {
+                versionsList.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--text-light-color);">هنوز هیچ نسخه‌ای ذخیره نشده است.</p>';
+                return;
+            }
+            
+            versionsList.innerHTML = currentVersions.map(v => renderVersionItem(v, v.version_number === currentVersion)).join('');
+            attachVersionEventListeners();
+            
+        } catch (error) {
+            versionsList.innerHTML = `<p style="text-align: center; padding: 2rem; color: var(--danger-color);">${error.message}</p>`;
+        }
+    }
+
+    function renderVersionItem(version, isCurrent) {
+        const date = new Date(version.created_at * 1000);
+        const dateStr = date.toLocaleDateString('fa-IR');
+        const timeStr = date.toLocaleTimeString('fa-IR');
+        
+        return `
+            <div class="version-item ${isCurrent ? 'current-version' : ''}" data-version="${version.version_number}">
+                <div class="version-header">
+                    <div class="version-info">
+                        <span class="version-number">نسخه ${version.version_number}#</span>
+                        ${isCurrent ? '<span class="current-badge">نسخه فعلی</span>' : ''}
+                        <div class="version-meta">
+                            توسط <strong>${version.changed_by}</strong> در ${dateStr} ساعت ${timeStr}
+                        </div>
+                    </div>
+                    <div class="version-actions">
+                        ${!isCurrent ? `
+                            <button type="button" class="btn btn--danger btn--icon restore-version-btn" 
+                                    data-version="${version.version_number}" title="بازگردانی">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                            </button>` : ''}
+                        <button type="button" class="btn btn--primary btn--icon view-version-btn" 
+                                data-version="${version.version_number}" title="مشاهده جزئیات">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </button>
+                        <button type="button" class="btn btn--primary btn--icon select-for-compare-btn" 
+                                data-version="${version.version_number}" title="انتخاب برای مقایسه">
+                            <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_429_11147)"><path d="M13 3.99969H6C4.89543 3.99969 4 4.89513 4 5.99969V17.9997C4 19.1043 4.89543 19.9997 6 19.9997H13M17 3.99969H18C19.1046 3.99969 20 4.89513 20 5.99969V6.99969M20 16.9997V17.9997C20 19.1043 19.1046 19.9997 18 19.9997H17M20 10.9997V12.9997M12 1.99969V21.9997" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></g><defs><clipPath id="clip0_429_11147"><rect width="24" height="24" fill="white" transform="translate(0 -0.000305176)"/></clipPath></defs></svg>
+                        </button>
+                    </div>
+                </div>
+                ${version.description ? `<div class="version-description">${version.description}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function attachVersionEventListeners() {
+        document.querySelectorAll('.restore-version-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const version = this.dataset.version;
+                if (await showConfirm('بازگردانی نسخه', `آیا از بازگردانی به نسخه #${version} مطمئن هستید؟ تنظیمات فعلی ذخیره و سپس این نسخه بازگردانی می‌شود.`)) {
+                    this.disabled = true; this.classList.add('loading');
+                    try {
+                        const formData = new FormData();
+                        formData.append('action', 'restore_version');
+                        formData.append('version_number', version);
+                        const result = await sendRequest(formData);
+                        showToast(result.message);
+                        setTimeout(() => window.location.reload(), 1500);
+                    } catch (error) {
+                        showToast(error.message, 'error');
+                        this.disabled = false; this.classList.remove('loading');
+                    }
+                }
+            });
+        });
+        
+        document.querySelectorAll('.view-version-btn').forEach(btn => btn.addEventListener('click', function() { showVersionDetails(this.dataset.version); }));
+        
+        document.querySelectorAll('.select-for-compare-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const version = parseInt(this.dataset.version);
+                if (selectedVersionsForCompare.includes(version)) {
+                    selectedVersionsForCompare = selectedVersionsForCompare.filter(v => v !== version);
+                    this.style.background = ''; this.style.color = ''; this.style.borderColor = '';
+                } else {
+                    if (selectedVersionsForCompare.length >= 2) {
+                        showToast('حداکثر می‌توانید ۲ نسخه برای مقایسه انتخاب کنید', 'error'); return;
+                    }
+                    selectedVersionsForCompare.push(version);
+                    this.style.background = 'var(--primary-color)'; this.style.color = 'var(--light-color)'; this.style.borderColor = 'var(--primary-color)';
+                }
+                
+                if (selectedVersionsForCompare.length === 2) {
+                    compareVersions(selectedVersionsForCompare[0], selectedVersionsForCompare[1]);
+                    selectedVersionsForCompare = [];
+                    document.querySelectorAll('.select-for-compare-btn').forEach(btn =>{
+                        btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = '';
+                    })
+                }
+            });
+        });
+    }
+
+    // RECONSTRUCTED: This function was incomplete in the provided file.
+    async function showVersionDetails(versionNumber) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'get_version_data');
+            formData.append('version_number', versionNumber);
+            
+            const result = await sendRequest(formData);
+            const version = result.version;
+            
+            const date = new Date(version.created_at * 1000);
+            const details = `
+                <div style="text-align: right; line-height: 1.8;">
+                    <p><strong>توسط:</strong> ${version.changed_by}</p>
+                    <p><strong>تاریخ:</strong> ${date.toLocaleString('fa-IR')}</p>
+                    ${version.description ? `<p><strong>توضیحات:</strong> ${version.description}</p>` : ''}
+                    <hr style="margin: 1rem 0;">
+                    <details>
+                        <summary><strong>مشاهده داده‌های خام</strong></summary>
+                        <pre style="background: #2d2d2d; color: #f1f1f1; padding: 1rem; border-radius: 8px; text-align: left; direction: ltr; max-height: 300px; overflow-y: auto;">${JSON.stringify(version, null, 2)}</pre>
+                    </details>
+                </div>`;
+            
+            // Using the existing confirm modal but only showing an "OK" button.
+            const modalEl = document.getElementById("confirm-modal");
+            modalEl.querySelector("#modal-title").textContent = `جزئیات نسخه #${version.version_number}`;
+            modalEl.querySelector("#modal-text").innerHTML = details;
+            modalEl.querySelector("#modal-confirm-btn").style.display = 'none';
+            modalEl.querySelector("#modal-cancel-btn").textContent = 'بستن';
+            
+            const onModalHide = () => {
+                modalEl.querySelector("#modal-confirm-btn").style.display = '';
+                modalEl.querySelector("#modal-cancel-btn").textContent = 'انصراف';
+                modalEl.removeEventListener('transitionend', checkHide);
+            };
+
+            const checkHide = (e) => {
+                if (e.propertyName === 'opacity' && !modalEl.classList.contains('active')) {
+                    onModalHide();
+                }
+            };
+
+            modalEl.addEventListener('transitionend', checkHide);
+
+            const cancelButton = modalEl.querySelector("#modal-cancel-btn");
+            const newCancelButton = cancelButton.cloneNode(true);
+            cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+            newCancelButton.addEventListener('click', () => {
+                confirmModal.hide();
+            }, { once: true });
+
+            confirmModal.show();
+
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+
+    // RECONSTRUCTED: This function was missing from the provided file.
+    async function compareVersions(v1, v2) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'compare_versions');
+            formData.append('version1', Math.min(v1, v2));
+            formData.append('version2', Math.max(v1, v2));
+
+            const result = await sendRequest(formData);
+
+            document.getElementById('compare-v1-title').textContent = `نسخه #${result.version1.version_number}`;
+            document.getElementById('compare-v2-title').textContent = `نسخه #${result.version2.version_number}`;
+
+            const v1Content = document.getElementById('compare-v1-content');
+            const v2Content = document.getElementById('compare-v2-content');
+
+            v1Content.innerHTML = renderCompareColumn(result.version1);
+            v2Content.innerHTML = renderCompareColumn(result.version2);
+
+            compareModal.show();
+
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+
+    // RECONSTRUCTED: Helper function for the compare modal.
+    function renderCompareColumn(versionData) {
+        const escape = (str) => String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        
+        let html = '';
+        const { configs, subtitles, custom_css } = versionData;
+
+        // General Configs
+        html += '<div class="compare-section"><h5>تنظیمات اصلی</h5>';
+        for (const key in configs) {
+            if (typeof configs[key] !== 'object') {
+                html += `<div class="compare-field"><strong>${key}:</strong> <code>${escape(configs[key] || 'خالی')}</code></div>`;
+            }
+        }
+        html += '</div>';
+
+        // Buttons, Socials (Objects in array)
+        ['buttons', 'socials'].forEach(key => {
+            html += `<div class="compare-section"><h5>${key === 'buttons' ? 'دکمه‌ها' : 'صفحات اجتماعی'}</h5>`;
+            if (configs[key]?.length > 0) {
+                html += `<code>${escape(JSON.stringify(configs[key], null, 2))}</code>`;
+            } else {
+                html += `<code>[]</code>`;
+            }
+            html += '</div>';
+        });
+
+        // Subtitles
+        html += '<div class="compare-section"><h5>زیرنویس‌ها</h5>';
+        if (subtitles?.length > 0) {
+            html += `<code>${escape(JSON.stringify(subtitles, null, 2))}</code>`;
+        } else {
+            html += `<code>[]</code>`;
+        }
+        html += '</div>';
+
+        // Custom CSS
+        html += '<div class="compare-section"><h5>CSS سفارشی</h5>';
+        html += `<code>${escape(custom_css || '/* خالی */')}</code>`;
+        html += '</div>';
+
+        return html;
+    }
+
 });
