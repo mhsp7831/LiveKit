@@ -73,7 +73,7 @@ body.rtl .sortable-ghost {right: auto !important}
 .placeholder { height: 40px; background-color: var(--placeholder, #e9ecef); border: 1px solid var(--placeholder-border, #ced4da); border-radius: var(--border-radius); }
 #json-preview-container { margin-top: var(--spacing-lg); }
 #json-preview-container h4 { margin-bottom: var(--spacing-md); }
-#json-preview { background-color: var(--code-bg); color: var(--code-fg); padding: var(--spacing-md); border-radius: var(--border-radius); max-height: 300px; overflow-y: auto; text-align: left; direction: ltr; font-size: var(--font-size-sm); }
+#json-preview { padding: var(--spacing-md); border-radius: var(--border-radius); max-height: 300px; overflow-y: auto; text-align: left; direction: ltr; }
 #toast-container { position: fixed; bottom: 5.5rem; left: 2rem; z-index: 2000; display: flex; flex-direction: column; gap: var(--spacing-md); }
 .toast { padding: var(--spacing-md) var(--spacing-lg); border-radius: var(--border-radius); color: var(--light-color); box-shadow: var(--shadow-lg); opacity: 0; transform: translateX(-120%); transition: opacity 0.4s ease, transform 0.4s ease; display: flex; align-items: center; gap: var(--spacing-md); min-width: 250px; }
 .toast.show { opacity: 1; transform: translateX(0); }
@@ -87,7 +87,7 @@ body.rtl .sortable-ghost {right: auto !important}
 .modal-content { background-color: var(--light-color); padding: var(--spacing-xl); border-radius: var(--border-radius); box-shadow: var(--shadow-lg); text-align: center; width: 90%; max-width: 400px; transform: scale(0.97); transition: transform var(--transition-speed) ease; }
 .modal-overlay.active .modal-content { transform: scale(1); }
 .modal-content h3 { margin-top: 0; margin-bottom: var(--spacing-md); color: var(--dark-color); }
-.modal-content p { margin-bottom: var(--spacing-xl); color: var(--text-color); line-height: 1.6; }
+.modal-content p { margin-bottom: var(--spacing-lg); color: var(--text-color); line-height: 1.6; }
 .modal-buttons { display: flex; justify-content: center; gap: var(--spacing-md); }
 .prompt-input { margin-bottom: var(--spacing-lg); text-align: left; direction: ltr; }
 button.loading .btn-text, button.success .btn-text { visibility: hidden; }
@@ -682,6 +682,7 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
     max-height: calc(90vh - 200px);
     overflow-y: auto;
     background: var(--light-color);
+    direction: ltr;
 }
 .compare-section {
     margin-bottom: var(--spacing-lg);
@@ -690,6 +691,7 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
     color: var(--primary-color);
     margin-bottom: var(--spacing-sm);
     font-size: var(--font-size-md);
+    direction: rtl;
 }
 .compare-field {
     margin-bottom: var(--spacing-sm);
@@ -729,4 +731,10 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
         width: 100%;
         justify-content: flex-end;
     }
+}
+
+code {
+    font-family: var(--font-family-monospace) !important;
+    font-size: var(--font-size-sm) !important;
+    padding: var(--spacing-xs) var(--spacing-xs) !important;
 }

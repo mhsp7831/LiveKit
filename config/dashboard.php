@@ -72,6 +72,7 @@ $users = get_all_users();
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="assets/css/theme.css">
     <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/prism.css">
 </head>
 
 <body>
@@ -514,10 +515,10 @@ $users = get_all_users();
                                 <!-- CSS Reference -->
                                 <div class="css-reference">
                                     <h4>متغیرهای رنگی قابل استفاده:</h4>
-                                    <code>var(--bg), var(--title), var(--primary), var(--primary-hover), var(--card-bg), var(--placeholder), var(--text)</code>
+                                    <code class="language-css">var(--bg), var(--title), var(--primary), var(--primary-hover), var(--card-bg), var(--placeholder), var(--text)</code>
                                     
                                     <h4>کلاس‌های اصلی:</h4>
-                                    <code>.card, .video, .banner, .btn, .countdown, .social, header, main, footer</code>
+                                    <code class="language-css">.card {}, .video {}, .banner {}, .btn {}, .countdown {}, .social {}, header {}, main {}, footer {}</code>
                                 </div>
                             </div>
                         </div>
@@ -614,7 +615,7 @@ $users = get_all_users();
                                 </div>
                                 <div id="json-preview-container" style="display: none;">
                                     <h4>پیش‌نمایش محتوای فایل:</h4>
-                                    <pre id="json-preview"></pre>
+                                    <pre id="json-preview" class="language-json"><code></code></pre>
                                 </div>
                                 <div class="form-actions">
                                     <button type="submit" class="btn btn--primary" id="restore-btn" disabled><span class="btn-text">تایید و بازیابی</span></button>
@@ -816,6 +817,8 @@ $users = get_all_users();
     </div>
 
     <script src="assets/js/dashboard.js"></script>
+    <script src="assets/js/prism.js"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">

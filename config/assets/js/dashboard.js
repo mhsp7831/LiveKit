@@ -1374,7 +1374,7 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
     const backupFileInput = document.getElementById("backup_file");
     if (backupFileInput) {
         backupFileInput.addEventListener("change", () => {
-            const previewEl = document.getElementById("json-preview");
+            const previewEl = document.getElementById("json-preview").firstChild;
             const restoreBtn = document.getElementById("restore-btn");
             const file = backupFileInput.files[0];
             if (file && file.type === "application/json") {
@@ -1386,7 +1386,8 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
                             null,
                             2
                         );
-                        previewEl.parentElement.style.display = "block";
+                        Prism.highlightAllUnder(previewEl.parentElement);
+                        previewEl.parentElement.parentElement.style.display = "block";
                         restoreBtn.disabled = false;
                     } catch (err) {
                         previewEl.textContent = "خطا: فایل JSON معتبر نیست.";
@@ -1650,13 +1651,14 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
             const date = new Date(version.created_at * 1000);
             const details = `
                 <div style="text-align: right; line-height: 1.8;">
-                    <p><strong>توسط:</strong> ${version.changed_by}</p>
-                    <p><strong>تاریخ:</strong> ${date.toLocaleString('fa-IR')}</p>
-                    ${version.description ? `<p><strong>توضیحات:</strong> ${version.description}</p>` : ''}
-                    <hr style="margin: 1rem 0;">
+                    <p>
+                        <strong>توسط:</strong> ${version.changed_by}<br />
+                        <strong>تاریخ:</strong> ${date.toLocaleString('fa-IR')}<br />
+                        ${version.description ? `<strong>توضیحات:</strong> ${version.description}<br />` : ''}
+                    </p>
                     <details>
                         <summary><strong>مشاهده داده‌های خام</strong></summary>
-                        <pre style="background: #2d2d2d; color: #f1f1f1; padding: 1rem; border-radius: 8px; text-align: left; direction: ltr; max-height: 300px; overflow-y: auto;">${JSON.stringify(version, null, 2)}</pre>
+                        <pre class="language-json" style="background: #2d2d2d; color: #f1f1f1; padding: 1rem; border-radius: 8px; text-align: left; direction: ltr; max-height: 300px; overflow-y: auto;"><code>${JSON.stringify(version, null, 2)}</code></pre>
                     </details>
                 </div>`;
             
@@ -1664,6 +1666,7 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
             const modalEl = document.getElementById("confirm-modal");
             modalEl.querySelector("#modal-title").textContent = `جزئیات نسخه #${version.version_number}`;
             modalEl.querySelector("#modal-text").innerHTML = details;
+            Prism.highlightAllUnder(document.getElementById("modal-text"));
             modalEl.querySelector("#modal-confirm-btn").style.display = 'none';
             modalEl.querySelector("#modal-cancel-btn").textContent = 'بستن';
             
@@ -1713,6 +1716,8 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
             v1Content.innerHTML = renderCompareColumn(result.version1);
             v2Content.innerHTML = renderCompareColumn(result.version2);
+            Prism.highlightAllUnder(v1Content);
+            Prism.highlightAllUnder(v2Content);
 
             compareModal.show();
 
@@ -1729,37 +1734,37 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
         const { configs, subtitles, custom_css } = versionData;
 
         // General Configs
-        html += '<div class="compare-section"><h5>تنظیمات اصلی</h5>';
+        html += '<div class="compare-section"><h5>تنظیمات اصلی:</h5>';
         for (const key in configs) {
             if (typeof configs[key] !== 'object') {
-                html += `<div class="compare-field"><strong>${key}:</strong> <code>${escape(configs[key] || 'خالی')}</code></div>`;
+                html += `<div class="compare-field language-json"><strong>${key}:</strong> <code>${escape(configs[key] || 'خالی')}</code></div>`;
             }
         }
         html += '</div>';
 
         // Buttons, Socials (Objects in array)
         ['buttons', 'socials'].forEach(key => {
-            html += `<div class="compare-section"><h5>${key === 'buttons' ? 'دکمه‌ها' : 'صفحات اجتماعی'}</h5>`;
+            html += `<div class="compare-section"><h5>${key === 'buttons' ? 'دکمه‌ها:' : 'صفحات اجتماعی:'}</h5>`;
             if (configs[key]?.length > 0) {
-                html += `<code>${escape(JSON.stringify(configs[key], null, 2))}</code>`;
+                html += `<pre class="language-json"><code>${escape(JSON.stringify(configs[key], null, 2))}</code></pre>`;
             } else {
-                html += `<code>[]</code>`;
+                html += `<pre class="language-json"><code>[]</code></pre>`;
             }
             html += '</div>';
         });
 
         // Subtitles
-        html += '<div class="compare-section"><h5>زیرنویس‌ها</h5>';
+        html += '<div class="compare-section"><h5>زیرنویس‌ها:</h5>';
         if (subtitles?.length > 0) {
-            html += `<code>${escape(JSON.stringify(subtitles, null, 2))}</code>`;
+            html += `<pre class="language-json"><code>${escape(JSON.stringify(subtitles, null, 2))}</code></pre>`;
         } else {
-            html += `<code>[]</code>`;
+            html += `<pre class="language-json"><code>[]</code></pre>`;
         }
         html += '</div>';
 
         // Custom CSS
-        html += '<div class="compare-section"><h5>CSS سفارشی</h5>';
-        html += `<code>${escape(custom_css || '/* خالی */')}</code>`;
+        html += '<div class="compare-section"><h5>CSS سفارشی:</h5>';
+        html += `<pre class="language-css"><code>${escape(custom_css || '/* خالی */')}</code></pre>`;
         html += '</div>';
 
         return html;
