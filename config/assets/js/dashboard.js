@@ -50,6 +50,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 function generatePreviewHTML(previewState = 'live') {
+    // Helper to resolve image URLs
+    const resolveImageUrl = (url) => {
+        if (!url || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//') || url.startsWith('data:')) {
+            return url;
+        }
+        // Create a full absolute URL.
+        // Assumes dashboard is at /config/* and we need to get to the root /
+        const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/config/') + 8)
+        return `${baseUrl}/${url}`;
+    };
+
     // Collect form data
     const formData = new FormData(document.getElementById('settings-form'));
     
@@ -66,10 +77,10 @@ function generatePreviewHTML(previewState = 'live') {
         copyright: formData.get('copyright') || '',
         liveStart: formData.get('liveStart'),
         scrollSpeed: formData.get('scrollSpeed') || 50,
-        logo: formData.get('logo_url') || '',
-        preBanner: formData.get('preBanner_url') || '',
-        endBanner: formData.get('endBanner_url') || '',
-        banner: formData.get('banner_url') || '',
+        logo: resolveImageUrl(formData.get('logo_url')) || '',
+        preBanner: resolveImageUrl(formData.get('preBanner_url')) || '',
+        endBanner: resolveImageUrl(formData.get('endBanner_url')) || '',
+        banner: resolveImageUrl(formData.get('banner_url')) || '',
         bannerLink: formData.get('bannerLink') || '',
         colors: {
             bg: formData.get('bg') || '#ffffff',
@@ -106,7 +117,7 @@ function generatePreviewHTML(previewState = 'live') {
             config.socials.push({
                 title: socialTitles[i],
                 link: socialLinks[i] || '#',
-                icon: socialIcons[i] || ''
+                icon: resolveImageUrl(socialIcons[i]) || ''
             });
         }
     }
