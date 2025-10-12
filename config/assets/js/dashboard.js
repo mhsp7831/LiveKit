@@ -1462,6 +1462,16 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
             // If no tab is saved, ensure the default tab is correctly set up
             switchToTab("settings");
         }
+        document.querySelectorAll('.image-group').forEach((group) => {
+            const urlInput = group.querySelector('.preview-url-input');
+            const fileInput = group.querySelector('.preview-file-input');
+            const preview = group.querySelector('.image-preview');
+            
+            if (urlInput && fileInput && preview) {
+                setupImagePreview(urlInput, fileInput, preview);
+                enableMediaLibraryPicker(urlInput, fileInput, preview);
+            }
+        });
     };
 
     initializeDashboard();
@@ -1780,5 +1790,464 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
         return html;
     }
+
+    // ============================================
+    // MEDIA MANAGER
+    // ============================================
+
+    let currentMediaLibrary = [];
+    let selectedMediaItem = null;
+
+    // Initialize media manager when tab is opened
+    document.querySelector('[data-tab="media"]')?.addEventListener('click', function() {
+        setTimeout(loadMediaLibrary, 100);
+    });
+
+    // Drag and drop functionality
+    const dropzone = document.getElementById('media-dropzone');
+    const fileInput = document.getElementById('media-file-input');
+
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', () => fileInput.click());
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const fileName = e.target.files[0].name;
+                dropzone.querySelector('p').textContent = `فایل انتخاب شده: ${fileName}`;
+            }
+        });
+    }
+
+    // Upload media form
+    document.getElementById('media-upload-form')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('media-file-input');
+        if (!fileInput.files.length) {
+            showToast('لطفاً یک فایل انتخاب کنید', 'error');
+            return;
+        }
+        
+        const submitBtn = document.getElementById('upload-media-btn');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+        
+        try {
+            const formData = new FormData(this);
+            const result = await sendRequest(formData);
+            
+            showToast(result.message);
+            
+            // Reset form
+            this.reset();
+            dropzone.querySelector('p').textContent = 'فایل را اینجا رها کنید یا کلیک کنید';
+            
+            // Reload media library
+            loadMediaLibrary();
+            
+            submitBtn.classList.remove('loading');
+            submitBtn.classList.add('success');
+            setTimeout(() => {
+                submitBtn.classList.remove('success');
+                submitBtn.disabled = false;
+            }, 1500);
+            
+        } catch (error) {
+            showToast(error.message, 'error');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+        }
+    });
+
+    // Load media library
+    async function loadMediaLibrary(filters = {}) {
+        const mediaGrid = document.getElementById('media-grid');
+        mediaGrid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
+        
+        try {
+            const formData = new FormData();
+            formData.append('action', 'get_media_library');
+            
+            if (filters.search) formData.append('search', filters.search);
+            if (filters.mime_type) formData.append('mime_type', filters.mime_type);
+            
+            const result = await sendRequest(formData);
+            currentMediaLibrary = result.media;
+            
+            // Display stats
+            displayMediaStats(result.stats);
+            
+            // Display media grid
+            if (currentMediaLibrary.length === 0) {
+                mediaGrid.innerHTML = '<div class="loading-media">هیچ فایلی یافت نشد</div>';
+                return;
+            }
+            
+            mediaGrid.innerHTML = currentMediaLibrary.map(media => renderMediaItem(media)).join('');
+            
+            // Attach click handlers
+            document.querySelectorAll('.media-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const mediaId = parseInt(this.dataset.id);
+                    const media = currentMediaLibrary.find(m => m.id === mediaId);
+                    if (media) {
+                        showMediaDetail(media);
+                    }
+                });
+            });
+            
+        } catch (error) {
+            mediaGrid.innerHTML = `<div class="loading-media" style="color: var(--danger-color);">${error.message}</div>`;
+        }
+    }
+
+    function displayMediaStats(stats) {
+        const statsContainer = document.getElementById('media-stats');
+        
+        const totalSizeMB = (stats.total_size / (1024 * 1024)).toFixed(2);
+        
+        statsContainer.innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value">${stats.total_files}</div>
+                <div class="stat-label">تعداد فایل</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${totalSizeMB} MB</div>
+                <div class="stat-label">حجم کل</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${stats.jpeg_count}</div>
+                <div class="stat-label">JPEG</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${stats.png_count}</div>
+                <div class="stat-label">PNG</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${stats.webp_count}</div>
+                <div class="stat-label">WebP</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${stats.svg_count}</div>
+                <div class="stat-label">SVG</div>
+            </div>
+        `;
+    }
+
+    function renderMediaItem(media) {
+        const sizeKB = (media.filesize / 1024).toFixed(1);
+        const dimensions = media.width && media.height ? `${media.width}×${media.height}` : 'N/A';
+        
+        return `
+            <div class="media-item" data-id="${media.id}" style="position: relative;">
+                ${media.usage_count > 0 ? `<span class="media-item-badge">در حال استفاده</span>` : ''}
+                <div class="media-item-preview">
+                    <img src="${media.filepath}" alt="${media.original_name}" loading="lazy">
+                </div>
+                <div class="media-item-info">
+                    <div class="media-item-name" title="${media.original_name}">${media.original_name}</div>
+                    <div class="media-item-meta">
+                        <span>${dimensions}</span>
+                        <span>${sizeKB} KB</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function showMediaDetail(media) {
+        selectedMediaItem = media;
+        
+        // Populate modal
+        document.getElementById('media-detail-image').src = media.filepath;
+        document.getElementById('media-detail-filename').value = media.original_name;
+        document.getElementById('media-detail-filepath').value = media.filepath;
+        document.getElementById('media-detail-dimensions').value = 
+            media.width && media.height ? `${media.width} × ${media.height} پیکسل` : 'نامشخص';
+        document.getElementById('media-detail-size').value = `${(media.filesize / 1024).toFixed(2)} کیلوبایت`;
+        document.getElementById('media-detail-uploader').value = media.uploaded_by;
+        
+        const date = new Date(media.uploaded_at * 1000);
+        document.getElementById('media-detail-date').value = 
+            date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
+        
+        document.getElementById('media-detail-description').value = media.description || '';
+        document.getElementById('media-detail-tags').value = media.tags || '';
+        
+        // Check usage
+        await checkMediaUsage(media.filepath);
+        
+        // Show modal
+        const modal = setupModal(document.getElementById('media-detail-modal'));
+        modal.show();
+    }
+
+    async function checkMediaUsage(filepath) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'check_media_usage');
+            formData.append('filepath', filepath);
+            
+            const result = await sendRequest(formData);
+            const usageInfo = document.getElementById('media-usage-info');
+            const usageList = document.getElementById('media-usage-list');
+            
+            if (result.usage.in_use) {
+                usageList.innerHTML = result.usage.locations.map(loc => `<li>${loc}</li>`).join('');
+                usageInfo.style.display = 'block';
+            } else {
+                usageInfo.style.display = 'none';
+            }
+            
+        } catch (error) {
+            console.error('Error checking usage:', error);
+        }
+    }
+
+    // Copy filepath to clipboard
+    document.getElementById('copy-filepath-btn')?.addEventListener('click', function() {
+        const filepath = document.getElementById('media-detail-filepath').value;
+        navigator.clipboard.writeText(filepath)
+            .then(() => showToast('آدرس فایل کپی شد'))
+            .catch(() => showToast('خطا در کپی کردن', 'error'));
+    });
+
+    // Save media info
+    document.getElementById('save-media-info-btn')?.addEventListener('click', async function() {
+        if (!selectedMediaItem) return;
+        
+        this.disabled = true;
+        this.classList.add('loading');
+        
+        try {
+            const formData = new FormData();
+            formData.append('action', 'update_media_info');
+            formData.append('media_id', selectedMediaItem.id);
+            formData.append('description', document.getElementById('media-detail-description').value);
+            formData.append('tags', document.getElementById('media-detail-tags').value);
+            
+            const result = await sendRequest(formData);
+            showToast(result.message);
+            
+            this.classList.remove('loading');
+            this.classList.add('success');
+            
+            setTimeout(() => {
+                this.classList.remove('success');
+                this.disabled = false;
+            }, 1500);
+            
+            // Reload library
+            loadMediaLibrary();
+            
+        } catch (error) {
+            showToast(error.message, 'error');
+            this.disabled = false;
+            this.classList.remove('loading');
+        }
+    });
+
+    // Delete media
+    document.getElementById('delete-media-btn')?.addEventListener('click', async function() {
+        if (!selectedMediaItem) return;
+        
+        if (await showConfirm(
+            'حذف فایل',
+            `آیا از حذف فایل "${selectedMediaItem.original_name}" مطمئن هستید؟`
+        )) {
+            this.disabled = true;
+            this.classList.add('loading');
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'delete_media');
+                formData.append('media_id', selectedMediaItem.id);
+                
+                const result = await sendRequest(formData);
+                showToast(result.message);
+                
+                // Close modal
+                document.getElementById('media-detail-modal').classList.remove('active');
+                
+                // Reload library
+                loadMediaLibrary();
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+                this.disabled = false;
+                this.classList.remove('loading');
+            }
+        }
+    });
+
+    // Refresh media library
+    document.getElementById('refresh-media-btn')?.addEventListener('click', loadMediaLibrary);
+
+    // Cleanup unused media
+    document.getElementById('cleanup-media-btn')?.addEventListener('click', async function() {
+        if (await showConfirm(
+            'پاکسازی فایل‌های استفاده نشده',
+            'آیا از حذف تمام فایل‌هایی که در تنظیمات استفاده نشده‌اند مطمئن هستید؟'
+        )) {
+            this.disabled = true;
+            this.classList.add('loading');
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'cleanup_unused_media');
+                
+                const result = await sendRequest(formData);
+                showToast(result.message);
+                
+                this.classList.remove('loading');
+                this.disabled = false;
+                
+                // Reload library
+                loadMediaLibrary();
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+                this.disabled = false;
+                this.classList.remove('loading');
+            }
+        }
+    });
+
+    // Search and filter
+    let searchTimeout;
+    document.getElementById('media-search')?.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadMediaLibrary({
+                search: this.value,
+                mime_type: document.getElementById('media-filter-type').value
+            });
+        }, 500);
+    });
+
+    document.getElementById('media-filter-type')?.addEventListener('change', function() {
+        loadMediaLibrary({
+            search: document.getElementById('media-search').value,
+            mime_type: this.value
+        });
+    });
+    
+function enableMediaLibraryPicker(inputField, fileInputField, previewImage) {
+    // Create "Browse Library" button
+    const browseBtn = document.createElement('button');
+    browseBtn.type = 'button';
+    browseBtn.className = 'btn btn--secondary btn--outline';
+    browseBtn.innerHTML = '<span class="btn-text">انتخاب از کتابخانه</span>';
+    browseBtn.style.marginTop = '0.5rem';
+    
+    inputField.parentNode.insertBefore(browseBtn, fileInputField);
+    
+    browseBtn.addEventListener('click', async () => {
+        // Open mini media picker modal
+        const pickerModal = createMediaPickerModal();
+        
+        pickerModal.onSelect = (media) => {
+            inputField.value = media.filepath;
+            previewImage.src = media.filepath;
+            previewImage.style.display = '';
+            setDirty();
+            pickerModal.close();
+        };
+        
+        pickerModal.show();
+    });
+}
+
+function createMediaPickerModal() {
+  // Create temporary modal for media selection
+  const modalHTML = `
+        <div class="modal-overlay" id="temp-media-picker" style="z-index: 2000;">
+            <div class="modal-content" style="max-width: 800px; width: 90vw; max-height: 80vh; overflow: auto;">
+                <div class="card-header">
+                    <h3>انتخاب از کتابخانه رسانه</h3>
+                    <button type="button" class="btn btn--danger btn--icon close-picker-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="temp-media-grid" class="media-grid" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+    `;
+
+  document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+  const modal = document.getElementById("temp-media-picker");
+  const grid = document.getElementById("temp-media-grid");
+
+  // Load media
+  grid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
+
+  const formData = new FormData();
+  formData.append("action", "get_media_library");
+
+  sendRequest(formData).then((result) => {
+    if (result.media.length === 0) {
+      grid.innerHTML = '<div class="loading-media">هیچ فایلی در کتابخانه وجود ندارد</div>';
+      return;
+    }
+
+    grid.innerHTML = result.media.map((media) => renderMediaItem(media)).join("");
+
+    grid.querySelectorAll(".media-item").forEach((item) => {
+      item.addEventListener("click", function () {
+        const mediaId = parseInt(this.dataset.id);
+        const media = result.media.find((m) => m.id === mediaId);
+        if (media && modal.onSelect) {
+          modal.onSelect(media);
+        }
+      });
+    });
+  });
+
+  const closeBtn = modal.querySelector(".close-picker-btn");
+  closeBtn.addEventListener("click", () => {
+    modal.remove();
+  });
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+
+  return {
+    show: () => {
+      modal.classList.add("active");
+    },
+    close: () => {
+      modal.remove();
+    },
+    onSelect: null,
+  };
+}
 
 });

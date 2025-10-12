@@ -103,6 +103,12 @@ $users = get_all_users();
                             </svg>
                             <span>ظاهر</span>
                         </a></li>
+                    <li><a href="#" class="tab-button" data-tab="media">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>مدیریت رسانه</span>
+                    </a></li>
                     <li><a href="#" class="tab-button" data-tab="users">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5 5 0 019 10a5 5 0 014 2.002m-4 0a4 4 0 100-5.292" />
@@ -641,6 +647,78 @@ $users = get_all_users();
                         </div>
                     </div>
                 </div>
+                <div id="media" class="tab-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>کتابخانه رسانه</h3>
+                            <div>
+                                <button type="button" id="cleanup-media-btn" class="btn btn--danger btn--outline btn--icon" title="حذف فایل‌های استفاده نشده">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                                <button type="button" id="refresh-media-btn" class="btn btn--primary btn--icon" title="بارگذاری مجدد">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Section -->
+                        <div class="media-upload-section">
+                            <form id="media-upload-form" enctype="multipart/form-data">
+                                <input type="hidden" name="action" value="upload_media">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                                
+                                <div class="upload-dropzone" id="media-dropzone">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p>فایل را اینجا رها کنید یا کلیک کنید</p>
+                                    <small>فرمت‌های مجاز: JPG, PNG, GIF, WebP, SVG - حداکثر 5MB</small>
+                                    <input type="file" id="media-file-input" name="media_file" accept="image/*" style="display: none;">
+                                </div>
+                                
+                                <div class="form-grid" style="margin-top: 1rem;">
+                                    <div class="form-group">
+                                        <label>توضیحات (اختیاری):</label>
+                                        <input type="text" name="description" placeholder="توضیحات فایل">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>برچسب‌ها (اختیاری):</label>
+                                        <input type="text" name="tags" placeholder="بنر, لوگو, آیکون (با کاما جدا کنید)">
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn--primary" id="upload-media-btn">
+                                    <span class="btn-text">آپلود فایل</span>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Stats Section -->
+                        <div id="media-stats" class="media-stats"></div>
+                        
+                        <!-- Search and Filter -->
+                        <div class="media-filters">
+                            <input type="text" id="media-search" placeholder="جستجو در نام، توضیحات یا برچسب‌ها...">
+                            <select id="media-filter-type">
+                                <option value="">همه فرمت‌ها</option>
+                                <option value="image/jpeg">JPEG</option>
+                                <option value="image/png">PNG</option>
+                                <option value="image/gif">GIF</option>
+                                <option value="image/webp">WebP</option>
+                                <option value="image/svg+xml">SVG</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Media Grid -->
+                        <div id="media-grid" class="media-grid">
+                            <div class="loading-media">در حال بارگذاری...</div>
+                        </div>
+                    </div>
+                </div>
             </main>
             <div class="save-button-container">
                 <button type="button" id="preview-btn" class="btn btn--primary btn--outline">
@@ -765,6 +843,76 @@ $users = get_all_users();
                         <button type="button" class="btn btn--danger btn--outline modal-cancel-btn"><span class="btn-text">انصراف</span></button>
                     </div>
                 </form>
+            </div>
+        </div>
+        <div id="media-detail-modal" class="modal-overlay">
+            <div class="modal-content media-detail-content">
+                <div class="media-detail-header">
+                    <h3>جزئیات فایل</h3>
+                    <button type="button" class="btn btn--danger btn--icon modal-cancel-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="media-detail-body">
+                    <div class="media-detail-preview">
+                        <img id="media-detail-image" src="" alt="">
+                    </div>
+                    <div class="media-detail-info">
+                        <div class="form-group">
+                            <label>نام فایل:</label>
+                            <input type="text" id="media-detail-filename" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>آدرس فایل:</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="media-detail-filepath" readonly style="flex: 1;">
+                                <button type="button" id="copy-filepath-btn" class="btn btn--primary btn--icon" title="کپی آدرس">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>ابعاد:</label>
+                            <input type="text" id="media-detail-dimensions" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>حجم:</label>
+                            <input type="text" id="media-detail-size" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>آپلود شده توسط:</label>
+                            <input type="text" id="media-detail-uploader" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>تاریخ آپلود:</label>
+                            <input type="text" id="media-detail-date" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>توضیحات:</label>
+                            <textarea id="media-detail-description" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>برچسب‌ها:</label>
+                            <input type="text" id="media-detail-tags">
+                        </div>
+                        <div id="media-usage-info" class="alert-warning" style="display: none; margin-top: 1rem;">
+                            <p><strong>این فایل در حال استفاده است در:</strong></p>
+                            <ul id="media-usage-list"></ul>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" id="save-media-info-btn" class="btn btn--primary">
+                                <span class="btn-text">ذخیره تغییرات</span>
+                            </button>
+                            <button type="button" id="delete-media-btn" class="btn btn--danger">
+                                <span class="btn-text">حذف فایل</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

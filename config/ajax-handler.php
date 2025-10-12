@@ -308,7 +308,122 @@ try {
                 ]
             ];
             break;
-        
+
+        case 'upload_media':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است');
+
+            if (!isset($_FILES['media_file']) || $_FILES['media_file']['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('فایلی انتخاب نشده است');
+            }
+
+            $description = $_POST['description'] ?? '';
+            $tags = $_POST['tags'] ?? '';
+
+            $result = upload_to_media_library($_FILES['media_file'], $current_event_id, $description, $tags);
+
+            write_log('INFO', "Media uploaded: {$result['filename']} to event {$current_event_id}");
+
+            $response = [
+                'success' => true,
+                'message' => 'فایل با موفقیت آپلود شد',
+                'media' => $result
+            ];
+            break;
+
+        case 'get_media_library':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است');
+
+            $filters = [
+                'search' => $_POST['search'] ?? '',
+                'mime_type' => $_POST['mime_type'] ?? '',
+                'limit' => $_POST['limit'] ?? null
+            ];
+
+            $media = get_media_library($current_event_id, $filters);
+            $stats = get_media_stats($current_event_id);
+
+            $response = [
+                'success' => true,
+                'media' => $media,
+                'stats' => $stats
+            ];
+            break;
+
+        case 'delete_media':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است');
+
+            $media_id = filter_input(INPUT_POST, 'media_id', FILTER_VALIDATE_INT);
+            if (!$media_id)
+                throw new Exception('شناسه فایل نامعتبر است');
+
+            delete_media_file($media_id, $current_event_id);
+
+            $response = [
+                'success' => true,
+                'message' => 'فایل با موفقیت حذف شد'
+            ];
+            break;
+
+        case 'check_media_usage':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است');
+
+            $filepath = $_POST['filepath'] ?? '';
+            if (empty($filepath))
+                throw new Exception('مسیر فایل ارسال نشده است');
+
+            $usage = check_media_usage($filepath, $current_event_id);
+
+            $response = [
+                'success' => true,
+                'usage' => $usage
+            ];
+            break;
+
+        case 'cleanup_unused_media':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است');
+
+            $deleted_count = cleanup_unused_media($current_event_id);
+
+            $response = [
+                'success' => true,
+                'message' => "{$deleted_count} فایل استفاده نشده حذف شد",
+                'deleted_count' => $deleted_count
+            ];
+            break;
+
+        case 'update_media_info':
+            if (empty($current_event_id))
+                throw new Exception('رویداد انتخاب نشده است');
+
+            $media_id = filter_input(INPUT_POST, 'media_id', FILTER_VALIDATE_INT);
+            $description = $_POST['description'] ?? '';
+            $tags = $_POST['tags'] ?? '';
+
+            if (!$media_id)
+                throw new Exception('شناسه فایل نامعتبر است');
+
+            $db = get_db_connection();
+            $stmt = $db->prepare("UPDATE media_library 
+        SET description = :description, tags = :tags 
+        WHERE id = :id AND event_id = :event_id");
+
+            $stmt->execute([
+                'id' => $media_id,
+                'description' => $description,
+                'tags' => $tags,
+                'event_id' => $current_event_id
+            ]);
+
+            $response = [
+                'success' => true,
+                'message' => 'اطلاعات فایل به‌روزرسانی شد'
+            ];
+            break;
         default:
             if (empty($current_event_id) || !is_valid_event_id($current_event_id)) throw new Exception("هیچ رویداد معتبری انتخاب نشده است.");
             switch ($action) {

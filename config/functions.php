@@ -80,6 +80,35 @@ function create_version_history_table($db) {
                ON config_versions(event_id, version_number DESC)");
 }
 
+
+function create_media_library_table() {
+    $db = get_db_connection();
+    
+    $db->exec("CREATE TABLE IF NOT EXISTS media_library (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        filesize INTEGER NOT NULL,
+        mime_type TEXT NOT NULL,
+        width INTEGER,
+        height INTEGER,
+        uploaded_by TEXT NOT NULL,
+        uploaded_at INTEGER NOT NULL,
+        last_used_at INTEGER,
+        usage_count INTEGER DEFAULT 0,
+        tags TEXT,
+        description TEXT
+    )");
+    
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_media_event ON media_library(event_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_media_filename ON media_library(filename)");
+}
+
+// Call in get_db_connection() after other tables
+create_media_library_table();
+
 // --- USER MANAGEMENT & PERMISSIONS ---
 function is_owner()
 {
@@ -589,4 +618,247 @@ function get_current_version($event_id) {
     $result = $stmt->fetch();
     
     return $result['current_ver'] ?? 0;
+}
+
+/**
+ * Upload file to media library
+ */
+function upload_to_media_library($file, $event_id, $description = '', $tags = '') {
+    // Validate file
+    $allowed_mimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    $max_size = 5 * 1024 * 1024; // 5MB
+    
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        throw new Exception('خطا در آپلود فایل');
+    }
+    
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    if (!in_array($mime_type, $allowed_mimes)) {
+        throw new Exception('فرمت فایل مجاز نیست');
+    }
+    
+    if ($file['size'] > $max_size) {
+        throw new Exception('حجم فایل بیش از 5 مگابایت است');
+    }
+    
+    // Get image dimensions
+    $dimensions = @getimagesize($file['tmp_name']);
+    $width = $dimensions[0] ?? null;
+    $height = $dimensions[1] ?? null;
+    
+    // Generate unique filename
+    $path_info = pathinfo($file['name']);
+    $extension = strtolower($path_info['extension']);
+    $unique_name = uniqid() . '_' . preg_replace('/[^\p{L}\p{N}_-]/u', '_', $path_info['filename']) . '.' . $extension;
+    
+    // Create event-specific media directory
+    $media_dir = UPLOADS_DIR . $event_id . '/media/';
+    if (!is_dir($media_dir)) {
+        mkdir($media_dir, 0755, true);
+    }
+    
+    $target_path = $media_dir . $unique_name;
+    $web_path = 'config/uploads/' . $event_id . '/media/' . $unique_name;
+    
+    if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+        throw new Exception('خطا در ذخیره فایل');
+    }
+    
+    // Save to database
+    $db = get_db_connection();
+    $stmt = $db->prepare("INSERT INTO media_library 
+        (event_id, filename, original_name, filepath, filesize, mime_type, width, height, uploaded_by, uploaded_at, tags, description) 
+        VALUES (:event_id, :filename, :original_name, :filepath, :filesize, :mime_type, :width, :height, :uploaded_by, :uploaded_at, :tags, :description)");
+    
+    $stmt->execute([
+        'event_id' => $event_id,
+        'filename' => $unique_name,
+        'original_name' => $file['name'],
+        'filepath' => $web_path,
+        'filesize' => $file['size'],
+        'mime_type' => $mime_type,
+        'width' => $width,
+        'height' => $height,
+        'uploaded_by' => $_SESSION['username'] ?? 'unknown',
+        'uploaded_at' => time(),
+        'tags' => $tags,
+        'description' => $description
+    ]);
+    
+    return [
+        'id' => $db->lastInsertId(),
+        'filepath' => $web_path,
+        'filename' => $unique_name,
+        'filesize' => $file['size'],
+        'width' => $width,
+        'height' => $height
+    ];
+}
+
+/**
+ * Get all media for an event
+ */
+function get_media_library($event_id, $filters = []) {
+    $db = get_db_connection();
+    
+    $sql = "SELECT * FROM media_library WHERE event_id = :event_id";
+    $params = ['event_id' => $event_id];
+    
+    // Add filters
+    if (!empty($filters['search'])) {
+        $sql .= " AND (original_name LIKE :search OR description LIKE :search OR tags LIKE :search)";
+        $params['search'] = '%' . $filters['search'] . '%';
+    }
+    
+    if (!empty($filters['mime_type'])) {
+        $sql .= " AND mime_type = :mime_type";
+        $params['mime_type'] = $filters['mime_type'];
+    }
+    
+    $sql .= " ORDER BY uploaded_at DESC";
+    
+    if (!empty($filters['limit'])) {
+        $sql .= " LIMIT :limit";
+        $params['limit'] = (int)$filters['limit'];
+    }
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    
+    return $stmt->fetchAll();
+}
+
+/**
+ * Delete media file
+ */
+function delete_media_file($media_id, $event_id) {
+    $db = get_db_connection();
+    
+    // Get media info
+    $stmt = $db->prepare("SELECT * FROM media_library WHERE id = :id AND event_id = :event_id");
+    $stmt->execute(['id' => $media_id, 'event_id' => $event_id]);
+    $media = $stmt->fetch();
+    
+    if (!$media) {
+        throw new Exception('فایل یافت نشد');
+    }
+    
+    // Check if file is in use
+    $usage = check_media_usage($media['filepath'], $event_id);
+    if ($usage['in_use']) {
+        throw new Exception('این فایل در حال استفاده است و نمی‌تواند حذف شود: ' . implode(', ', $usage['locations']));
+    }
+    
+    // Delete physical file
+    $physical_path = PROJECT_ROOT . '/' . $media['filepath'];
+    if (file_exists($physical_path)) {
+        @unlink($physical_path);
+    }
+    
+    // Delete from database
+    $stmt = $db->prepare("DELETE FROM media_library WHERE id = :id");
+    $stmt->execute(['id' => $media_id]);
+    
+    write_log('INFO', "Media file deleted: {$media['filename']} from event {$event_id}");
+    
+    return true;
+}
+
+/**
+ * Check if media file is currently in use
+ */
+function check_media_usage($filepath, $event_id) {
+    $configsFile = EVENTS_DIR . $event_id . '/configs.json';
+    
+    if (!file_exists($configsFile)) {
+        return ['in_use' => false, 'locations' => []];
+    }
+    
+    $configs = json_decode(file_get_contents($configsFile), true);
+    $locations = [];
+    
+    // Check main images
+    $fields = ['logo' => 'لوگو', 'preBanner' => 'بنر قبل از پخش', 'endBanner' => 'بنر پایان', 'banner' => 'بنر زیر پخش'];
+    foreach ($fields as $key => $label) {
+        if (isset($configs[$key]) && $configs[$key] === $filepath) {
+            $locations[] = $label;
+        }
+    }
+    
+    // Check social icons
+    if (isset($configs['socials']) && is_array($configs['socials'])) {
+        foreach ($configs['socials'] as $index => $social) {
+            if (isset($social['icon']) && $social['icon'] === $filepath) {
+                $locations[] = "آیکون شبکه اجتماعی: {$social['title']}";
+            }
+        }
+    }
+    
+    return [
+        'in_use' => !empty($locations),
+        'locations' => $locations
+    ];
+}
+
+/**
+ * Update media usage stats
+ */
+function update_media_usage($filepath, $event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("UPDATE media_library 
+        SET last_used_at = :time, usage_count = usage_count + 1 
+        WHERE filepath = :filepath AND event_id = :event_id");
+    
+    $stmt->execute([
+        'time' => time(),
+        'filepath' => $filepath,
+        'event_id' => $event_id
+    ]);
+}
+
+/**
+ * Get media library statistics
+ */
+function get_media_stats($event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("SELECT 
+        COUNT(*) as total_files,
+        SUM(filesize) as total_size,
+        COUNT(CASE WHEN mime_type LIKE 'image/jpeg%' THEN 1 END) as jpeg_count,
+        COUNT(CASE WHEN mime_type LIKE 'image/png%' THEN 1 END) as png_count,
+        COUNT(CASE WHEN mime_type LIKE 'image/gif%' THEN 1 END) as gif_count,
+        COUNT(CASE WHEN mime_type LIKE 'image/webp%' THEN 1 END) as webp_count,
+        COUNT(CASE WHEN mime_type LIKE 'image/svg%' THEN 1 END) as svg_count
+        FROM media_library WHERE event_id = :event_id");
+    
+    $stmt->execute(['event_id' => $event_id]);
+    
+    return $stmt->fetch();
+}
+
+/**
+ * Bulk delete unused media
+ */
+function cleanup_unused_media($event_id) {
+    $media_files = get_media_library($event_id);
+    $deleted_count = 0;
+    
+    foreach ($media_files as $media) {
+        $usage = check_media_usage($media['filepath'], $event_id);
+        if (!$usage['in_use']) {
+            try {
+                delete_media_file($media['id'], $event_id);
+                $deleted_count++;
+            } catch (Exception $e) {
+                // Continue with other files
+            }
+        }
+    }
+    
+    return $deleted_count;
 }
