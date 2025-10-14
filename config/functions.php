@@ -109,6 +109,40 @@ function create_media_library_table() {
 // Call in get_db_connection() after other tables
 create_media_library_table();
 
+/**
+ * Get the base URL of the application (e.g., http://localhost/php/livekit)
+ */
+function get_base_url() {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    $domain = $_SERVER['HTTP_HOST'];
+    
+    // Assumes the project is directly inside the web root or a subdirectory.
+    // This logic calculates the path from the document root to the project root.
+    $project_root_path = str_replace('\\', '/', PROJECT_ROOT);
+    $document_root_path = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
+    
+    // Ensure document_root_path ends with a slash if it's not empty
+    if ($document_root_path !== '' && substr($document_root_path, -1) !== '/') {
+        $document_root_path .= '/';
+    }
+
+    // Calculate the base path by removing the document root from the project root
+    if (strpos($project_root_path, $document_root_path) === 0) {
+        $base_path = substr($project_root_path, strlen($document_root_path));
+    } else {
+        // Fallback if the project is not under the document root (e.g., symlink)
+        // This might need manual configuration in a real-world scenario
+        $base_path = ''; 
+    }
+
+    // Prepend a slash if base_path is not empty and doesn't start with one
+    if ($base_path !== '' && $base_path[0] !== '/') {
+        $base_path = '/' . $base_path;
+    }
+
+    return rtrim($protocol . $domain . $base_path, '/');
+}
+
 // --- USER MANAGEMENT & PERMISSIONS ---
 function is_owner()
 {
@@ -317,8 +351,8 @@ function handle_upload($file_input, $url_input, $old_file_path)
             $target_file_abs = $event_upload_dir_abs . $sanitized_name;
 
             if (move_uploaded_file($file['tmp_name'], $target_file_abs)) {
-                // FIX 5: Use correct web-accessible path
-                $new_file_path = 'config/uploads/' . $current_event_id . '/' . $sanitized_name;
+                // Use absolute URL
+                $new_file_path = get_base_url() . '/config/uploads/' . $current_event_id . '/' . $sanitized_name;
             } else {
                 $error_message = 'خطا در آپلود فایل.';
                 $new_file_path = $url_input;
@@ -327,11 +361,16 @@ function handle_upload($file_input, $url_input, $old_file_path)
     }
 
     // Compare final path with old path for deletion
-    if ($new_file_path !== $old_file_path && !empty($old_file_path) && strpos($old_file_path, 'config/uploads/') === 0) {
-        // Construct physical path from web path
-        $old_file_on_disk = PROJECT_ROOT . '/' . $old_file_path;
-        if (file_exists($old_file_on_disk)) {
-            @unlink($old_file_on_disk);
+    if ($new_file_path !== $old_file_path && !empty($old_file_path)) {
+        $base_url = get_base_url();
+        // Check if it's a local file managed by the app
+        if (strpos($old_file_path, $base_url . '/config/uploads/') === 0) {
+            // Construct physical path from web path
+            $relative_path = substr($old_file_path, strlen($base_url) + 1); // +1 for the leading slash
+            $old_file_on_disk = PROJECT_ROOT . '/' . $relative_path;
+            if (file_exists($old_file_on_disk)) {
+                @unlink($old_file_on_disk);
+            }
         }
     }
 
@@ -436,8 +475,31 @@ function is_valid_image_url($url)
 
     // First, check if the URL structure is valid.
     if (preg_match('/^https?:\/\//i', $url)) {
-        // For absolute URLs, use the full validator.
-        $isStructurallyValid = (filter_var($url, FILTER_VALIDATE_URL) !== false);
+        // For absolute URLs, we need to handle non-ASCII characters in the path.
+        $parts = parse_url($url);
+        if ($parts === false) {
+            return false;
+        }
+
+        $path = $parts['path'] ?? '';
+        // URL-encode each part of the path individually, but don't encode slashes
+        $path_parts = explode('/', $path);
+        $encoded_path_parts = array_map('rawurlencode', $path_parts);
+        $encoded_path = implode('/', $encoded_path_parts);
+        
+        $rebuilt_url = ($parts['scheme'] ?? 'http') . '://' . ($parts['host'] ?? '');
+        if (isset($parts['port'])) {
+            $rebuilt_url .= ':' . $parts['port'];
+        }
+        $rebuilt_url .= $encoded_path;
+        if (isset($parts['query'])) {
+            $rebuilt_url .= '?' . $parts['query'];
+        }
+        if (isset($parts['fragment'])) {
+            $rebuilt_url .= '#' . $parts['fragment'];
+        }
+
+        $isStructurallyValid = (filter_var($rebuilt_url, FILTER_VALIDATE_URL) !== false);
     } else {
         // For relative URLs, we assume the structure is valid.
         $isStructurallyValid = true;
@@ -447,7 +509,7 @@ function is_valid_image_url($url)
         return false;
     }
 
-    // If the structure is valid, now check for a valid image extension.
+    // If the structure is valid, now check for a valid image extension on the original URL.
     return preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $url);
 }
 
@@ -661,7 +723,8 @@ function upload_to_media_library($file, $event_id, $description = '', $tags = ''
     }
     
     $target_path = $media_dir . $unique_name;
-    $web_path = 'config/uploads/' . $event_id . '/media/' . $unique_name;
+    $relative_web_path = 'config/uploads/' . $event_id . '/media/' . $unique_name;
+    $web_path = get_base_url() . '/' . $relative_web_path;
     
     if (!move_uploaded_file($file['tmp_name'], $target_path)) {
         throw new Exception('خطا در ذخیره فایل');
@@ -677,7 +740,7 @@ function upload_to_media_library($file, $event_id, $description = '', $tags = ''
         'event_id' => $event_id,
         'filename' => $unique_name,
         'original_name' => $file['name'],
-        'filepath' => $web_path,
+        'filepath' => $web_path, // Store the full URL
         'filesize' => $file['size'],
         'mime_type' => $mime_type,
         'width' => $width,
@@ -753,9 +816,20 @@ function delete_media_file($media_id, $event_id) {
     }
     
     // Delete physical file
-    $physical_path = PROJECT_ROOT . '/' . $media['filepath'];
-    if (file_exists($physical_path)) {
+    $base_url = get_base_url();
+    $physical_path = '';
+
+    // Convert URL to physical path
+    if (strpos($media['filepath'], $base_url) === 0) {
+        $relative_path = substr($media['filepath'], strlen($base_url) + 1);
+        $physical_path = PROJECT_ROOT . '/' . str_replace('/', DIRECTORY_SEPARATOR, $relative_path);
+    }
+
+    if (!empty($physical_path) && file_exists($physical_path)) {
         @unlink($physical_path);
+    } else {
+        // Log if file not found, but proceed to delete DB record
+        write_log('WARNING', "Media file not found on disk for deletion: {$physical_path}");
     }
     
     // Delete from database
@@ -781,7 +855,7 @@ function check_media_usage($filepath, $event_id) {
     $locations = [];
     
     // Check main images
-    $fields = ['logo' => 'لوگو', 'preBanner' => 'بنر قبل از پخش', 'endBanner' => 'بنر پایان', 'banner' => 'بنر زیر پخش'];
+    $fields = ['logo' => 'لوگو', 'preBanner' => 'بنر قبل از پخش‌زنده', 'endBanner' => 'بنر بعد از پخش‌زنده', 'banner' => 'بنر زیر پخش‌زنده'];
     foreach ($fields as $key => $label) {
         if (isset($configs[$key]) && $configs[$key] === $filepath) {
             $locations[] = $label;

@@ -880,11 +880,14 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
         const setupItem = (item) => {
             item.querySelectorAll(".image-group").forEach((group) => {
-                setupImagePreview(
-                    group.querySelector(".preview-url-input"),
-                    group.querySelector(".preview-file-input"),
-                    group.querySelector(".image-preview")
-                );
+                const urlInput = group.querySelector(".preview-url-input");
+                const fileInput = group.querySelector(".preview-file-input");
+                const preview = group.querySelector(".image-preview");
+
+                if (urlInput && fileInput && preview) {
+                    setupImagePreview(urlInput, fileInput, preview);
+                    enableMediaLibraryPicker(urlInput, fileInput, preview);
+                }
             });
             updateItemCounters(containerId);
         };
@@ -1466,10 +1469,14 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
             const urlInput = group.querySelector('.preview-url-input');
             const fileInput = group.querySelector('.preview-file-input');
             const preview = group.querySelector('.image-preview');
+            const mediaPickerBtn = group.querySelector(".media-picker");
+            
             
             if (urlInput && fileInput && preview) {
                 setupImagePreview(urlInput, fileInput, preview);
-                enableMediaLibraryPicker(urlInput, fileInput, preview);
+                if (!mediaPickerBtn){
+                    enableMediaLibraryPicker(urlInput, fileInput, preview);
+                }
             }
         });
     };
@@ -1958,7 +1965,14 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
     function renderMediaItem(media) {
         const sizeKB = (media.filesize / 1024).toFixed(1);
-        const dimensions = media.width && media.height ? `${media.width}×${media.height}` : 'N/A';
+        let dimensions = media.width && media.height ? `${media.width}×${media.height}` : media.original_name.split('.').pop().toLowerCase() === "svg" ? '' : 'N/A';
+        if (media.original_name.split('.').pop().toLowerCase() === "svg") {
+            dimensions = '';
+        }
+        // let src = media.filepath;
+        // if (media.filepath.startsWith("config/")){
+        //     src = src.substring(7);
+        // }
         
         return `
             <div class="media-item" data-id="${media.id}" style="position: relative;">
@@ -1979,13 +1993,17 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
     async function showMediaDetail(media) {
         selectedMediaItem = media;
+        // let src = media.filepath;
+        // if (media.filepath.startsWith("config/")){
+        //     src = src.substring(7);
+        // }
         
         // Populate modal
         document.getElementById('media-detail-image').src = media.filepath;
         document.getElementById('media-detail-filename').value = media.original_name;
         document.getElementById('media-detail-filepath').value = media.filepath;
         document.getElementById('media-detail-dimensions').value = 
-            media.width && media.height ? `${media.width} × ${media.height} پیکسل` : 'نامشخص';
+            media.width && media.height ? `${media.width}×${media.height}` : media.original_name.split('.').pop().toLowerCase() === "svg" ? 'فایل های svg ابعاد مشخصی ندارند' : 'نامشخص';
         document.getElementById('media-detail-size').value = `${(media.filesize / 1024).toFixed(2)} کیلوبایت`;
         document.getElementById('media-detail-uploader').value = media.uploaded_by;
         
@@ -2104,6 +2122,15 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
     // Refresh media library
     document.getElementById('refresh-media-btn')?.addEventListener('click', loadMediaLibrary);
+    
+    if (
+      savedTabId === "media" ||
+      document.querySelector("#media.active")
+    ) {
+      setTimeout(() => {
+        loadMediaLibrary();
+      }, 100);
+    }
 
     // Cleanup unused media
     document.getElementById('cleanup-media-btn')?.addEventListener('click', async function() {
@@ -2141,7 +2168,7 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             loadMediaLibrary({
-                search: this.value,
+                search: this.value.trim(),
                 mime_type: document.getElementById('media-filter-type').value
             });
         }, 500);
@@ -2158,9 +2185,9 @@ function enableMediaLibraryPicker(inputField, fileInputField, previewImage) {
     // Create "Browse Library" button
     const browseBtn = document.createElement('button');
     browseBtn.type = 'button';
-    browseBtn.className = 'btn btn--secondary btn--outline';
+    browseBtn.className = 'btn btn--primary btn--outline media-picker';
     browseBtn.innerHTML = '<span class="btn-text">انتخاب از کتابخانه</span>';
-    browseBtn.style.marginTop = '0.5rem';
+    browseBtn.style.marginBottom = '0.5rem';
     
     inputField.parentNode.insertBefore(browseBtn, fileInputField);
     
@@ -2169,6 +2196,10 @@ function enableMediaLibraryPicker(inputField, fileInputField, previewImage) {
         const pickerModal = createMediaPickerModal();
         
         pickerModal.onSelect = (media) => {
+            // let src = media.filepath;
+            // if (media.filepath.startsWith("config/")) {
+            //     src = src.substring(7);
+            // }
             inputField.value = media.filepath;
             previewImage.src = media.filepath;
             previewImage.style.display = '';
@@ -2203,6 +2234,16 @@ function createMediaPickerModal() {
   const modal = document.getElementById("temp-media-picker");
   const grid = document.getElementById("temp-media-grid");
 
+  const modalObject = {
+    show: () => {
+      modal.classList.add("active");
+    },
+    close: () => {
+      modal.remove();
+    },
+    onSelect: null,
+  };
+
   // Load media
   grid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
 
@@ -2221,8 +2262,8 @@ function createMediaPickerModal() {
       item.addEventListener("click", function () {
         const mediaId = parseInt(this.dataset.id);
         const media = result.media.find((m) => m.id === mediaId);
-        if (media && modal.onSelect) {
-          modal.onSelect(media);
+        if (media && modalObject.onSelect) {
+          modalObject.onSelect(media);
         }
       });
     });
@@ -2239,15 +2280,7 @@ function createMediaPickerModal() {
     }
   });
 
-  return {
-    show: () => {
-      modal.classList.add("active");
-    },
-    close: () => {
-      modal.remove();
-    },
-    onSelect: null,
-  };
+  return modalObject;
 }
 
 });
