@@ -143,6 +143,35 @@ function get_base_url() {
     return rtrim($protocol . $domain . $base_path, '/');
 }
 
+/**
+ * Converts a full absolute URL into a project-relative path.
+ * It removes the base URL from the beginning of the given link.
+ *
+ * @param string $full_url The full URL to convert (e.g., "https://example.com/myapp/css/style.css").
+ * @return string The project-relative path (e.g., "/css/style.css"), or the original URL if it's not part of the project.
+ */
+function url_to_relative_path($full_url) {
+    // Get the base URL of the current project.
+    $base_url = get_base_url() . "/config";
+
+    // Check if the provided URL starts with the base URL.
+    // We use strpos() === 0 to ensure it's at the beginning.
+    if (strpos($full_url, $base_url) === 0) {
+        // If it matches, extract the part of the string after the base URL.
+        $relative_path = substr($full_url, strlen($base_url));
+
+        // Ensure the path always starts with a '/' for consistency.
+        if (empty($relative_path) || $relative_path[0] === '/') {
+            $relative_path = substr($relative_path, 1);
+        }
+
+        return $relative_path;
+    }
+
+    // If the URL is not part of this project, return it unchanged.
+    return $full_url;
+}
+
 // --- USER MANAGEMENT & PERMISSIONS ---
 function is_owner()
 {
@@ -762,9 +791,12 @@ function upload_to_media_library($file, $event_id, $description = '', $tags = ''
 }
 
 /**
- * Get all media for an event
+ * Verify file exists before loading media library
  */
 function get_media_library($event_id, $filters = []) {
+    // First sync to remove orphaned entries
+    sync_media_library($event_id);
+    
     $db = get_db_connection();
     
     $sql = "SELECT * FROM media_library WHERE event_id = :event_id";
@@ -785,11 +817,19 @@ function get_media_library($event_id, $filters = []) {
     
     if (!empty($filters['limit'])) {
         $sql .= " LIMIT :limit";
-        $params['limit'] = (int)$filters['limit'];
     }
     
     $stmt = $db->prepare($sql);
-    $stmt->execute($params);
+    
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    
+    if (!empty($filters['limit'])) {
+        $stmt->bindValue(':limit', (int)$filters['limit'], PDO::PARAM_INT);
+    }
+    
+    $stmt->execute();
     
     return $stmt->fetchAll();
 }
@@ -935,4 +975,67 @@ function cleanup_unused_media($event_id) {
     }
     
     return $deleted_count;
+}
+
+/**
+ * Sync media library with actual files - remove orphaned database entries
+ */
+function sync_media_library($event_id) {
+    $db = get_db_connection();
+    
+    // Get all media from database
+    $stmt = $db->prepare("SELECT id, filepath FROM media_library WHERE event_id = :event_id");
+    $stmt->execute(['event_id' => $event_id]);
+    $media_files = $stmt->fetchAll();
+    
+    $removed_count = 0;
+    
+    foreach ($media_files as $media) {
+        $physical_path = url_to_relative_path($media['filepath']);
+        
+        
+        // If file doesn't exist on disk, remove from database
+        if (!file_exists($physical_path)) {
+            $delete_stmt = $db->prepare("DELETE FROM media_library WHERE id = :id");
+            $delete_stmt->execute(['id' => $media['id']]);
+            $removed_count++;
+            
+            write_log('WARNING', "Orphaned media entry removed: {$media['filepath']}");
+        }
+    }
+    
+    return $removed_count;
+}
+
+// Add to functions.php - call this when loading dashboard
+
+/**
+ * Perform database maintenance tasks
+ */
+function perform_database_maintenance() {
+    $db = get_db_connection();
+    
+    // Get all events
+    $events = get_events();
+    $event_ids = array_column($events, 'id');
+    
+    if (empty($event_ids)) {
+        return;
+    }
+    
+    // Clean up media for non-existent events
+    $placeholders = implode(',', array_fill(0, count($event_ids), '?'));
+    $stmt = $db->prepare("DELETE FROM media_library WHERE event_id NOT IN ($placeholders)");
+    $stmt->execute($event_ids);
+    
+    // Clean up versions for non-existent events
+    $stmt = $db->prepare("DELETE FROM config_versions WHERE event_id NOT IN ($placeholders)");
+    $stmt->execute($event_ids);
+    
+    // Sync each event's media library
+    foreach ($event_ids as $event_id) {
+        sync_media_library($event_id);
+    }
+    
+    write_log('INFO', 'Database maintenance completed');
 }

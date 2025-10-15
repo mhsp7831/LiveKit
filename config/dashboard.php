@@ -37,6 +37,11 @@ if (!isset($configs['socials'])) {
     $configs['socials'] = [];
 }
 
+if (!empty($all_events)) {
+    // Perform database maintenance on dashboard load
+    perform_database_maintenance();
+}
+
 $users = get_all_users();
 ?>
 <!DOCTYPE html>

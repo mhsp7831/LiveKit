@@ -172,6 +172,37 @@ try {
                 safe_file_put_contents($configsFile, json_encode($eventConfigs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             }
 
+            // FIX: Update event_id in media_library table
+            $db = get_db_connection();
+            $stmt = $db->prepare("UPDATE media_library SET event_id = :new_id WHERE event_id = :old_id");
+            $stmt->execute(['new_id' => $newId, 'old_id' => $currentId]);
+            
+            // FIX: Update filepath in media_library table
+            $stmt = $db->prepare("SELECT id, filepath FROM media_library WHERE event_id = :event_id");
+            $stmt->execute(['event_id' => $newId]);
+            $mediaFiles = $stmt->fetchAll();
+            
+            foreach ($mediaFiles as $media) {
+                $oldFilepath = $media['filepath'];
+                $newFilepath = str_replace(
+                    'config/uploads/' . $currentId . '/',
+                    'config/uploads/' . $newId . '/',
+                    $oldFilepath
+                );
+                
+                if ($oldFilepath !== $newFilepath) {
+                    $updateStmt = $db->prepare("UPDATE media_library SET filepath = :new_filepath WHERE id = :id");
+                    $updateStmt->execute([
+                        'new_filepath' => $newFilepath,
+                        'id' => $media['id']
+                    ]);
+                }
+            }
+            
+            // FIX: Update event_id in config_versions table
+            $stmt = $db->prepare("UPDATE config_versions SET event_id = :new_id WHERE event_id = :old_id");
+            $stmt->execute(['new_id' => $newId, 'old_id' => $currentId]);
+
             // Update events.json
             foreach ($events as &$event) {
                 if ($event['id'] === $currentId) $event['id'] = $newId;
@@ -179,7 +210,7 @@ try {
             safe_file_put_contents(EVENTS_FILE, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
             $_SESSION['current_event_id'] = $newId;
-            write_log('INFO', "Event ID changed from '{$currentId}' to '{$newId}'.");
+            write_log('INFO', "Event ID changed from '{$currentId}' to '{$newId}' with database sync.");
             $response = ['success' => true, 'message' => 'شناسه رویداد با موفقیت تغییر کرد.'];
             break;
 
@@ -191,10 +222,32 @@ try {
             $events = array_values(array_filter(get_events(), fn($e) => $e['id'] !== $eventId));
             $dirPath = EVENTS_DIR . $eventId;
             $uploadsPath = UPLOADS_DIR . $eventId;
+            
+            // FIX: Delete related database entries before deleting files
+            $db = get_db_connection();
+            
+            // Delete media library entries
+            $stmt = $db->prepare("DELETE FROM media_library WHERE event_id = :event_id");
+            $stmt->execute(['event_id' => $eventId]);
+            $deletedMedia = $stmt->rowCount();
+            
+            // Delete config versions
+            $stmt = $db->prepare("DELETE FROM config_versions WHERE event_id = :event_id");
+            $stmt->execute(['event_id' => $eventId]);
+            $deletedVersions = $stmt->rowCount();
+            
+            write_log('INFO', "Deleted {$deletedMedia} media entries and {$deletedVersions} version entries for event {$eventId}");
+            
+            // Delete physical files
             foreach ([$dirPath, $uploadsPath] as $pathToDelete) {
                 if (is_dir($pathToDelete)) {
-                    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pathToDelete, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
-                    foreach ($files as $fileinfo) ($fileinfo->isDir() ? 'rmdir' : 'unlink')($fileinfo->getRealPath());
+                    $files = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($pathToDelete, RecursiveDirectoryIterator::SKIP_DOTS), 
+                        RecursiveIteratorIterator::CHILD_FIRST
+                    );
+                    foreach ($files as $fileinfo) {
+                        ($fileinfo->isDir() ? 'rmdir' : 'unlink')($fileinfo->getRealPath());
+                    }
                     rmdir($pathToDelete);
                 }
             }
@@ -202,8 +255,13 @@ try {
             safe_file_put_contents(EVENTS_FILE, json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             $newCurrentEventId = $events[0]['id'] ?? null;
             $_SESSION['current_event_id'] = $newCurrentEventId;
-            write_log('INFO', "Event deleted. ID: {$eventId}");
-            $response = ['success' => true, 'message' => 'رویداد حذف شد.', 'deleted_event_id' => $eventId, 'new_current_event_id' => $newCurrentEventId];
+            write_log('INFO', "Event deleted with database cleanup. ID: {$eventId}");
+            $response = [
+                'success' => true, 
+                'message' => 'رویداد و تمام اطلاعات مرتبط حذف شد.', 
+                'deleted_event_id' => $eventId, 
+                'new_current_event_id' => $newCurrentEventId
+            ];
             break;
 
         case 'switch_event':
@@ -424,6 +482,20 @@ try {
                 'message' => 'اطلاعات فایل به‌روزرسانی شد'
             ];
             break;
+
+        case 'sync_media_library':
+            if (empty($current_event_id)) throw new Exception('رویداد انتخاب نشده است');
+            
+            $removed_count = sync_media_library($current_event_id);
+            
+            $response = [
+                'success' => true,
+                'message' => $removed_count > 0 
+                    ? "{$removed_count} مورد ناهماهنگ از پایگاه داده حذف شد" 
+                    : "پایگاه داده و فایل‌ها هماهنگ هستند",
+                'removed_count' => $removed_count
+            ];
+            break;
         default:
             if (empty($current_event_id) || !is_valid_event_id($current_event_id)) throw new Exception("هیچ رویداد معتبری انتخاب نشده است.");
             switch ($action) {
@@ -439,11 +511,20 @@ try {
                         if (!is_valid_image_url($url_input)) {
                             throw new Exception("آدرس تصویر برای '$field' نامعتبر است. آدرس باید به یک فایل تصویر ختم شود.");
                         }
-                        $result = handle_upload($_FILES[$field . '_file'] ?? null, trim($url_input) ?? '', $_POST[$field . '_old'] ?? '');
-                        $configs[$field] = $result['path'];
-                        if ($result['error']) {
-                            $upload_errors[] = $result['error'];
+
+                        $file_to_upload = $_FILES[$field . '_file'] ?? null;
+                        $final_path = trim($url_input);
+
+                        if (isset($file_to_upload) && $file_to_upload['error'] === UPLOAD_ERR_OK) {
+                            try {
+                                $result = upload_to_media_library($file_to_upload, $current_event_id, "Uploaded for field: $field");
+                                $final_path = $result['filepath'];
+                            } catch (Exception $e) {
+                                $upload_errors[] = "خطا در آپلود برای '$field': " . $e->getMessage();
+                            }
                         }
+                        
+                        $configs[$field] = $final_path;
                     }
                     if (!empty($upload_errors)) {
                         throw new Exception(implode('<br>', $upload_errors));
@@ -503,27 +584,35 @@ try {
                                 throw new Exception("آدرس آیکن برای '$title' نامعتبر است. آدرس باید به یک فایل تصویر ختم شود.");
                             }
 
-                            $icon_result = handle_upload(
-                                !empty($_FILES['social_icon_file']['name'][$index]) ? [
-                                    'name' => $_FILES['social_icon_file']['name'][$index],
-                                    'type' => $_FILES['social_icon_file']['type'][$index],
-                                    'tmp_name' => $_FILES['social_icon_file']['tmp_name'][$index],
-                                    'error' => $_FILES['social_icon_file']['error'][$index],
-                                    'size' => $_FILES['social_icon_file']['size'][$index],
-                                ] : null,
-                                $icon_url_input,
-                                $_POST['social_icon_old'][$index] ?? ''
-                            );
-                            if ($icon_result['error']) {
-                                $upload_errors[] = $icon_result['error'];
+                            $icon_file_to_upload = !empty($_FILES['social_icon_file']['name'][$index]) ? [
+                                'name' => $_FILES['social_icon_file']['name'][$index],
+                                'type' => $_FILES['social_icon_file']['type'][$index],
+                                'tmp_name' => $_FILES['social_icon_file']['tmp_name'][$index],
+                                'error' => $_FILES['social_icon_file']['error'][$index],
+                                'size' => $_FILES['social_icon_file']['size'][$index],
+                            ] : null;
+                            
+                            $icon_final_path = trim($icon_url_input);
+
+                            if (isset($icon_file_to_upload) && $icon_file_to_upload['error'] === UPLOAD_ERR_OK) {
+                                try {
+                                    $icon_result = upload_to_media_library($icon_file_to_upload, $current_event_id, "Uploaded for social icon: $title");
+                                    $icon_final_path = $icon_result['filepath'];
+                                } catch (Exception $e) {
+                                    $upload_errors[] = "خطا در آپلود آیکون برای '$title': " . $e->getMessage();
+                                }
                             }
 
                             $newSocials[] = [
                                 'title' => trim($title),
                                 'link' => trim($link),
-                                'icon' => $icon_result['path']
+                                'icon' => $icon_final_path
                             ];
                         }
+                    }
+                    
+                    if (!empty($upload_errors)) {
+                        throw new Exception(implode('<br>', $upload_errors));
                     }
 
                     // 2. Get a list of the icons that are still in use.
