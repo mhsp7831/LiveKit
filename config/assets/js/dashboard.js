@@ -2181,25 +2181,54 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
         });
     });
     
+
 function enableMediaLibraryPicker(inputField, fileInputField, previewImage) {
-    // Create "Browse Library" button
-    const browseBtn = document.createElement('button');
-    browseBtn.type = 'button';
-    browseBtn.className = 'btn btn--primary btn--outline media-picker';
-    browseBtn.innerHTML = '<span class="btn-text">انتخاب از کتابخانه</span>';
-    browseBtn.style.marginBottom = '0.5rem';
+    // Find or create image-actions container
+    let actionsContainer = inputField.parentNode.querySelector('.image-actions');
     
-    inputField.parentNode.insertBefore(browseBtn, fileInputField);
+    if (!actionsContainer) {
+        // Create actions container if it doesn't exist
+        actionsContainer = document.createElement('div');
+        actionsContainer.className = 'image-actions';
+        
+        // Move file input inside a label
+        const uploadLabel = document.createElement('label');
+        uploadLabel.className = 'btn btn--primary btn--outline upload-new-btn';
+        uploadLabel.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 4 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span class="btn-text">آپلود جدید</span>
+        `;
+        
+        fileInputField.style.display = 'none';
+        uploadLabel.appendChild(fileInputField);
+        
+        // Create "Browse Library" button
+        const browseBtn = document.createElement('button');
+        browseBtn.type = 'button';
+        browseBtn.className = 'btn btn--secondary btn--outline select-from-library-btn';
+        browseBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="btn-text">انتخاب از کتابخانه</span>
+        `;
+        
+        actionsContainer.appendChild(browseBtn);
+        actionsContainer.appendChild(uploadLabel);
+        
+        // Insert after URL input
+        inputField.parentNode.insertBefore(actionsContainer, inputField.nextSibling);
+    }
+    
+    // Get the browse button
+    const browseBtn = actionsContainer.querySelector('.select-from-library-btn');
     
     browseBtn.addEventListener('click', async () => {
-        // Open mini media picker modal
         const pickerModal = createMediaPickerModal();
         
         pickerModal.onSelect = (media) => {
-            // let src = media.filepath;
-            // if (media.filepath.startsWith("config/")) {
-            //     src = src.substring(7);
-            // }
             inputField.value = media.filepath;
             previewImage.src = media.filepath;
             previewImage.style.display = '';
@@ -2211,76 +2240,173 @@ function enableMediaLibraryPicker(inputField, fileInputField, previewImage) {
     });
 }
 
+
 function createMediaPickerModal() {
-  // Create temporary modal for media selection
-  const modalHTML = `
-        <div class="modal-overlay" id="temp-media-picker" style="z-index: 2000;">
-            <div class="modal-content" style="max-width: 800px; width: 90vw; max-height: 80vh; overflow: auto;">
-                <div class="card-header">
-                    <h3>انتخاب از کتابخانه رسانه</h3>
-                    <button type="button" class="btn btn--danger btn--icon close-picker-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div id="temp-media-grid" class="media-grid" style="margin-top: 1rem;"></div>
-            </div>
-        </div>
-    `;
+    
+    const modal = document.getElementById('media-picker-modal');
+    const grid = document.getElementById('temp-media-grid');
+    const searchInput = document.getElementById('picker-search');
 
-  document.body.insertAdjacentHTML("beforeend", modalHTML);
-
-  const modal = document.getElementById("temp-media-picker");
-  const grid = document.getElementById("temp-media-grid");
-
-  const modalObject = {
-    show: () => {
-      modal.classList.add("active");
-    },
-    close: () => {
-      modal.remove();
-    },
-    onSelect: null,
-  };
-
-  // Load media
-  grid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
-
-  const formData = new FormData();
-  formData.append("action", "get_media_library");
-
-  sendRequest(formData).then((result) => {
-    if (result.media.length === 0) {
-      grid.innerHTML = '<div class="loading-media">هیچ فایلی در کتابخانه وجود ندارد</div>';
-      return;
-    }
-
-    grid.innerHTML = result.media.map((media) => renderMediaItem(media)).join("");
-
-    grid.querySelectorAll(".media-item").forEach((item) => {
-      item.addEventListener("click", function () {
-        const mediaId = parseInt(this.dataset.id);
-        const media = result.media.find((m) => m.id === mediaId);
-        if (media && modalObject.onSelect) {
-          modalObject.onSelect(media);
-        }
-      });
+    
+    // Tab switching
+    modal.querySelectorAll('.media-picker-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            modal.querySelectorAll('.media-picker-tab').forEach(t => t.classList.remove('active'));
+            modal.querySelectorAll('.media-picker-tab-content').forEach(c => c.classList.remove('active'));
+            
+            this.classList.add('active');
+            const tabId = this.dataset.tab;
+            document.getElementById(`picker-${tabId}-tab`).classList.add('active');
+        });
     });
-  });
+    
+    modal.querySelectorAll('.media-picker-tab')[0].click();
+    
 
-  const closeBtn = modal.querySelector(".close-picker-btn");
-  closeBtn.addEventListener("click", () => {
-    modal.remove();
-  });
-
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      modal.remove();
+    // Load media library
+    function loadPickerMedia(searchTerm = '') {
+        grid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
+        
+        const formData = new FormData();
+        formData.append('action', 'get_media_library');
+        if (searchTerm) formData.append('search', searchTerm);
+        
+        sendRequest(formData).then(result => {
+            if (result.media.length === 0) {
+                grid.innerHTML = '<div class="loading-media">هیچ فایلی در کتابخانه وجود ندارد</div>';
+                return;
+            }
+            
+            grid.innerHTML = result.media.map(media => renderMediaItem(media)).join('');
+            
+            grid.querySelectorAll('.media-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const mediaId = parseInt(this.dataset.id);
+                    const media = result.media.find(m => m.id === mediaId);
+                    if (media && modal.onSelect) {
+                        modal.onSelect(media);
+                    }
+                });
+            });
+        }).catch(error => {
+            grid.innerHTML = `<div class="loading-media" style="color: var(--danger-color);">${error.message}</div>`;
+        });
     }
-  });
-
-  return modalObject;
+    
+    loadPickerMedia();
+    
+    // Search functionality
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadPickerMedia(this.value);
+        }, 500);
+    });
+    
+    // Quick upload functionality
+    const quickUploadZone = document.getElementById('quick-upload-zone');
+    const quickFileInput = document.getElementById('quick-file-input');
+    const quickUploadForm = document.getElementById('quick-upload-form');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    
+    quickUploadZone.addEventListener('click', () => quickFileInput.click());
+    
+    quickUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        quickUploadZone.classList.add('dragover');
+    });
+    
+    quickUploadZone.addEventListener('dragleave', () => {
+        quickUploadZone.classList.remove('dragover');
+    });
+    
+    quickUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        quickUploadZone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            quickFileInput.files = files;
+            uploadQuickFile();
+        }
+    });
+    
+    quickFileInput.addEventListener('change', () => {
+        if (quickFileInput.files.length > 0) {
+            uploadQuickFile();
+        }
+    });
+    
+    async function uploadQuickFile() {
+        if (!quickFileInput.files.length) {
+            showToast('لطفاً یک فایل انتخاب کنید', 'error');
+            return;
+        }
+        
+        uploadProgress.style.display = 'block';
+        progressFill.style.width = '0%';
+        
+        try {
+            const formData = new FormData(quickUploadForm);
+            
+            // Show progress (simulated)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                if (progress <= 90) {
+                    progressFill.style.width = progress + '%';
+                }
+            }, 100);
+            
+            const result = await sendRequest(formData);
+            
+            clearInterval(progressInterval);
+            progressFill.style.width = '100%';
+            
+            showToast(result.message);
+            
+            // Reset form
+            quickUploadForm.reset();
+            quickUploadZone.querySelector('p').textContent = 'فایل را اینجا رها کنید یا کلیک کنید';
+            
+            setTimeout(() => {
+                uploadProgress.style.display = 'none';
+                
+                // Auto-select the uploaded file
+                if (modal.onSelect && result.media) {
+                    modal.onSelect(result.media);
+                }
+            }, 500);
+            
+        } catch (error) {
+            showToast(error.message, 'error');
+            uploadProgress.style.display = 'none';
+        }
+    }
+    
+    // Close button
+    const closeBtn = modal.querySelector('.close-picker-btn');
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove("active");
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove("active");
+        }
+    });
+    
+    return {
+        show: () => {
+            modal.classList.add('active');
+        },
+        close: () => {
+            modal.remove();
+        },
+        onSelect: null
+    };
 }
 
 });

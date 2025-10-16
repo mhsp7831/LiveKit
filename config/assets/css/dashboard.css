@@ -965,3 +965,131 @@ code {
         flex-direction: column;
     }
 }
+
+
+.image-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.image-actions .btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.upload-new-btn {
+    cursor: pointer;
+}
+
+.upload-new-btn input[type="file"] {
+    display: none !important;
+}
+
+/* Media picker modal improvements */
+.media-picker-modal .modal-content {
+    max-width: 900px;
+    width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.media-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.media-picker-tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.media-picker-tab {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    background: var(--grey-light-color);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    cursor: pointer;
+    font-family: var(--font-family-base);
+    transition: all var(--transition-speed);
+}
+
+.media-picker-tab.active {
+    background: var(--light-color);
+    font-weight: var(--font-weight-bold);
+}
+
+.media-picker-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+}
+
+.media-picker-tab-content {
+    display: none;
+}
+
+.media-picker-tab-content.active {
+    display: block;
+}
+
+.quick-upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xl);
+    text-align: center;
+    background: var(--grey-x-light-color);
+    margin-bottom: var(--spacing-lg);
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.quick-upload-zone:hover,
+.quick-upload-zone.dragover {
+    border-color: var(--primary-color);
+    background: var(--primary-light-color);
+}
+
+.quick-upload-zone svg {
+    width: 48px;
+    height: 48px;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.upload-progress {
+    margin-top: var(--spacing-md);
+    display: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--grey-light-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+@media (max-width: 768px) {
+    .image-actions {
+        flex-direction: column;
+    }
+}

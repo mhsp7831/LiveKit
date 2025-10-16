@@ -6,6 +6,7 @@ config/uploads/
 config/events.json
 config/app.log
 config/live_database.sqlite
+config/fresh-air.php
 
 # --- System Files ---
 # Ignore OS-generated files
