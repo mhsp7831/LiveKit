@@ -2241,28 +2241,112 @@ function enableMediaLibraryPicker(inputField, fileInputField, previewImage) {
 }
 
 
+let mediaPickerModalInstance = null;
+
 function createMediaPickerModal() {
+    if (mediaPickerModalInstance) {
+        return mediaPickerModalInstance;
+    }
     
     const modal = document.getElementById('media-picker-modal');
     const grid = document.getElementById('temp-media-grid');
     const searchInput = document.getElementById('picker-search');
 
+    const modalObject = {
+      show: () => {
+        modal.classList.add("active");
+        modal.querySelectorAll('.media-picker-tab')[0].click();
+        loadPickerMedia();
+      },
+      close: () => {
+        modal.classList.remove("active");
+      },
+      onSelect: null,
+    };
     
-    // Tab switching
-    modal.querySelectorAll('.media-picker-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            modal.querySelectorAll('.media-picker-tab').forEach(t => t.classList.remove('active'));
-            modal.querySelectorAll('.media-picker-tab-content').forEach(c => c.classList.remove('active'));
-            
-            this.classList.add('active');
-            const tabId = this.dataset.tab;
-            document.getElementById(`picker-${tabId}-tab`).classList.add('active');
+    // فقط یک بار event listenerها را اضافه کن
+    if (!modal._initialized) {
+        // Tab switching
+        modal.querySelectorAll('.media-picker-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                modal.querySelectorAll('.media-picker-tab').forEach(t => t.classList.remove('active'));
+                modal.querySelectorAll('.media-picker-tab-content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                const tabId = this.dataset.tab;
+                document.getElementById(`picker-${tabId}-tab`).classList.add('active');
+            });
         });
-    });
-    
-    modal.querySelectorAll('.media-picker-tab')[0].click();
-    
+        
+        // Search functionality
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadPickerMedia(this.value);
+            }, 500);
+        });
+        
+        // Quick upload functionality - FIXED
+        const quickUploadZone = document.getElementById('quick-upload-zone');
+        const quickFileInput = document.getElementById('quick-file-input');
+        
+        // حذف event listenerهای قبلی با جایگزینی المان
+        const newQuickUploadZone = quickUploadZone.cloneNode(true);
+        quickUploadZone.parentNode.replaceChild(newQuickUploadZone, quickUploadZone);
+        
+        const newQuickFileInput = quickFileInput.cloneNode(true);
+        quickFileInput.parentNode.replaceChild(newQuickFileInput, quickFileInput);
+        
+        // دریافت المان‌های جدید
+        const freshQuickUploadZone = document.getElementById('quick-upload-zone');
+        const freshQuickFileInput = document.getElementById('quick-file-input');
+        
+        // اضافه کردن event listener به المان‌های جدید
+        freshQuickUploadZone.addEventListener('click', handleQuickUploadClick);
+        
+        freshQuickUploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            freshQuickUploadZone.classList.add('dragover');
+        });
+        
+        freshQuickUploadZone.addEventListener('dragleave', () => {
+            freshQuickUploadZone.classList.remove('dragover');
+        });
+        
+        freshQuickUploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            freshQuickUploadZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                freshQuickFileInput.files = files;
+                uploadQuickFile();
+            }
+        });
+        
+        freshQuickFileInput.addEventListener('change', () => {
+            if (freshQuickFileInput.files.length > 0) {
+                uploadQuickFile();
+            }
+        });
+        
+        // Close button
+        const closeBtn = modal.querySelector('.close-picker-btn');
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove("active");
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove("active");
+            }
+        });
+        
+        modal._initialized = true;
+    }
 
+    
     // Load media library
     function loadPickerMedia(searchTerm = '') {
         grid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
@@ -2283,8 +2367,8 @@ function createMediaPickerModal() {
                 item.addEventListener('click', function() {
                     const mediaId = parseInt(this.dataset.id);
                     const media = result.media.find(m => m.id === mediaId);
-                    if (media && modal.onSelect) {
-                        modal.onSelect(media);
+                    if (media && modalObject.onSelect) {
+                        modalObject.onSelect(media);
                     }
                 });
             });
@@ -2293,63 +2377,25 @@ function createMediaPickerModal() {
         });
     }
     
-    loadPickerMedia();
-    
-    // Search functionality
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            loadPickerMedia(this.value);
-        }, 500);
-    });
-    
-    // Quick upload functionality
-    const quickUploadZone = document.getElementById('quick-upload-zone');
-    const quickFileInput = document.getElementById('quick-file-input');
-    const quickUploadForm = document.getElementById('quick-upload-form');
-    const uploadProgress = document.getElementById('upload-progress');
-    const progressFill = document.getElementById('progress-fill');
-    
-    quickUploadZone.addEventListener('click', () => quickFileInput.click());
-    
-    quickUploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        quickUploadZone.classList.add('dragover');
-    });
-    
-    quickUploadZone.addEventListener('dragleave', () => {
-        quickUploadZone.classList.remove('dragover');
-    });
-    
-    quickUploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        quickUploadZone.classList.remove('dragover');
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            quickFileInput.files = files;
-            uploadQuickFile();
-        }
-    });
-    
-    quickFileInput.addEventListener('change', () => {
-        if (quickFileInput.files.length > 0) {
-            uploadQuickFile();
-        }
-    });
+    function handleQuickUploadClick() {
+        document.getElementById('quick-file-input').click();
+    }
     
     async function uploadQuickFile() {
-        if (!quickFileInput.files.length) {
+        const freshQuickFileInput = document.getElementById('quick-file-input');
+        if (!freshQuickFileInput.files.length) {
             showToast('لطفاً یک فایل انتخاب کنید', 'error');
             return;
         }
+        
+        const uploadProgress = document.getElementById('upload-progress');
+        const progressFill = document.getElementById('progress-fill');
         
         uploadProgress.style.display = 'block';
         progressFill.style.width = '0%';
         
         try {
-            const formData = new FormData(quickUploadForm);
+            const formData = new FormData(document.getElementById('quick-upload-form'));
             
             // Show progress (simulated)
             let progress = 0;
@@ -2368,15 +2414,15 @@ function createMediaPickerModal() {
             showToast(result.message);
             
             // Reset form
-            quickUploadForm.reset();
-            quickUploadZone.querySelector('p').textContent = 'فایل را اینجا رها کنید یا کلیک کنید';
+            document.getElementById('quick-upload-form').reset();
+            document.querySelector('#quick-upload-zone p').textContent = 'فایل را اینجا رها کنید یا کلیک کنید';
             
             setTimeout(() => {
                 uploadProgress.style.display = 'none';
                 
                 // Auto-select the uploaded file
-                if (modal.onSelect && result.media) {
-                    modal.onSelect(result.media);
+                if (modalObject.onSelect && result.media) {
+                    modalObject.onSelect(result.media);
                 }
             }, 500);
             
@@ -2386,27 +2432,8 @@ function createMediaPickerModal() {
         }
     }
     
-    // Close button
-    const closeBtn = modal.querySelector('.close-picker-btn');
-    closeBtn.addEventListener('click', () => {
-        modal.classList.remove("active");
-    });
-    
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.remove("active");
-        }
-    });
-    
-    return {
-        show: () => {
-            modal.classList.add('active');
-        },
-        close: () => {
-            modal.remove();
-        },
-        onSelect: null
-    };
+    mediaPickerModalInstance = modalObject;
+    return modalObject;
 }
 
 });

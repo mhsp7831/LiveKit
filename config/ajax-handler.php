@@ -151,8 +151,8 @@ try {
             $configsFile = $newPath . '/configs.json';
             if (file_exists($configsFile)) {
                 $eventConfigs = json_decode(file_get_contents($configsFile), true);
-                $oldUploadsRelativePath = 'config/uploads/' . $currentId . '/';
-                $newUploadsRelativePath = 'config/uploads/' . $newId . '/';
+                $oldUploadsRelativePath = get_base_url() . '/' . 'config/uploads/' . $currentId . '/';
+                $newUploadsRelativePath = get_base_url() . '/' . 'config/uploads/' . $newId . '/';
 
                 // Update main images
                 $fileFields = ['logo', 'preBanner', 'endBanner', 'banner'];
