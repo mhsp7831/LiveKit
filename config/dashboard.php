@@ -348,7 +348,21 @@ $users = get_all_users();
                                                     <label>آیکن:</label>
                                                     <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($social['icon'])) ?>" class="image-preview"></div>
                                                     <input type="text" name="social_icon_url[]" placeholder="آدرس آیکن" value="<?= htmlspecialchars(get_dashboard_image_url($social['icon'])) ?>" class="preview-url-input">
-                                                    <input type="file" name="social_icon_file[]" accept="image/*" class="preview-file-input">
+                                                    <div class="image-actions">
+                                                        <button type="button" class="btn btn--primary btn--outline select-from-library-btn">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <span class="btn-text">انتخاب از کتابخانه</span>
+                                                        </button>
+                                                        <label class="btn btn--primary btn--outline upload-new-btn">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                            </svg>
+                                                            <span class="btn-text">آپلود جدید</span>
+                                                        </label>
+                                                    </div>
+                                                    <input type="file" name="social_icon_file[]" accept="image/*" class="preview-file-input" style="display: none;">
                                                     <input type="hidden" name="social_icon_old[]" value="<?= htmlspecialchars($social['icon']) ?>">
                                                 </div>
                                             </div>
@@ -402,41 +416,40 @@ $users = get_all_users();
                                 <div class="card-header"><h3>تصاویر و بنرها</h3></div>
                                 <div class="image-upload-grid">
                                     <div class="form-group image-group">
-                                        <div class="form-group image-group">
-                                            <label for="logo_file"> 
-                                                لوگو:
-                                                <div class="label-tooltip">
-                                                    <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
-                                                    </svg>
-                                                    <span class="tooltip-text">
-                                                        فرمت‌های مجاز: JPG, PNG, GIF, SVG, WEBP<br />
-                                                        ابعاد پیشنهادی: 150×150 پیکسل
-                                                    </span>
-                                                </div>
-                                            </label>
-                                            <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="image-preview" id="logo_preview"></div>
-                                            
-                                            <input type="text" name="logo_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="preview-url-input">
-                                            
-                                            <div class="image-actions">
-                                                <button type="button" class="btn btn--secondary btn--outline select-from-library-btn">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <span class="btn-text">انتخاب از کتابخانه</span>
-                                                </button>
-                                                <label class="btn btn--primary btn--outline upload-new-btn">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                    </svg>
-                                                    <span class="btn-text">آپلود جدید</span>
-                                                    <input type="file" name="logo_file" id="logo_file" accept="image/*" class="preview-file-input" style="display: none;">
-                                                </label>
+                                        <label for="logo_file"> 
+                                            لوگو:
+                                            <div class="label-tooltip">
+                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                </svg>
+                                                <span class="tooltip-text">
+                                                    فرمت‌های مجاز: JPG, PNG, GIF, SVG, WEBP<br />
+                                                    ابعاد پیشنهادی: 150×150 پیکسل
+                                                </span>
                                             </div>
-                                            
-                                            <input type="hidden" name="logo_old" value="<?= htmlspecialchars($configs['logo']) ?>">
+                                        </label>
+                                        <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="image-preview" id="logo_preview"></div>
+                                        
+                                        <input type="text" name="logo_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="preview-url-input">
+                                        
+                                        <div class="image-actions">
+                                            <button type="button" class="btn btn--primary btn--outline select-from-library-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span class="btn-text">انتخاب از کتابخانه</span>
+                                            </button>
+                                            <label class="btn btn--primary btn--outline upload-new-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                </svg>
+                                                <span class="btn-text">آپلود جدید</span>
+                                            </label>
                                         </div>
+                                        
+                                        <input type="file" name="logo_file" id="logo_file" accept="image/*" class="preview-file-input" style="display: none;">
+                                        <input type="hidden" name="logo_old" value="<?= htmlspecialchars($configs['logo']) ?>">
+                                    </div>
                                     <div class="form-group image-group">
                                         <label for="preBanner_file">
                                             بنر قبل از پخش‌زنده:
@@ -452,7 +465,21 @@ $users = get_all_users();
                                         </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="image-preview" id="preBanner_preview"></div>
                                         <input type="text" name="preBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="preview-url-input">
-                                        <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input">
+                                        <div class="image-actions">
+                                            <button type="button" class="btn btn--primary btn--outline select-from-library-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span class="btn-text">انتخاب از کتابخانه</span>
+                                            </button>
+                                            <label class="btn btn--primary btn--outline upload-new-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                </svg>
+                                                <span class="btn-text">آپلود جدید</span>
+                                            </label>
+                                        </div>
+                                        <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                         <input type="hidden" name="preBanner_old" value="<?= htmlspecialchars($configs['preBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
@@ -470,7 +497,21 @@ $users = get_all_users();
                                         </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="image-preview" id="endBanner_preview"></div>
                                         <input type="text" name="endBanner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="preview-url-input">
-                                        <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input">
+                                        <div class="image-actions">
+                                            <button type="button" class="btn btn--primary btn--outline select-from-library-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span class="btn-text">انتخاب از کتابخانه</span>
+                                            </button>
+                                            <label class="btn btn--primary btn--outline upload-new-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                </svg>
+                                                <span class="btn-text">آپلود جدید</span>
+                                            </label>
+                                        </div>
+                                        <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                         <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
@@ -488,7 +529,21 @@ $users = get_all_users();
                                         </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="image-preview" id="banner_preview"></div>
                                         <input type="text" name="banner_url" placeholder="آدرس تصویر" value="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="preview-url-input">
-                                        <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input">
+                                        <div class="image-actions">
+                                            <button type="button" class="btn btn--primary btn--outline select-from-library-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span class="btn-text">انتخاب از کتابخانه</span>
+                                            </button>
+                                            <label class="btn btn--primary btn--outline upload-new-btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                </svg>
+                                                <span class="btn-text">آپلود جدید</span>
+                                            </label>
+                                        </div>
+                                        <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                         <input type="hidden" name="banner_old" value="<?= htmlspecialchars($configs['banner']) ?>">
 
                                         <label for="bannerLink" style="margin-top: 1rem;">لینک بنر (اختیاری):</label>
@@ -798,7 +853,7 @@ $users = get_all_users();
                             <div class="image-preview-container"><img src="" class="image-preview"></div>
                             <input type="text" name="social_icon_url[]" placeholder="آدرس آیکون" value="" class="preview-url-input">
                             <div class="image-actions">
-                                <button type="button" class="btn btn--secondary btn--outline select-from-library-btn">
+                                <button type="button" class="btn btn--primary btn--outline select-from-library-btn">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>

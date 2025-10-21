@@ -880,10 +880,12 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
         const setupItem = (item) => {
             item.querySelectorAll(".image-group").forEach((group) => {
-                const urlInput = group.querySelector(".preview-url-input");
-                const fileInput = group.querySelector(".preview-file-input");
-                const preview = group.querySelector(".image-preview");
-
+                const urlInput = group.querySelector('.preview-url-input');
+                const fileInput = group.querySelector('.preview-file-input');
+                const preview = group.querySelector('.image-preview');
+                const imageActions = group.querySelector(".image-actions");
+                
+                
                 if (urlInput && fileInput && preview) {
                     setupImagePreview(urlInput, fileInput, preview);
                     enableMediaLibraryPicker(urlInput, fileInput, preview);
@@ -1469,14 +1471,12 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
             const urlInput = group.querySelector('.preview-url-input');
             const fileInput = group.querySelector('.preview-file-input');
             const preview = group.querySelector('.image-preview');
-            const mediaPickerBtn = group.querySelector(".media-picker");
+            const imageActions = group.querySelector(".image-actions");
             
             
             if (urlInput && fileInput && preview) {
                 setupImagePreview(urlInput, fileInput, preview);
-                if (!mediaPickerBtn){
-                    enableMediaLibraryPicker(urlInput, fileInput, preview);
-                }
+                enableMediaLibraryPicker(urlInput, fileInput, preview);
             }
         });
     };
@@ -2185,42 +2185,6 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 function enableMediaLibraryPicker(inputField, fileInputField, previewImage) {
     // Find or create image-actions container
     let actionsContainer = inputField.parentNode.querySelector('.image-actions');
-    
-    if (!actionsContainer) {
-        // Create actions container if it doesn't exist
-        actionsContainer = document.createElement('div');
-        actionsContainer.className = 'image-actions';
-        
-        // Move file input inside a label
-        const uploadLabel = document.createElement('label');
-        uploadLabel.className = 'btn btn--primary btn--outline upload-new-btn';
-        uploadLabel.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 4 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <span class="btn-text">آپلود جدید</span>
-        `;
-        
-        fileInputField.style.display = 'none';
-        uploadLabel.appendChild(fileInputField);
-        
-        // Create "Browse Library" button
-        const browseBtn = document.createElement('button');
-        browseBtn.type = 'button';
-        browseBtn.className = 'btn btn--secondary btn--outline select-from-library-btn';
-        browseBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span class="btn-text">انتخاب از کتابخانه</span>
-        `;
-        
-        actionsContainer.appendChild(browseBtn);
-        actionsContainer.appendChild(uploadLabel);
-        
-        // Insert after URL input
-        inputField.parentNode.insertBefore(actionsContainer, inputField.nextSibling);
-    }
     
     // Get the browse button
     const browseBtn = actionsContainer.querySelector('.select-from-library-btn');

@@ -985,6 +985,7 @@ code {
 
 .upload-new-btn {
     cursor: pointer;
+    margin: 0;
 }
 
 .upload-new-btn input[type="file"] {
