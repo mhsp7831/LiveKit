@@ -517,7 +517,7 @@ try {
 
                         if (isset($file_to_upload) && $file_to_upload['error'] === UPLOAD_ERR_OK) {
                             try {
-                                $result = upload_to_media_library($file_to_upload, $current_event_id, "Uploaded for field: $field");
+                                $result = upload_to_media_library($file_to_upload, $current_event_id, "برای فیلد '$field' آپلود شده است.");
                                 $final_path = $result['filepath'];
                             } catch (Exception $e) {
                                 $upload_errors[] = "خطا در آپلود برای '$field': " . $e->getMessage();
@@ -596,7 +596,7 @@ try {
 
                             if (isset($icon_file_to_upload) && $icon_file_to_upload['error'] === UPLOAD_ERR_OK) {
                                 try {
-                                    $icon_result = upload_to_media_library($icon_file_to_upload, $current_event_id, "Uploaded for social icon: $title");
+                                    $icon_result = upload_to_media_library($icon_file_to_upload, $current_event_id, "برای آیکن '$title' آپلود شده است.");
                                     $icon_final_path = $icon_result['filepath'];
                                 } catch (Exception $e) {
                                     $upload_errors[] = "خطا در آپلود آیکون برای '$title': " . $e->getMessage();

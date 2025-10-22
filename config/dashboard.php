@@ -227,7 +227,7 @@ $users = get_all_users();
                                     <div class="form-group"><label for="liveEnd">زمان پایان:</label><input type="datetime-local" name="liveEnd" id="liveEnd" value="<?= htmlspecialchars($configs['liveEnd']) ?>"></div>
                                     <div class="form-group">
                                         <label for="playerRevealOffset">
-                                            نمایش پلیر قبل از شروع (ms)
+                                            نمایش پلیر قبل از شروع (ms):
                                             <div class="label-tooltip">
                                                 <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
@@ -360,9 +360,9 @@ $users = get_all_users();
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                             </svg>
                                                             <span class="btn-text">آپلود جدید</span>
+                                                            <input type="file" name="social_icon_file[]" accept="image/*" class="preview-file-input" style="display: none;">
                                                         </label>
                                                     </div>
-                                                    <input type="file" name="social_icon_file[]" accept="image/*" class="preview-file-input" style="display: none;">
                                                     <input type="hidden" name="social_icon_old[]" value="<?= htmlspecialchars($social['icon']) ?>">
                                                 </div>
                                             </div>
@@ -444,10 +444,10 @@ $users = get_all_users();
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                 </svg>
                                                 <span class="btn-text">آپلود جدید</span>
+                                                <input type="file" name="logo_file" id="logo_file" accept="image/*" class="preview-file-input" style="display: none;">
                                             </label>
                                         </div>
                                         
-                                        <input type="file" name="logo_file" id="logo_file" accept="image/*" class="preview-file-input" style="display: none;">
                                         <input type="hidden" name="logo_old" value="<?= htmlspecialchars($configs['logo']) ?>">
                                     </div>
                                     <div class="form-group image-group">
@@ -477,9 +477,9 @@ $users = get_all_users();
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                 </svg>
                                                 <span class="btn-text">آپلود جدید</span>
+                                                <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                             </label>
                                         </div>
-                                        <input type="file" name="preBanner_file" id="preBanner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                         <input type="hidden" name="preBanner_old" value="<?= htmlspecialchars($configs['preBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
@@ -509,9 +509,9 @@ $users = get_all_users();
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                 </svg>
                                                 <span class="btn-text">آپلود جدید</span>
+                                                <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                             </label>
                                         </div>
-                                        <input type="file" name="endBanner_file" id="endBanner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                         <input type="hidden" name="endBanner_old" value="<?= htmlspecialchars($configs['endBanner']) ?>">
                                     </div>
                                     <div class="form-group image-group">
@@ -541,9 +541,9 @@ $users = get_all_users();
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                 </svg>
                                                 <span class="btn-text">آپلود جدید</span>
+                                                <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                             </label>
                                         </div>
-                                        <input type="file" name="banner_file" id="banner_file" accept="image/*" class="preview-file-input" style="display: none;">
                                         <input type="hidden" name="banner_old" value="<?= htmlspecialchars($configs['banner']) ?>">
 
                                         <label for="bannerLink" style="margin-top: 1rem;">لینک بنر (اختیاری):</label>
@@ -721,7 +721,7 @@ $users = get_all_users();
                         <p>آخرین ۱۰ نسخه از تنظیمات رویداد ذخیره می‌شود. می‌توانید به هر نسخه برگردید یا نسخه‌ها را مقایسه کنید.</p>
 
                         <div id="versions-list" class="versions-list">
-                            <div class="loading-versions">در حال بارگذاری...</div>
+                            <div class="loading-versions"><div class="loader-spinner"></div></div>
                         </div>
                     </div>
                 </div>
@@ -780,7 +780,7 @@ $users = get_all_users();
                         
                         <!-- Search and Filter -->
                         <div class="media-filters">
-                            <input type="text" id="media-search" placeholder="جستجو در نام، توضیحات یا برچسب‌ها...">
+                            <input type="text" id="media-search" class="search-box" placeholder="جستجو در نام، توضیحات یا برچسب‌ها...">
                             <select id="media-filter-type">
                                 <option value="">همه فرمت‌ها</option>
                                 <option value="image/jpeg">JPEG</option>
@@ -793,7 +793,7 @@ $users = get_all_users();
                         
                         <!-- Media Grid -->
                         <div id="media-grid" class="media-grid">
-                            <div class="loading-media">در حال بارگذاری...</div>
+                            <div class="loading-media"><div class="image-loader"></div></div>
                         </div>
                     </div>
                 </div>
@@ -1075,7 +1075,7 @@ $users = get_all_users();
             <div class="media-picker-body">
                 <!-- Library Tab -->
                 <div id="picker-library-tab" class="media-picker-tab-content active">
-                    <input type="text" id="picker-search" placeholder="جستجو..." style="width: 100%; margin-bottom: 1rem;">
+                    <input type="text" id="picker-search" class="search-box" placeholder="جستجو..." style="width: 100%; margin-bottom: 1rem;">
                     <div id="temp-media-grid" class="media-grid"></div>
                 </div>
                 
@@ -1102,7 +1102,13 @@ $users = get_all_users();
                                 <div class="progress-fill" id="progress-fill"></div>
                             </div>
                         </div>
-    
+                        
+                        <div class="alert-warning">
+                            <p>
+                                <strong>توجه: </strong>بعد از انتخاب یا رها کردن فایل، آپلود آغاز می‌شود. ابتدا "توضیحات" و "برچسب‌ها" را وارد کنید.
+                            </p>
+                        </div>
+
                         <div class="form-grid" style="margin-top: 1rem;">
                             <div class="form-group">
                                 <label>توضیحات (اختیاری):</label>
@@ -1132,9 +1138,6 @@ $users = get_all_users();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/css-hint.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-    <!-- <script>
-        window.currentCsrfToken = '<?= htmlspecialchars(generate_csrf_token()) ?>';
-    </script> -->
 </body>
 
 </html>

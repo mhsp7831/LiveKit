@@ -37,8 +37,8 @@ body { font-family: var(--font-family-base); background-color: var(--grey-color)
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg); }
 .form-group { display: flex; flex-direction: column; }
 form label { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-sm); font-weight: var(--font-weight-normal); color: var(--dark-color); }
-form input[type="text"], form input[type="password"], form input[type="url"], form input[type="number"], form input[type="datetime-local"], form input[type="file"], form input[type="color"], .prompt-input, select { width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius); font-family: var(--font-family-base); transition: border-color var(--transition-speed), box-shadow var(--transition-speed); background-color: var(--light-color); }
-form input:focus, form input[type="password"]:focus, .prompt-input:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-focus-shadow); }
+form input[type="text"], form input[type="password"], form input[type="url"], form input[type="number"], form input[type="datetime-local"], form input[type="file"], form input[type="color"], .prompt-input, select, .search-box, .media-detail-info input, #media-detail-description { width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius); font-family: var(--font-family-base); transition: border-color var(--transition-speed), box-shadow var(--transition-speed); background-color: var(--light-color); }
+form input:focus, form input[type="password"]:focus, .prompt-input:focus, select:focus, .search-box:focus, .media-detail-info input:focus, #media-detail-description:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-focus-shadow); }
 form input[type="file"] { padding: var(--spacing-sm); }
 form input[type="color"] { min-height: 48px; padding: var(--spacing-xs); }
 .form-hint { font-size: var(--font-size-sm); color: var(--text-light-color); margin-top: var(--spacing-sm); }
@@ -309,9 +309,11 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
 }
-.alert-warning p {
-    margin: 0;
+.alert-warning, .alert-warning * {
+    margin: 0 !important;
     line-height: 1.6;
+    color: var(--warning-text-color);
+    text-align: right;
 }
 .alert-warning strong {
     font-weight: var(--font-weight-bold);
@@ -623,7 +625,9 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
     font-weight: var(--font-weight-bold);
 }
 .loading-versions {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: var(--spacing-xl);
     color: var(--text-light-color);
 }
@@ -733,10 +737,11 @@ div.form-grid > div:nth-child(8) .tooltip-text::after{
     }
 }
 
-code {
+code, .media-detail-info input {
     font-family: var(--font-family-monospace) !important;
     font-size: var(--font-size-sm) !important;
     padding: var(--spacing-xs) var(--spacing-xs) !important;
+    direction: ltr;
 }
 
 
@@ -799,6 +804,8 @@ code {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     color: var(--primary-color);
+    direction: ltr;
+    font-family: var(--font-family-monospace);
 }
 
 .stat-label {
@@ -836,6 +843,10 @@ code {
 .media-item:hover {
     box-shadow: var(--shadow);
     transform: translateY(-2px);
+}
+
+.media-item:active {
+    transform: translateY(0);
 }
 
 .media-item-preview {
@@ -891,6 +902,9 @@ code {
     text-align: center;
     padding: var(--spacing-xl);
     color: var(--text-light-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Media Detail Modal */
@@ -941,6 +955,7 @@ code {
 
 .media-detail-info .form-group {
     margin-bottom: 0;
+    text-align: right;
 }
 
 #media-usage-list {
@@ -996,7 +1011,7 @@ code {
 .media-picker-modal .modal-content {
     max-width: 900px;
     width: 95vw;
-    max-height: 85vh;
+    height: 85vh;
     display: flex;
     flex-direction: column;
 }
@@ -1019,16 +1034,21 @@ code {
 .media-picker-tab {
     padding: var(--spacing-sm) var(--spacing-lg);
     border: none;
-    background: var(--grey-light-color);
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    border-radius: var(--border-radius);
     cursor: pointer;
     font-family: var(--font-family-base);
     transition: all var(--transition-speed);
+    background: var(--light-color);
+    font-weight: var(--font-weight-bold);
+}
+
+.media-picker-tab:hover {
+    background: var(--grey-color);
 }
 
 .media-picker-tab.active {
-    background: var(--light-color);
-    font-weight: var(--font-weight-bold);
+    background: var(--grey-light-color);
+    font-weight: var(--font-weight-normal);
 }
 
 .media-picker-body {
@@ -1093,4 +1113,86 @@ code {
     .image-actions {
         flex-direction: column;
     }
+}
+
+
+.image-loader {
+    width: 64px;
+    height: 64px;
+    position: relative;
+    background: var(--grey-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.image-loader:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 40px;
+    height: 40px;
+    transform: rotate(45deg) translate(30%, 40%);
+    background: var(--primary-focus-shadow);
+    box-shadow: 32px -34px 0 5px var(--primary-color);
+    animation: slide 1s infinite ease-in-out alternate;
+}
+
+.image-loader:after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    transform: rotate(0deg);
+    transform-origin: 35px 145px;
+    animation: rotate 1s infinite ease-in-out;
+}
+
+@keyframes slide {
+
+    0%,
+    100% {
+        bottom: -35px
+    }
+
+    25%,
+    75% {
+        bottom: -2px
+    }
+
+    20%,
+    80% {
+        bottom: 2px
+    }
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(-15deg)
+    }
+
+    25%,
+    75% {
+        transform: rotate(0deg)
+    }
+
+    100% {
+        transform: rotate(25deg)
+    }
+}
+
+#media-upload-form .btn {
+    margin-top: 1rem;
+}
+
+#media-detail-description {
+    resize: vertical;
+}
+
+#media-detail-modal {
+    z-index: 999;
 }

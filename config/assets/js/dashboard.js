@@ -278,6 +278,7 @@ function generatePreviewHTMLTemplate(config, customCSS, state) {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 0.2rem;
         }
         .social a:hover { background: var(--placeholder); }
@@ -1559,7 +1560,7 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
 
     async function loadVersions() {
         const versionsList = document.getElementById('versions-list');
-        versionsList.innerHTML = '<div class="loading-versions">در حال بارگذاری...</div>';
+        versionsList.innerHTML = '<div class="loading-versions"><div class="loader-spinner"></div></div>';
         
         try {
             const formData = new FormData();
@@ -1891,7 +1892,7 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
     // Load media library
     async function loadMediaLibrary(filters = {}) {
         const mediaGrid = document.getElementById('media-grid');
-        mediaGrid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
+        mediaGrid.innerHTML = '<div class="loading-media"><div class="image-loader"></div></div>';
         
         try {
             const formData = new FormData();
@@ -2003,8 +2004,8 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
         document.getElementById('media-detail-filename').value = media.original_name;
         document.getElementById('media-detail-filepath').value = media.filepath;
         document.getElementById('media-detail-dimensions').value = 
-            media.width && media.height ? `${media.width}×${media.height}` : media.original_name.split('.').pop().toLowerCase() === "svg" ? 'فایل های svg ابعاد مشخصی ندارند' : 'نامشخص';
-        document.getElementById('media-detail-size').value = `${(media.filesize / 1024).toFixed(2)} کیلوبایت`;
+            media.width && media.height ? `${media.width}×${media.height}` : media.original_name.split('.').pop().toLowerCase() === "svg" ? 'svg ابعاد مشخصی ندارد' : 'نامشخص';
+        document.getElementById('media-detail-size').value = `${(media.filesize / 1024).toFixed(2)} KB`;
         document.getElementById('media-detail-uploader').value = media.uploaded_by;
         
         const date = new Date(media.uploaded_at * 1000);
@@ -2117,6 +2118,8 @@ document.getElementById('close-preview-btn')?.addEventListener('click', function
                 this.disabled = false;
                 this.classList.remove('loading');
             }
+            this.disabled = false;
+            this.classList.remove('loading');
         }
     });
 
@@ -2313,7 +2316,7 @@ function createMediaPickerModal() {
     
     // Load media library
     function loadPickerMedia(searchTerm = '') {
-        grid.innerHTML = '<div class="loading-media">در حال بارگذاری...</div>';
+        grid.innerHTML = '<div class="loading-media"><div class="image-loader"></div></div>';
         
         const formData = new FormData();
         formData.append('action', 'get_media_library');
