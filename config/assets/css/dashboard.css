@@ -1196,3 +1196,131 @@ code, .media-detail-info input {
 #media-detail-modal {
     z-index: 999;
 }
+
+/* Add to dashboard.css */
+
+.phone-validation-toggle {
+    padding: var(--spacing-lg);
+    background: var(--grey-x-light-color);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-lg);
+}
+
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    background: var(--grey-light-color);
+    border-radius: 30px;
+    transition: background var(--transition-speed);
+    flex-shrink: 0;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background: var(--light-color);
+    border-radius: 50%;
+    transition: transform var(--transition-speed);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(30px);
+}
+
+.toggle-label {
+    font-weight: var(--font-weight-bold);
+    color: var(--dark-color);
+}
+
+.phone-validation-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--grey-x-light-color);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-lg);
+}
+
+.phone-stat-item {
+    text-align: center;
+    padding: var(--spacing-md);
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+}
+
+.phone-stat-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.phone-stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-light-color);
+}
+
+.phone-validation-upload {
+    padding: var(--spacing-lg);
+    background: var(--grey-x-light-color);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-lg);
+}
+
+.phone-validation-upload h4 {
+    margin-bottom: var(--spacing-sm);
+    color: var(--dark-color);
+}
+
+.phone-validation-upload p {
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-light-color);
+}
+
+#phone-csv-dropzone {
+    margin: var(--spacing-lg) 0;
+}
+
+.current-csv-info {
+    padding: var(--spacing-lg);
+    background: var(--grey-x-light-color);
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--success-color);
+}
+
+.current-csv-info h4 {
+    margin-bottom: var(--spacing-md);
+    color: var(--dark-color);
+}
+
+.csv-info-content p {
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-color);
+}
+
+.csv-info-content strong {
+    color: var(--dark-color);
+    margin-left: var(--spacing-sm);
+}

@@ -2,6 +2,12 @@
 // FIX 4: Correct require_once path
 require_once __DIR__ . '/config/functions.php';
 
+// Prevent session fixation
+if (!isset($_SESSION['initiated'])) {
+    session_regenerate_id(true);
+    $_SESSION['initiated'] = true;
+}
+
 // FIX 5: Image URL helper now expects paths like "config/uploads/..." and just returns them.
 function get_image_url($path) {
     if (empty($path) || preg_match('/^(https?:)?\/\//', $path)) {
@@ -14,6 +20,8 @@ function get_image_url($path) {
 $event_id = $_GET['event'] ?? null;
 $configs = null;
 $error_message = '';
+$phone_validation_required = false;
+$phone_validation_error = false;
 
 if (!$event_id) {
     $all_events = get_events();
@@ -27,20 +35,57 @@ if (!$event_id) {
     if (!is_valid_event_id($event_id)) {
         $error_message = 'رویداد مورد نظر یافت نشد.';
     } else {
-        $event_path = EVENTS_DIR . $event_id;
-        $configsFile = $event_path . '/configs.json';
-        if (file_exists($configsFile)) {
-            $configs = json_decode(file_get_contents($configsFile), true);
-        } else {
-            $error_message = 'فایل تنظیمات برای این رویداد یافت نشد.';
+        // Check phone validation
+        $phone_settings = get_phone_validation_settings($event_id);
+        
+        if ($phone_settings['enabled']) {
+            // Check if user is already authorized
+            $is_authorized = isset($_SESSION['authorized_events'][$event_id]) && $_SESSION['authorized_events'][$event_id];
+            
+            if (!$is_authorized) {
+                $phone_validation_required = true;
+                
+                // Check if form was submitted
+                if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['phone_number'])) {
+                    $submitted_phone = $_POST['phone_number'];
+                    
+                    if (is_phone_authorized($event_id, $submitted_phone)) {
+                        // Authorize in session
+                        if (!isset($_SESSION['authorized_events'])) {
+                            $_SESSION['authorized_events'] = [];
+                        }
+                        $_SESSION['authorized_events'][$event_id] = true;
+                        $phone_validation_required = false;
+                        
+                        // Redirect to remove POST data
+                        header('Location: ?event=' . $event_id);
+                        exit;
+                    } else {
+                        $phone_validation_error = true;
+                        write_log('WARNING', "Unauthorized access attempt with phone for event {$event_id}");
+                    }
+                }
+            }
+        }
+        
+        if (!$phone_validation_required) {
+            $event_path = EVENTS_DIR . $event_id;
+            $configsFile = $event_path . '/configs.json';
+            if (file_exists($configsFile)) {
+                $configs = json_decode(file_get_contents($configsFile), true);
+            } else {
+                $error_message = 'فایل تنظیمات برای این رویداد یافت نشد.';
+            }
         }
     }
 }
+
 // Ensure arrays exist to prevent errors on front-end
 if (isset($configs) && !isset($configs['buttons'])) $configs['buttons'] = [];
 if (isset($configs) && !isset($configs['socials'])) $configs['socials'] = [];
 
-if (empty($configs) || !empty($error_message)):
+// Show error page
+if (empty($configs) && !$phone_validation_required && !empty($error_message)):
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -57,6 +102,167 @@ if (empty($configs) || !empty($error_message)):
         <h1>خطا در بارگذاری رویداد</h1>
       <p><?= htmlspecialchars($error_message ?: 'تنظیمات رویداد یافت نشد.') ?></p>
     </body>
+</html>
+<?php exit; endif;
+
+// Show phone validation form
+if ($phone_validation_required):
+?>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>احراز هویت - شماره تلفن</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .auth-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .auth-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .input-group {
+            position: relative;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Vazirmatn', sans-serif;
+            transition: all 0.3s;
+            direction: ltr;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        .input-hint {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 8px;
+            text-align: right;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            font-family: 'Vazirmatn', sans-serif;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </div>
+        <h1>احراز هویت</h1>
+        <p>برای دسترسی به این پخش زنده، لطفاً شماره تلفن همراه خود را وارد کنید.</p>
+        
+        <?php if ($phone_validation_error): ?>
+            <div class="error-message">
+                شماره تلفن وارد شده مجاز به دسترسی نیست. لطفاً شماره تلفن صحیح خود را وارد کنید.
+            </div>
+        <?php endif; ?>
+        
+        <form method="POST">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    name="phone_number" 
+                    placeholder="09123456789" 
+                    pattern="^(0|\+98)?9\d{9}$"
+                    required
+                    autocomplete="tel"
+                    inputmode="numeric"
+                    maxlength="13"
+                >
+                <div class="input-hint">مثال: 09123456789 یا +989123456789</div>
+            </div>
+            <button type="submit">ورود به پخش زنده</button>
+        </form>
+    </div>
+</body>
 </html>
 <?php exit; endif; ?>
 
@@ -188,6 +394,23 @@ if (empty($configs) || !empty($error_message)):
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>"><img src="<?= htmlspecialchars(get_image_url($configs["logo"])) ?>" alt="لوگو"></a>
     <!-- <h1><?= htmlspecialchars($configs["title"]) ?></h1> -->
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>">صفحه اصلی</a>
+
+<!--//! ↓↓↓↓ JUST FOR TEST ↓↓↓↓ -->
+
+<?php if (isset($_SESSION['authorized_events'][$event_id])): ?>
+  <a href="?event=<?= htmlspecialchars($event_id) ?>&logout=1" style="font-size: 0.8rem; color: #999;">خروج</a>
+  <?php
+    // Handle logout
+    if (isset($_GET['logout'])) {
+      unset($_SESSION['authorized_events'][$event_id]);
+        header('Location: ?event=' . $event_id);
+        exit;
+    }
+    ?>
+<?php endif; ?>
+
+<!--//! ↑↑↑↑ JUST FOR TEST ↑↑↑↑ -->
+
   </header>
 
   <main>

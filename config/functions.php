@@ -51,6 +51,7 @@ function get_db_connection()
         }
 
         create_version_history_table($db);
+        create_phone_validation_table($db);
 
         return $db;
     } catch (PDOException $e) {
@@ -1038,4 +1039,275 @@ function perform_database_maintenance() {
     }
     
     write_log('INFO', 'Database maintenance completed');
+}
+
+// Update functions.php - remove csv_filename from schema
+function create_phone_validation_table($db) {
+    
+    $db->exec("CREATE TABLE IF NOT EXISTS phone_validation (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id TEXT NOT NULL UNIQUE,
+        enabled INTEGER DEFAULT 0,
+        csv_uploaded_at INTEGER,
+        total_numbers INTEGER DEFAULT 0,
+        last_updated_by TEXT
+    )");
+    
+    $db->exec("CREATE TABLE IF NOT EXISTS authorized_phones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        added_at INTEGER NOT NULL,
+        UNIQUE(event_id, phone_number)
+    )");
+    
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_phone_event ON authorized_phones(event_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_phone_number ON authorized_phones(event_id, phone_number)");
+}
+
+
+/**
+ * Get phone validation settings for an event
+ */
+function get_phone_validation_settings($event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("SELECT * FROM phone_validation WHERE event_id = :event_id");
+    $stmt->execute(['event_id' => $event_id]);
+    $settings = $stmt->fetch();
+    
+    if (!$settings) {
+        // Create default settings
+        $stmt = $db->prepare("INSERT INTO phone_validation (event_id, enabled) VALUES (:event_id, 0)");
+        $stmt->execute(['event_id' => $event_id]);
+        
+        return [
+            'event_id' => $event_id,
+            'enabled' => 0,
+            'csv_uploaded_at' => null,
+            'total_numbers' => 0,
+            'last_updated_by' => null
+        ];
+    }
+    
+    return $settings;
+}
+
+/**
+ * Update phone validation settings
+ */
+function update_phone_validation_settings($event_id, $enabled) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("UPDATE phone_validation 
+        SET enabled = :enabled, last_updated_by = :updated_by 
+        WHERE event_id = :event_id");
+    
+    $stmt->execute([
+        'enabled' => $enabled ? 1 : 0,
+        'updated_by' => $_SESSION['username'] ?? 'unknown',
+        'event_id' => $event_id
+    ]);
+    
+    write_log('INFO', "Phone validation " . ($enabled ? 'enabled' : 'disabled') . " for event {$event_id}");
+}
+
+// Update in functions.php
+
+/**
+ * Process and import CSV phone numbers
+ */
+/**
+ * Process and import CSV phone numbers
+ */
+function import_phone_numbers_csv($file, $event_id) {
+    // Validate file
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        throw new Exception('خطا در آپلود فایل');
+    }
+    
+    $allowed_types = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    // Also check extension
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!in_array($mime_type, $allowed_types) && $extension !== 'csv') {
+        throw new Exception('فرمت فایل باید CSV باشد');
+    }
+    
+    // Max file size: 5MB
+    if ($file['size'] > 5 * 1024 * 1024) {
+        throw new Exception('حجم فایل نباید بیشتر از 5 مگابایت باشد');
+    }
+    
+    // Read and parse CSV
+    $handle = fopen($file['tmp_name'], 'r');
+    if (!$handle) {
+        throw new Exception('خطا در خواندن فایل');
+    }
+    
+    $phone_numbers = [];
+    $line_number = 0;
+    $invalid_count = 0;
+    
+    while (($line = fgets($handle)) !== false) {
+        $line_number++;
+        $phone = trim($line);
+        
+        // Skip empty lines
+        if (empty($phone)) {
+            continue;
+        }
+        
+        // Normalize phone number (remove spaces, dashes, etc.)
+        $phone = preg_replace('/[^0-9+]/', '', $phone);
+        
+        // Validate phone number format
+        if (!preg_match('/^(\+98|0)?9\d{9}$/', $phone)) {
+            write_log('WARNING', "Invalid phone number on line {$line_number}: {$phone}");
+            $invalid_count++;
+            continue; // Skip invalid numbers
+        }
+        
+        // Normalize to standard format (09xxxxxxxxx)
+        if (preg_match('/^\+989(\d{9})$/', $phone, $matches)) {
+            $phone = '09' . $matches[1];
+        } elseif (preg_match('/^9(\d{9})$/', $phone, $matches)) {
+            $phone = '09' . $matches[1];
+        }
+        
+        $phone_numbers[] = $phone;
+    }
+    
+    fclose($handle);
+    
+    if (empty($phone_numbers)) {
+        throw new Exception('هیچ شماره تلفن معتبری در فایل یافت نشد');
+    }
+    
+    // Remove duplicates
+    $phone_numbers = array_unique($phone_numbers);
+    
+    // Update database
+    $db = get_db_connection();
+    
+    // Start transaction for atomicity
+    $db->beginTransaction();
+    
+    try {
+        // Clear existing phone numbers for this event
+        $stmt = $db->prepare("DELETE FROM authorized_phones WHERE event_id = :event_id");
+        $stmt->execute(['event_id' => $event_id]);
+        
+        // Insert new phone numbers
+        $stmt = $db->prepare("INSERT INTO authorized_phones (event_id, phone_number, added_at) 
+            VALUES (:event_id, :phone_number, :added_at)");
+        
+        foreach ($phone_numbers as $phone) {
+            $stmt->execute([
+                'event_id' => $event_id,
+                'phone_number' => $phone,
+                'added_at' => time()
+            ]);
+        }
+        
+        // Update validation settings
+        $stmt = $db->prepare("UPDATE phone_validation 
+            SET csv_uploaded_at = :uploaded_at, total_numbers = :total, last_updated_by = :updated_by 
+            WHERE event_id = :event_id");
+        
+        $stmt->execute([
+            'uploaded_at' => time(),
+            'total' => count($phone_numbers),
+            'updated_by' => $_SESSION['username'] ?? 'unknown',
+            'event_id' => $event_id
+        ]);
+        
+        $db->commit();
+        
+        write_log('INFO', "Imported " . count($phone_numbers) . " phone numbers for event {$event_id}" . 
+                  ($invalid_count > 0 ? " ({$invalid_count} invalid numbers skipped)" : ""));
+        
+        return [
+            'total' => count($phone_numbers),
+            'invalid_count' => $invalid_count
+        ];
+        
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw new Exception('خطا در ذخیره اطلاعات: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Check if phone number is authorized
+ */
+function is_phone_authorized($event_id, $phone_number) {
+    // Normalize phone number
+    $phone = preg_replace('/[^0-9+]/', '', $phone_number);
+    
+    // Convert to standard format
+    if (preg_match('/^\+989(\d{9})$/', $phone, $matches)) {
+        $phone = '09' . $matches[1];
+    } elseif (preg_match('/^9(\d{9})$/', $phone, $matches)) {
+        $phone = '09' . $matches[1];
+    }
+    
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("SELECT COUNT(*) as count FROM authorized_phones 
+        WHERE event_id = :event_id AND phone_number = :phone_number");
+    
+    $stmt->execute([
+        'event_id' => $event_id,
+        'phone_number' => $phone
+    ]);
+    
+    $result = $stmt->fetch();
+    return $result['count'] > 0;
+}
+
+/**
+ * Get phone validation statistics
+ */
+function get_phone_validation_stats($event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("SELECT COUNT(*) as total FROM authorized_phones WHERE event_id = :event_id");
+    $stmt->execute(['event_id' => $event_id]);
+    $result = $stmt->fetch();
+    
+    return [
+        'total_numbers' => $result['total']
+    ];
+}
+
+/**
+ * Delete phone validation data when event is deleted
+ */
+function delete_phone_validation_data($event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("DELETE FROM phone_validation WHERE event_id = :event_id");
+    $stmt->execute(['event_id' => $event_id]);
+    
+    $stmt = $db->prepare("DELETE FROM authorized_phones WHERE event_id = :event_id");
+    $stmt->execute(['event_id' => $event_id]);
+    
+    // REMOVED: CSV file deletion since we don't save files anymore
+}
+
+/**
+ * Update event_id in phone validation when event ID changes
+ */
+function update_phone_validation_event_id($old_event_id, $new_event_id) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("UPDATE phone_validation SET event_id = :new_id WHERE event_id = :old_id");
+    $stmt->execute(['new_id' => $new_event_id, 'old_id' => $old_event_id]);
+    
+    $stmt = $db->prepare("UPDATE authorized_phones SET event_id = :new_id WHERE event_id = :old_id");
+    $stmt->execute(['new_id' => $new_event_id, 'old_id' => $old_event_id]);
 }

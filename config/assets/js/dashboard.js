@@ -2403,4 +2403,194 @@ function createMediaPickerModal() {
     return modalObject;
 }
 
+
+let phoneValidationSettings = null;
+
+// Load phone validation when tab is opened
+document.querySelector('[data-tab="phone-validation"]')?.addEventListener('click', function() {
+    setTimeout(loadPhoneValidation, 100);
+});
+
+document.getElementById('refresh-phone-validation-btn')?.addEventListener('click', loadPhoneValidation);
+
+if (
+    savedTabId === "phone-validation" ||
+    document.querySelector("#phone-validation.active")
+) {
+    setTimeout(() => {
+    loadPhoneValidation();
+    }, 100);
+}
+
+async function loadPhoneValidation() {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_phone_validation_settings');
+        
+        const result = await sendRequest(formData);
+        phoneValidationSettings = result.settings;
+        
+        // Update toggle
+        document.getElementById('phone-validation-enabled').checked = phoneValidationSettings.enabled == 1;
+        
+        // Update stats
+        displayPhoneValidationStats(result.stats, phoneValidationSettings);
+        
+        // Update current file info
+        updateCurrentFileInfo(phoneValidationSettings);
+        
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+function displayPhoneValidationStats(stats, settings) {
+    const statsContainer = document.getElementById('phone-validation-stats');
+    
+    const statusColor = settings.enabled ? 'var(--success-color)' : 'var(--text-light-color)';
+    const statusText = settings.enabled ? 'فعال' : 'غیرفعال';
+    
+    statsContainer.innerHTML = `
+        <div class="phone-stat-item">
+            <div class="phone-stat-value" style="color: ${statusColor}">${statusText}</div>
+            <div class="phone-stat-label">وضعیت</div>
+        </div>
+        <div class="phone-stat-item">
+            <div class="phone-stat-value">${stats.total_numbers}</div>
+            <div class="phone-stat-label">تعداد شماره‌های مجاز</div>
+        </div>
+    `;
+}
+
+function updateCurrentFileInfo(settings) {
+    const infoSection = document.getElementById('current-csv-info');
+    
+    if (settings.csv_uploaded_at) {
+        const date = new Date(settings.csv_uploaded_at * 1000);
+        const dateStr = date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
+        
+        // Remove filename display since we don't save the file
+        document.getElementById('csv-upload-date').textContent = dateStr;
+        document.getElementById('csv-total-numbers').textContent = settings.total_numbers;
+        document.getElementById('csv-uploaded-by').textContent = settings.last_updated_by || 'نامشخص';
+        
+        infoSection.style.display = 'block';
+    } else {
+        infoSection.style.display = 'none';
+    }
+}
+
+// Toggle phone validation
+document.getElementById('phone-validation-enabled')?.addEventListener('change', async function() {
+    const enabled = this.checked;
+    
+    // If enabling, check if CSV is uploaded
+    if (enabled && !phoneValidationSettings) {
+        showToast('ابتدا فایل CSV شماره تلفن‌ها را آپلود کنید', 'error');
+        this.checked = false;
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'update_phone_validation_enabled');
+        formData.append('enabled', enabled ? '1' : '0');
+        
+        const result = await sendRequest(formData);
+        showToast(result.message);
+        
+        loadPhoneValidation();
+        
+    } catch (error) {
+        showToast(error.message, 'error');
+        this.checked = !enabled; // Revert
+    }
+});
+
+// CSV Upload
+const phoneCsvDropzone = document.getElementById('phone-csv-dropzone');
+const phoneCsvInput = document.getElementById('phone-csv-input');
+
+if (phoneCsvDropzone && phoneCsvInput) {
+    phoneCsvDropzone.addEventListener('click', () => phoneCsvInput.click());
+    
+    phoneCsvDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        phoneCsvDropzone.classList.add('dragover');
+    });
+    
+    phoneCsvDropzone.addEventListener('dragleave', () => {
+        phoneCsvDropzone.classList.remove('dragover');
+    });
+    
+    phoneCsvDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        phoneCsvDropzone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            phoneCsvInput.files = files;
+            const event = new Event('change', { bubbles: true });
+            phoneCsvInput.dispatchEvent(event);
+        }
+    });
+    
+    phoneCsvInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            const fileName = e.target.files[0].name;
+            phoneCsvDropzone.querySelector('p').textContent = `فایل انتخاب شده: ${fileName}`;
+        }
+    });
+}
+
+// Update in dashboard.js
+document.getElementById('phone-csv-upload-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent parent form submission
+    
+    const fileInput = document.getElementById('phone-csv-input');
+    if (!fileInput.files.length) {
+        showToast('لطفاً یک فایل CSV انتخاب کنید', 'error');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('upload-csv-btn');
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    
+    try {
+        const formData = new FormData(this);
+        const result = await sendRequest(formData);
+        
+        // Show message with invalid count if any
+        let message = result.message;
+        if (result.data && result.data.invalid_count > 0) {
+            message += ` (${result.data.invalid_count} شماره نامعتبر نادیده گرفته شد)`;
+        }
+        showToast(message);
+        
+        // Reset form
+        this.reset();
+        const dropzone = document.getElementById('phone-csv-dropzone');
+        if (dropzone) {
+            dropzone.querySelector('p').textContent = 'فایل CSV را اینجا رها کنید یا کلیک کنید';
+        }
+        
+        // Reload validation settings
+        loadPhoneValidation();
+        
+        submitBtn.classList.remove('loading');
+        submitBtn.classList.add('success');
+        setTimeout(() => {
+            submitBtn.classList.remove('success');
+            submitBtn.disabled = false;
+        }, 1500);
+        
+    } catch (error) {
+        showToast(error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+    }
+});
+
 });

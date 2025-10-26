@@ -108,6 +108,12 @@ $users = get_all_users();
                             </svg>
                             <span>ظاهر</span>
                         </a></li>
+                    <li><a href="#" class="tab-button" data-tab="phone-validation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>اعتبارسنجی تلفن</span>
+                    </a></li>
                     <li><a href="#" class="tab-button" data-tab="media">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -609,6 +615,71 @@ $users = get_all_users();
                     </div>
                 </form>
 
+                <div id="phone-validation" class="tab-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>اعتبارسنجی شماره تلفن</h3>
+                            <button type="button" id="refresh-phone-validation-btn" class="btn btn--primary btn--icon" title="بارگذاری مجدد">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="alert-warning" style="margin-bottom: 1.5rem;">
+                            <p><strong>توضیحات:</strong></p>
+                            <p>با فعال کردن این قابلیت، فقط کاربرانی که شماره تلفن آن‌ها در لیست موجود است می‌توانند به پخش زنده دسترسی داشته باشند.</p>
+                        </div>
+                        
+                        <!-- Enable/Disable Toggle -->
+                        <div class="phone-validation-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="phone-validation-enabled">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">فعال‌سازی اعتبارسنجی شماره تلفن</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Statistics -->
+                        <div id="phone-validation-stats" class="phone-validation-stats">
+                            <!-- Stats will be loaded here -->
+                        </div>
+                        
+                        <!-- CSV Upload Section -->
+                        <div class="phone-validation-upload">
+                            <h4>آپلود لیست شماره تلفن‌ها</h4>
+                            <p>فایل CSV حاوی لیست شماره تلفن‌های مجاز را آپلود کنید. هر خط باید شامل یک شماره تلفن باشد.</p>
+                            
+                            <form id="phone-csv-upload-form" enctype="multipart/form-data">
+                                <input type="hidden" name="action" value="upload_phone_numbers_csv">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                                
+                                <div class="upload-dropzone" id="phone-csv-dropzone">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 4 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p>فایل CSV را اینجا رها کنید یا کلیک کنید</p>
+                                    <small>فرمت قابل قبول: CSV - حداکثر 5MB</small>
+                                    <input type="file" id="phone-csv-input" name="csv_file" accept=".csv,text/csv" style="display: none;">
+                                </div>
+                                <button type="submit" class="btn btn--primary" id="upload-csv-btn">
+                                    <span class="btn-text">آپلود فایل CSV</span>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Current File Info -->
+                        <div id="current-csv-info" class="current-csv-info" style="display: none;">
+                            <h4>آخرین آپلود</h4>
+                            <div class="csv-info-content">
+                                <p><strong>تاریخ آپلود:</strong> <span id="csv-upload-date"></span></p>
+                                <p><strong>تعداد شماره‌ها:</strong> <span id="csv-total-numbers"></span></p>
+                                <p><strong>آپلود شده توسط:</strong> <span id="csv-uploaded-by"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="users" class="tab-panel">
                     <div class="card-grid">
                         <?php if (is_owner()): ?>

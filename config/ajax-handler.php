@@ -169,6 +169,7 @@ try {
                         }
                     }
                 }
+                update_phone_validation_event_id($current_event_id, $newId);
                 safe_file_put_contents($configsFile, json_encode($eventConfigs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             }
 
@@ -262,6 +263,9 @@ try {
                 'deleted_event_id' => $eventId, 
                 'new_current_event_id' => $newCurrentEventId
             ];
+
+            delete_phone_validation_data($eventId);
+
             break;
 
         case 'switch_event':
@@ -496,6 +500,86 @@ try {
                 'removed_count' => $removed_count
             ];
             break;
+
+        case 'get_phone_validation_settings':
+            if (empty($current_event_id)) throw new Exception('رویداد انتخاب نشده است');
+            
+            $settings = get_phone_validation_settings($current_event_id);
+            $stats = get_phone_validation_stats($current_event_id);
+            
+            $response = [
+                'success' => true,
+                'settings' => $settings,
+                'stats' => $stats
+            ];
+            break;
+
+        case 'update_phone_validation_enabled':
+            if (empty($current_event_id)) throw new Exception('رویداد انتخاب نشده است');
+            
+            $enabled = filter_input(INPUT_POST, 'enabled', FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($enabled === null) throw new Exception('مقدار نامعتبر است');
+            
+            update_phone_validation_settings($current_event_id, $enabled);
+            
+            $response = [
+                'success' => true,
+                'message' => $enabled ? 'اعتبارسنجی شماره تلفن فعال شد' : 'اعتبارسنجی شماره تلفن غیرفعال شد'
+            ];
+            break;
+
+        case 'upload_phone_numbers_csv':
+            if (empty($current_event_id)) throw new Exception('رویداد انتخاب نشده است');
+            
+            if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('فایلی انتخاب نشده است');
+            }
+            
+            $result = import_phone_numbers_csv($_FILES['csv_file'], $current_event_id);
+            
+            $response = [
+                'success' => true,
+                'message' => "{$result['total']} شماره تلفن با موفقیت وارد شد",
+                'data' => $result
+            ];
+            break;
+        case 'verify_phone_number':
+            $event_id = $_POST['event_id'] ?? '';
+            $phone_number = $_POST['phone_number'] ?? '';
+            
+            if (empty($event_id) || !is_valid_event_id($event_id)) {
+                throw new Exception('رویداد نامعتبر است');
+            }
+            
+            if (empty($phone_number)) {
+                throw new Exception('شماره تلفن وارد نشده است');
+            }
+            
+            // Check if validation is enabled
+            $settings = get_phone_validation_settings($event_id);
+            
+            if (!$settings['enabled']) {
+                $response = ['success' => true, 'authorized' => true];
+                break;
+            }
+            
+            // Check if phone is authorized
+            $authorized = is_phone_authorized($event_id, $phone_number);
+            
+            if ($authorized) {
+                // Store in session
+                if (!isset($_SESSION['authorized_events'])) {
+                    $_SESSION['authorized_events'] = [];
+                }
+                $_SESSION['authorized_events'][$event_id] = true;
+                
+                $response = ['success' => true, 'authorized' => true];
+            } else {
+                write_log('WARNING', "Unauthorized access attempt with phone: {$phone_number} for event {$event_id}");
+                $response = ['success' => true, 'authorized' => false];
+            }
+            break;
+            
         default:
             if (empty($current_event_id) || !is_valid_event_id($current_event_id)) throw new Exception("هیچ رویداد معتبری انتخاب نشده است.");
             switch ($action) {
