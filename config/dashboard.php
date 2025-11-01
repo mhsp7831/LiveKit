@@ -609,6 +609,9 @@ $users = get_all_users();
                                     
                                     <h4>کلاس‌های اصلی:</h4>
                                     <code class="language-css">.card {}, .video {}, .banner {}, .btn {}, .countdown {}, .social {}, header {}, main {}, footer {}</code>
+                                    <h4>کلاس‌های صفحه اعتبارسنجی:</h4>
+
+                                    <code class="language-css">.auth-container {}, .auth-icon {}, .error-message {}, .input-hint {}</code>
                                 </div>
                             </div>
                         </div>

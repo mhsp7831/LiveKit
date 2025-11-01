@@ -68,15 +68,14 @@ if (!$event_id) {
             }
         }
         
-        if (!$phone_validation_required) {
-            $event_path = EVENTS_DIR . $event_id;
-            $configsFile = $event_path . '/configs.json';
-            if (file_exists($configsFile)) {
-                $configs = json_decode(file_get_contents($configsFile), true);
-            } else {
-                $error_message = 'فایل تنظیمات برای این رویداد یافت نشد.';
-            }
+        $event_path = EVENTS_DIR . $event_id;
+        $configsFile = $event_path . '/configs.json';
+        if (file_exists($configsFile)) {
+            $configs = json_decode(file_get_contents($configsFile), true);
+        } else {
+            $error_message = 'فایل تنظیمات برای این رویداد یافت نشد.';
         }
+
     }
 }
 
@@ -116,10 +115,20 @@ if ($phone_validation_required):
     <title>احراز هویت - شماره تلفن</title>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: <?= htmlspecialchars($configs["colors"]["bg"]) ?>;
+            --title: <?= htmlspecialchars($configs["colors"]["title"]) ?>;
+            --primary: <?= htmlspecialchars($configs["colors"]["primary"]) ?>;
+            --primary-hover: <?= htmlspecialchars($configs["colors"]["primary-hover"]) ?>;
+            --card-bg: <?= htmlspecialchars($configs["colors"]["card-bg"]) ?>;
+            --placeholder: <?= htmlspecialchars($configs["colors"]["placeholder"]) ?>;
+            --placeholder-border: <?= htmlspecialchars($configs["colors"]["placeholder-border"]) ?>;
+            --text: <?= htmlspecialchars($configs["colors"]["text"]) ?>;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: var(--bg);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -127,7 +136,7 @@ if ($phone_validation_required):
             padding: 20px;
         }
         .auth-container {
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 40px;
@@ -138,7 +147,7 @@ if ($phone_validation_required):
         .auth-icon {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: var(--primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -148,15 +157,15 @@ if ($phone_validation_required):
         .auth-icon svg {
             width: 40px;
             height: 40px;
-            color: white;
+            color: var(--card-bg);
         }
         h1 {
-            color: #333;
+            color: var(--title);
             margin-bottom: 10px;
             font-size: 1.8rem;
         }
         p {
-            color: #666;
+            color: var(--text);
             margin-bottom: 30px;
             line-height: 1.6;
         }
@@ -180,7 +189,7 @@ if ($phone_validation_required):
         input[type="text"] {
             width: 100%;
             padding: 15px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--placeholder-border);
             border-radius: 10px;
             font-size: 1rem;
             font-family: 'Vazirmatn', sans-serif;
@@ -191,17 +200,17 @@ if ($phone_validation_required):
         }
         input[type="text"]:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            border-color: var(--primary-hover);
+            box-shadow: 0 0 0 4px var(--placeholder);
         }
         .input-hint {
             font-size: 0.85rem;
-            color: #999;
+            color: var(--text);
             margin-top: 8px;
             text-align: right;
         }
         button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary);
             color: white;
             border: none;
             padding: 15px;
@@ -214,7 +223,6 @@ if ($phone_validation_required):
         }
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
         button:active {
             transform: translateY(0);
@@ -228,6 +236,14 @@ if ($phone_validation_required):
             }
         }
     </style>
+    <?php
+        $customCSSFile = EVENTS_DIR . $event_id . '/custom.css';
+        if (file_exists($customCSSFile) && filesize($customCSSFile) > 0):
+            ?>
+        <style id="custom-css">
+            <?= file_get_contents($customCSSFile) ?>
+        </style>
+    <?php endif; ?>
 </head>
 <body>
     <div class="auth-container">
@@ -241,7 +257,7 @@ if ($phone_validation_required):
         
         <?php if ($phone_validation_error): ?>
             <div class="error-message">
-                شماره تلفن وارد شده مجاز به دسترسی نیست. لطفاً شماره تلفن صحیح خود را وارد کنید.
+                شماره تلفن وارد شده مجاز به دسترسی نیست.
             </div>
         <?php endif; ?>
         
@@ -257,7 +273,7 @@ if ($phone_validation_required):
                     inputmode="numeric"
                     maxlength="13"
                 >
-                <div class="input-hint">مثال: 09123456789 یا +989123456789</div>
+                <div class="input-hint">مثال: 09123456789 یا 989123456789+</div>
             </div>
             <button type="submit">ورود به پخش زنده</button>
         </form>
@@ -321,7 +337,7 @@ if ($phone_validation_required):
     }
     *{padding: 0;margin: 0;outline: none;box-sizing:border-box}
     body{margin:0;font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
-    header{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.05);padding:.8rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+    header{background:var(--card-bg);box-shadow:0 2px 6px rgba(0,0,0,.05);padding:.8rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
     header img{height:50px;margin-left: 50px;}
     header a{color:var(--title);text-decoration:none;font-weight:700;transition:.25s}
     header a:hover{color:var(--primary-hover)}
@@ -334,7 +350,7 @@ if ($phone_validation_required):
     .countdown, h3{font-size:1rem;font-weight:700;color:var(--title);margin:1rem 0 1rem}
     .countdown{display: flex;justify-content: center;align-items: center;gap: 5px;}
     .countdown div{display: flex;flex-direction: column;justify-content: center;align-items: center;gap: 5px;}
-    .countdown div span{background-color:var(--primary);color: var(--card-bg);padding: .5rem .8rem;border-radius: 8px;font-weight: bold;font-size: 2rem;width: 65px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+    .countdown div span{background-color:var(--primary);color: var(--text);padding: .5rem .8rem;border-radius: 8px;font-weight: bold;font-size: 2rem;width: 65px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
     .countdown div span span{padding: 0;font-size: 1rem;margin-top: -8px;line-height:1.2;}
     .banners{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.25rem}
     .banners .banner{background-image: url(<?= htmlspecialchars(get_image_url($configs["banner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;aspect-ratio: 64/19;}
@@ -342,14 +358,14 @@ if ($phone_validation_required):
     #preBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["preBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
     #endBanner{background-image: url(<?= htmlspecialchars(get_image_url($configs["endBanner"])) ?>);background-position: center;background-size: contain;background-repeat: no-repeat;}
     .actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:1.5rem;direction:ltr;}
-    .btn{padding:.4rem .5rem;border-radius:7px;background:var(--primary);color:#fff;text-decoration:none;font-weight:700;font-size:.7rem;transition:.25s;border:none;display:inline-block;word-spacing: -2px;}
+    .btn{padding:.4rem .5rem;border-radius:7px;background:var(--primary);color:var(--text);text-decoration:none;font-weight:700;font-size:.7rem;transition:.25s;border:none;display:inline-block;word-spacing: -2px;}
     .btn:hover{background:var(--primary-hover);transform:translateY(-2px)}
     .social{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;direction:ltr;}
     .social a{padding:.5rem .9rem;border-radius:8px;background:var(--bg);color:var(--title);text-decoration:none;font-size:.95rem;transition:.2s;border:1px solid var(--placeholder-border);display: flex;flex-direction: column;justify-content: space-around;align-items: center;gap: .2rem;line-height: 14px;}
     .social a:hover{background:var(--placeholder)}
     .social a img{width: 35px;height:35px;object-fit:contain;}
     footer{text-align:center;color:var(--title);padding:1rem}
-    #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center; display: none; position: relative; overflow: hidden;align-items: center;}
+    #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:var(--bg);border-radius:10px;min-height:40px;text-align:center; display: none; position: relative; overflow: hidden;align-items: center;}
     #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem; text-wrap: nowrap; position: absolute;}
     @media (max-width:600px){
       h1{font-size:1rem}
@@ -394,23 +410,6 @@ if ($phone_validation_required):
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>"><img src="<?= htmlspecialchars(get_image_url($configs["logo"])) ?>" alt="لوگو"></a>
     <!-- <h1><?= htmlspecialchars($configs["title"]) ?></h1> -->
     <a href="<?= htmlspecialchars($configs["homePage"]) ?>">صفحه اصلی</a>
-
-<!--//! ↓↓↓↓ JUST FOR TEST ↓↓↓↓ -->
-
-<?php if (isset($_SESSION['authorized_events'][$event_id])): ?>
-  <a href="?event=<?= htmlspecialchars($event_id) ?>&logout=1" style="font-size: 0.8rem; color: #999;">خروج</a>
-  <?php
-    // Handle logout
-    if (isset($_GET['logout'])) {
-      unset($_SESSION['authorized_events'][$event_id]);
-        header('Location: ?event=' . $event_id);
-        exit;
-    }
-    ?>
-<?php endif; ?>
-
-<!--//! ↑↑↑↑ JUST FOR TEST ↑↑↑↑ -->
-
   </header>
 
   <main>

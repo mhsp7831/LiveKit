@@ -183,7 +183,7 @@ function generatePreviewHTMLTemplate(config, customCSS, state) {
             flex-direction: column;
         }
         header { 
-            background: #fff; 
+            background: var(--card-bg); 
             box-shadow: 0 2px 6px rgba(0,0,0,.05); 
             padding: 0.8rem 2rem; 
             display: flex; 
@@ -250,7 +250,7 @@ function generatePreviewHTMLTemplate(config, customCSS, state) {
             padding: 0.4rem 0.5rem; 
             border-radius: 7px; 
             background: var(--primary); 
-            color: #fff; 
+            color: var(--text); 
             text-decoration: none; 
             font-weight: 700; 
             font-size: 0.7rem; 
@@ -285,20 +285,12 @@ function generatePreviewHTMLTemplate(config, customCSS, state) {
         .social a img { width: 35px; height: 35px; object-fit: contain; }
         footer { text-align: center; color: var(--title); padding: 1rem; }
         h3 { font-size: 1rem; font-weight: 700; color: var(--title); margin: 1rem 0; }
-        #subtitleBox { 
-            margin: 1rem 0; 
-            padding: 0.75rem 1rem; 
-            background: #f9f9f9; 
-            border-radius: 10px;
-            min-height: 40px;
-            text-align: center;
-        }
-            .countdown, h3{font-size:1rem;font-weight:700;color:var(--title);margin:1rem 0 1rem}
-    .countdown{display: flex;justify-content: center;align-items: center;gap: 5px;}
-    .countdown div{display: flex;flex-direction: column;justify-content: center;align-items: center;gap: 5px;}
-    .countdown div span{background-color:var(--primary);color: var(--card-bg);padding: .5rem .8rem;border-radius: 8px;font-weight: bold;font-size: 2rem;width: 65px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
-    .countdown div span span{padding: 0;font-size: 1rem;margin-top: -8px;line-height:1.2;}
-        #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:#f9f9f9;border-radius:10px;min-height:40px;text-align:center; display: none; position: relative; overflow: hidden;align-items: center;}
+        .countdown, h3{font-size:1rem;font-weight:700;color:var(--title);margin:1rem 0 1rem}
+        .countdown{display: flex;justify-content: center;align-items: center;gap: 5px;}
+        .countdown div{display: flex;flex-direction: column;justify-content: center;align-items: center;gap: 5px;}
+        .countdown div span{background-color:var(--primary);color: var(--card-bg);padding: .5rem .8rem;border-radius: 8px;font-weight: bold;font-size: 2rem;width: 65px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+        .countdown div span span{padding: 0;font-size: 1rem;margin-top: -8px;line-height:1.2;}
+        #subtitleBox{margin:1rem 0;padding:.75rem 1rem;background:var(--bg);border-radius:10px;min-height:40px;text-align:center; display: none; position: relative; overflow: hidden;align-items: center;}
         #subtitleText{font-weight:700;color:var(--title);font-size:1.1rem; text-wrap: nowrap; position: absolute;}
         #subtitleText a { color: var(--title); text-decoration: none; }
         ${customCSS ? `\n/* Custom CSS */\n${customCSS}` : ""}
@@ -2457,7 +2449,7 @@ function displayPhoneValidationStats(stats, settings) {
         </div>
         <div class="phone-stat-item">
             <div class="phone-stat-value">${stats.total_numbers}</div>
-            <div class="phone-stat-label">تعداد شماره‌های مجاز</div>
+            <div class="phone-stat-label">تعداد شماره‌های موجود</div>
         </div>
     `;
 }
@@ -2467,7 +2459,7 @@ function updateCurrentFileInfo(settings) {
     
     if (settings.csv_uploaded_at) {
         const date = new Date(settings.csv_uploaded_at * 1000);
-        const dateStr = date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
+        const dateStr = date.toLocaleDateString('fa-IR') + ' • ' + date.toLocaleTimeString('fa-IR');
         
         // Remove filename display since we don't save the file
         document.getElementById('csv-upload-date').textContent = dateStr;
