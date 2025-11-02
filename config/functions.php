@@ -478,6 +478,28 @@ if (isset($_GET['download']) && isset($_GET['event_id'])) {
         // Clean up the temporary zip file
         unlink($zip_file_path);
         exit;
+    } elseif ($file_type === 'phones') {
+        $db = get_db_connection();
+        $stmt = $db->prepare("SELECT phone_number FROM authorized_phones WHERE event_id = :event_id ORDER BY phone_number ASC");
+        $stmt->execute(['event_id' => $event_id]);
+
+        $filename = $event_id . '_phones_backup.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+
+        // Add header row
+        fputcsv($output, ['phone_number']);
+
+        // Add data rows
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            fputcsv($output, [$row['phone_number']]);
+        }
+
+        fclose($output);
+        exit;
     }
 
     if (isset($file_path) && file_exists($file_path)) {
