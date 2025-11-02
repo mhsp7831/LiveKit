@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
+
+    tippy('[data-tippy-content]', {
+        allowHTML: true,
+    });
+
     let cssEditor = null;
 
     // Fix: Initialize CodeMirror properly

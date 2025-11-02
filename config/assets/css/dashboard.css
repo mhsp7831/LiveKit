@@ -243,13 +243,8 @@ to {
     cursor: help;
 }
 
-.tooltip-text {
-    position: absolute;
-    bottom: 150%;
-    left: 50%;
-    max-width: 350px;
-    width: max-content;
-    transform: translate(-50%, 5%) scale(0.95);
+.tippy-box {
+    /* transform: translate(-50%, 5%) scale(0.95); */
     background-color: var(--dark-color);
     color: var(--light-color);
     padding: var(--spacing-sm) var(--spacing-md);
@@ -257,47 +252,26 @@ to {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-normal);
     text-align: right;
-    
-    z-index: 100;
-    opacity: 0;
-    visibility: hidden;
     pointer-events: none;
-    transition: all var(--transition-speed) cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transition-duration: var(--transition-speed);
+    transition-timing-function: cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
-.tooltip-text::after {
-    content: '';
-    position: absolute;
-    height: 0.8em;
-    width: 0.8em;
-    bottom: -0.4em;
-    left: 50%;
-    transform: translate(-50%) rotate(45deg);
-    background: var(--dark-color);
-    border-bottom-right-radius: 0.175rem;
+.tippy-content {
+    padding: 0;
+    margin: 0;
+    text-align: justify;
+}
+
+.tippy-box[data-state="visible"] {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 
 
-.label-tooltip:hover .tooltip-text {
-    opacity: 1;
-    visibility: visible;
-    transform: translate(-50%, 0%) scale(1);
-}
-
-div.image-upload-grid > div:nth-child(4) .tooltip-text {
-  left: 500%;
-}
-
-div.image-upload-grid > div:nth-child(4) .tooltip-text::after {
-  left: 15%;
-}
-
-div.form-grid > div:nth-child(8) .tooltip-text{
-    left: 850%;
-}
-
-div.form-grid > div:nth-child(8) .tooltip-text::after{
-    left: 8.5%;
+.tippy-box[data-state="hidden"] {
+  opacity: 0;
+  transform: scale(0.95) translateY(5%);
 }
 
 .alert-warning {

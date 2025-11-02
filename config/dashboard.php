@@ -235,13 +235,9 @@ $users = get_all_users();
                                         <label for="playerRevealOffset">
                                             نمایش پلیر قبل از شروع (ms):
                                             <div class="label-tooltip">
-                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <svg data-tippy-content="این عدد مشخص می‌کند که چند میلی‌ثانیه زودتر از زمان شروع، پلیر نمایش داده شود اما شمارنده به کار خود ادامه دهد. <br />(مقدار پیش‌فرض: 0)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
-                                                <span class="tooltip-text">
-                                                    این عدد مشخص می‌کند که چند میلی‌ثانیه زودتر از زمان شروع، پلیر نمایش داده شود اما شمارنده به کار خود ادامه دهد. <br />
-                                                    (مقدار پیش‌فرض: 0)
-                                                </span>
                                             </div>
                                         </label>
                                         <input type="number" name="playerRevealOffset" id="playerRevealOffset" placeholder="0" value="<?= htmlspecialchars($configs['playerRevealOffset'] ?? 0) ?>">
@@ -250,13 +246,9 @@ $users = get_all_users();
                                         <label for="fetchInterval">
                                             فاصله زمانی به‌روزرسانی زیرنویس (ms):
                                             <div class="label-tooltip">
-                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <svg data-tippy-content="این عدد مشخص می‌کند که صفحه پخش زنده، هر چند میلی‌ثانیه یک‌بار برای دریافت زیرنویس‌های جدید، سرور را بررسی کند. عدد کمتر به معنی به‌روزرسانی سریع‌تر و بار بیشتر روی سرور است. <br />(مقدار پیش‌فرض: 8000ms)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
-                                                <span class="tooltip-text">
-                                                    این عدد مشخص می‌کند که صفحه پخش زنده، هر چند میلی‌ثانیه یک‌بار برای دریافت زیرنویس‌های جدید، سرور را بررسی کند. عدد کمتر به معنی به‌روزرسانی سریع‌تر و بار بیشتر روی سرور است. <br />
-                                                    (مقدار پیش‌فرض: 8000ms)
-                                                </span>
                                             </div>
                                         </label>
                                         <input type="number" name="fetchInterval" id="fetchInterval" value="<?= htmlspecialchars($configs['fetchInterval']) ?>">
@@ -265,13 +257,9 @@ $users = get_all_users();
                                         <label for="scrollSpeed">
                                             سرعت نمایش زیرنویس (px/s):
                                             <div class="label-tooltip">
-                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <svg data-tippy-content="این عدد مشخص می‌کند که هر زیرنویس با چه سرعتی (بر حسب پیکسل در ثانیه) روی صفحه حرکت کند تا زیرنویس بعدی نمایش داده شود.<br />(مقدار پیش‌فرض: 50px/s)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
-                                                <span class="tooltip-text">
-                                                   این عدد مشخص می‌کند که هر زیرنویس با چه سرعتی (بر حسب پیکسل در ثانیه) روی صفحه حرکت کند تا زیرنویس بعدی نمایش داده شود.<br />
-                                                    (مقدار پیش‌فرض: 50px/s)
-                                                </span>
                                             </div>
                                         </label>
                                         <input type="number" name="scrollSpeed" id="scrollSpeed" value="<?= htmlspecialchars($configs['scrollSpeed']) ?>">
@@ -425,13 +413,9 @@ $users = get_all_users();
                                         <label for="logo_file"> 
                                             لوگو:
                                             <div class="label-tooltip">
-                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <svg data-tippy-content="فرمت‌های مجاز: JPG, PNG, GIF, SVG, WEBP<br />ابعاد پیشنهادی: 150×150 پیکسل" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
-                                                <span class="tooltip-text">
-                                                    فرمت‌های مجاز: JPG, PNG, GIF, SVG, WEBP<br />
-                                                    ابعاد پیشنهادی: 150×150 پیکسل
-                                                </span>
                                             </div>
                                         </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['logo'])) ?>" class="image-preview" id="logo_preview"></div>
@@ -460,13 +444,9 @@ $users = get_all_users();
                                         <label for="preBanner_file">
                                             بنر قبل از پخش‌زنده:
                                             <div class="label-tooltip">
-                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <svg data-tippy-content="فرمت: JPG, PNG, GIF, SVG, WEBP<br />نسبت ابعاد: 16:9 (مثال: 1080×1920)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
-                                                <span class="tooltip-text">
-                                                    فرمت: JPG, PNG, GIF, SVG, WEBP<br />
-                                                    نسبت ابعاد: 16:9 (مثال: 1080×1920)
-                                                </span>
                                             </div>
                                         </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['preBanner'])) ?>" class="image-preview" id="preBanner_preview"></div>
@@ -492,13 +472,9 @@ $users = get_all_users();
                                         <label for="endBanner_file">
                                             بنر بعد از پخش‌زنده:
                                             <div class="label-tooltip">
-                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <svg data-tippy-content="فرمت: JPG, PNG, GIF, SVG, WEBP<br />نسبت ابعاد: 16:9 (مثال: 1080×1920)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
-                                                <span class="tooltip-text">
-                                                    فرمت: JPG, PNG, GIF, SVG, WEBP<br />
-                                                    نسبت ابعاد: 16:9 (مثال: 1080×1920)
-                                                </span>
                                             </div>
                                         </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['endBanner'])) ?>" class="image-preview" id="endBanner_preview"></div>
@@ -524,13 +500,9 @@ $users = get_all_users();
                                         <label for="banner_file">
                                             بنر زیر پخش‌زنده:
                                             <div class="label-tooltip">
-                                                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <svg data-tippy-content="فرمت: JPG, PNG, GIF, SVG, WEBP<br />نسبت ابعاد: 64:19 (مثال: 1280×380)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                 </svg>
-                                                <span class="tooltip-text">
-                                                    فرمت: JPG, PNG, GIF, SVG, WEBP<br />
-                                                    نسبت ابعاد: 64:19 (مثال: 1280×380)
-                                                </span>
                                             </div>
                                         </label>
                                         <div class="image-preview-container"><img src="<?= htmlspecialchars(get_dashboard_image_url($configs['banner'])) ?>" class="image-preview" id="banner_preview"></div>
@@ -622,7 +594,7 @@ $users = get_all_users();
                     <div class="card">
                         <div class="card-header">
                             <h3>اعتبارسنجی شماره تلفن</h3>
-                            <div> <a href="?download=phones&event_id=<?= htmlspecialchars($current_event_id) ?>"
+                            <div> <a data-tippy-content="دانلود لیست شماره‌ها (CSV)" href="?download=phones&event_id=<?= htmlspecialchars($current_event_id) ?>"
                                     class="btn btn--primary btn--icon" title="دانلود لیست شماره‌ها (CSV)" id="download-phone-list-btn">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18"
                                         height="18">
@@ -1211,8 +1183,15 @@ $users = get_all_users();
     </div>
 
     <script src="assets/js/dashboard.js"></script>
+
+    <!-- Tippy.JS -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+
+    <!-- Prism.JS -->
     <script src="assets/js/prism.js"></script>
 
+    <!-- CodeMirror -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
