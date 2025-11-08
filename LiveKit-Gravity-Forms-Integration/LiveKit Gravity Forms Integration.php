@@ -288,44 +288,48 @@ class LiveStream_GF_Integration {
 
     /**
      * API Callback: Verify Phone Number.
-     * (This function is modified to search for multiple phone formats)
+     * Modified verify phone with auto-detection
      */
-    public function rest_verify_phone( $request ) {
-        if ( ! class_exists( 'GFAPI' ) ) {
-            return new WP_Error( 'gravity_forms_not_active', 'Gravity Forms is not active.', [ 'status' => 500 ] );
+    public function rest_verify_phone($request) {
+        if (!class_exists('GFAPI')) {
+            return new WP_Error('gravity_forms_not_active', 'Gravity Forms is not active.', ['status' => 500]);
         }
         
         $params = $request->get_json_params();
         $phone_number = $params['phone'] ?? '';
-        
-        // Use the form/field from the request, or fall back to saved settings
         $form_id = $params['form_id'] ?? $this->settings['form_id'];
         $field_id = $params['field_id'] ?? $this->settings['field_id'];
 
-        if ( empty( $phone_number ) || empty( $form_id ) || empty( $field_id ) ) {
-            return new WP_Error( 'missing_parameters', 'Missing required parameters (phone, form_id, field_id).', [ 'status' => 400 ] );
+        if (empty($phone_number) || empty($form_id)) {
+            return new WP_Error('missing_parameters', 'Missing required parameters (phone, form_id).', ['status' => 400]);
         }
 
-        // --- FIXED SEARCH LOGIC ---
+        // AUTO-DETECT: If field_id is empty, try to find it
+        if (empty($field_id)) {
+            $field_id = $this->get_phone_field_id($form_id);
+            
+            if (!$field_id) {
+                return new WP_Error('phone_field_not_found', 
+                    'Could not find a phone field in the form. Please specify field_id manually.', 
+                    ['status' => 400]
+                );
+            }
+        }
 
-        // 1. Normalize the input phone number
-        $normalized_phone = $this->normalize_phone( $phone_number );
+        // Rest of the verification logic...
+        $normalized_phone = $this->normalize_phone($phone_number);
         
-        // 2. Create an array of all possible formats to search for
         $search_formats = [];
-        $search_formats[] = $normalized_phone; // e.g., +989123456789
+        $search_formats[] = $normalized_phone;
         
-        // 3. Extract the core 9-digit number
         if (preg_match('/9(\d{9})$/', $normalized_phone, $matches)) {
-            $core_number = '9' . $matches[1]; // e.g., 9123456789
-            $search_formats[] = $core_number; // Add "9123456789"
-            $search_formats[] = '0' . $core_number; // Add "09123456789"
+            $core_number = '9' . $matches[1];
+            $search_formats[] = $core_number;
+            $search_formats[] = '0' . $core_number;
         }
         
-        // Remove duplicate formats
         $search_formats = array_unique($search_formats);
         
-        // 4. FIX: Build the Gravity Forms search criteria properly
         $field_filters = [];
         foreach ($search_formats as $format) {
             $field_filters[] = [
@@ -335,37 +339,32 @@ class LiveStream_GF_Integration {
             ];
         }
 
-        // FIX: Proper array structure for field_filters
         $search_criteria = [
             'status' => 'active',
-            'field_filters' => [
-                'mode' => 'any',
-            ]
+            'field_filters' => ['mode' => 'any']
         ];
         
-        // Add each filter to the field_filters array
         foreach ($field_filters as $filter) {
             $search_criteria['field_filters'][] = $filter;
         }
 
-        // 5. Query Gravity Forms
-        $entries = GFAPI::get_entries( $form_id, $search_criteria );
+        $entries = GFAPI::get_entries($form_id, $search_criteria);
 
-        if ( ! empty( $entries ) && !is_wp_error($entries) ) {
-            return new WP_REST_Response( [ 
-                'authorized' => true, 
-                'phone' => $normalized_phone, 
-                'found' => true, 
-                'searched_for' => $search_formats 
-            ], 200 );
+        if (!empty($entries) && !is_wp_error($entries)) {
+            return new WP_REST_Response([
+                'authorized' => true,
+                'phone' => $normalized_phone,
+                'found' => true,
+                'field_id_used' => $field_id // Show which field was used
+            ], 200);
         } else {
-            return new WP_REST_Response( [ 
-                'authorized' => false, 
-                'phone' => $normalized_phone, 
-                'found' => false, 
-                'searched_for' => $search_formats,
+            return new WP_REST_Response([
+                'authorized' => false,
+                'phone' => $normalized_phone,
+                'found' => false,
+                'field_id_used' => $field_id,
                 'error' => is_wp_error($entries) ? $entries->get_error_message() : null
-            ], 200 );
+            ], 200);
         }
     }
 
@@ -391,6 +390,44 @@ class LiveStream_GF_Integration {
         }
         
         return $phone;
+    }
+    
+    /**
+     * Auto-detect phone field in a Gravity Form
+     * 
+     * @param int $form_id The Gravity Form ID
+     * @return string|false The field ID if found, false otherwise
+     */
+    private function get_phone_field_id($form_id) {
+        if (!class_exists('GFAPI')) {
+            return false;
+        }
+        
+        $form = GFAPI::get_form($form_id);
+        if (!$form) {
+            return false;
+        }
+        
+        // Search for phone field
+        foreach ($form['fields'] as $field) {
+            // Check if field type is 'phone'
+            if ($field->type === 'phone') {
+                return (string) $field->id;
+            }
+        }
+        
+        // If no phone field found, search in field labels
+        foreach ($form['fields'] as $field) {
+            $label = strtolower($field->label);
+            if (strpos($label, 'phone') !== false || 
+                strpos($label, 'mobile') !== false ||
+                strpos($label, 'تلفن') !== false ||
+                strpos($label, 'موبایل') !== false) {
+                return (string) $field->id;
+            }
+        }
+        
+        return false;
     }
 }
 

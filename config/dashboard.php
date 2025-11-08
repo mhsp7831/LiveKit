@@ -685,7 +685,7 @@ $users = get_all_users();
                                     <h4>تنظیمات اتصال به WordPress</h4>
                                     <p>اطلاعات اتصال به افزونه WordPress را وارد کنید.</p>
                                     
-                                    <div class="alert-warning" style="margin-bottom: 1rem;">
+                                    <div class="alert-warning">
                                         <p><strong>نکته:</strong> لطفاً ابتدا افزونه "LiveKit Gravity Forms Integration" را در وردپرس خود نصب و فعال کنید.</p>
                                     </div>
                                     
@@ -693,9 +693,11 @@ $users = get_all_users();
                                         <div class="form-group" style="grid-column: 1 / -1;">
                                             <label for="wp_api_url">
                                                 WordPress Base URL:
-                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
-                                                    مثال: https://yoursite.com یا https://yoursite.com/wp-json/livestream/v1
-                                                </small>
+                                                <div class="label-tooltip">
+                                                    <svg data-tippy-content="مثال: https://yoursite.com یا https://yoursite.com/wp-json/livestream/v1" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                    </svg>
+                                                </div>
                                             </label>
                                             <input type="url" id="wp_api_url" name="wp_api_url" 
                                                 placeholder="https://yourwordpress.com" required>
@@ -703,9 +705,11 @@ $users = get_all_users();
                                         <div class="form-group" style="grid-column: 1 / -1;">
                                             <label for="wp_api_key">
                                                 API Key:
-                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
-                                                    این کلید را از تنظیمات افزونه در وردپرس کپی کنید
-                                                </small>
+                                                <div class="label-tooltip">
+                                                    <svg data-tippy-content="این کلید را از تنظیمات افزونه در وردپرس کپی کنید" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                    </svg>
+                                                </div>
                                             </label>
                                             <input type="text" id="wp_api_key" name="wp_api_key" 
                                                 placeholder="ls_..." required>
@@ -713,22 +717,28 @@ $users = get_all_users();
                                         <div class="form-group">
                                             <label for="wp_form_id">
                                                 Gravity Forms Form ID:
-                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
-                                                    شناسه فرم گراویتی (مثلاً 3)
-                                                </small>
+                                                <div class="label-tooltip">
+                                                    <svg data-tippy-content="شناسه فرم گراویتی (مثلاً 3)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                    </svg>
+                                                </div>
                                             </label>
                                             <input type="text" id="wp_form_id" name="wp_form_id" 
                                                 placeholder="3" required>
                                         </div>
                                         <div class="form-group">
                                             <label for="wp_field_id">
-                                                Phone Field ID:
+                                                Phone Field ID (اختیاری):
                                                 <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
-                                                    شناسه فیلد تلفن (مثلاً 5 یا 5.1)
+                                                    <div class="label-tooltip">
+                                                        <svg data-tippy-content="شناسه فیلد تلفن (مثلاً 5 یا 5.1)<br><strong>نکته:</strong> اگر خالی بگذارید، سیستم به صورت خودکار فیلد تلفن را پیدا می‌کند" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                        </svg>
+                                                    </div>
                                                 </small>
                                             </label>
                                             <input type="text" id="wp_field_id" name="wp_field_id" 
-                                                placeholder="5.1" required>
+                                                placeholder="5.1 (اختیاری - خودکار شناسایی می‌شود)">
                                         </div>
                                     </div>
                                     

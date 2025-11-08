@@ -286,7 +286,7 @@ to {
 .alert-warning, .alert-warning * {
     margin: 0 !important;
     line-height: 1.6;
-    color: var(--warning-text-color);
+    color: var(--warning-text-color) !important;
     text-align: right;
 }
 .alert-warning strong {

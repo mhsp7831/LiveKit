@@ -603,18 +603,20 @@ try {
                 'wp_api_url' => filter_input(INPUT_POST, 'wp_api_url', FILTER_VALIDATE_URL),
                 'wp_api_key' => trim($_POST['wp_api_key'] ?? ''),
                 'wp_form_id' => trim($_POST['wp_form_id'] ?? ''),
-                'wp_field_id' => trim($_POST['wp_field_id'] ?? ''),
+                'wp_field_id' => trim($_POST['wp_field_id'] ?? ''), // Now optional
             ];
             
-            if (empty($settings['wp_api_url']) || empty($settings['wp_api_key']) || empty($settings['wp_form_id']) || empty($settings['wp_field_id'])) {
-                throw new Exception('تمام فیلدهای WordPress الزامی هستند.');
+            // Validate required fields only (field_id is optional)
+            if (empty($settings['wp_api_url']) || empty($settings['wp_api_key']) || empty($settings['wp_form_id'])) {
+                throw new Exception('فیلدهای URL، API Key و Form ID الزامی هستند.');
             }
             
             save_wp_validation_settings($current_event_id, $settings);
             
             $response = [
                 'success' => true,
-                'message' => 'تنظیمات WordPress با موفقیت ذخیره شد'
+                'message' => 'تنظیمات WordPress با موفقیت ذخیره شد' . 
+                            (empty($settings['wp_field_id']) ? ' (شناسایی خودکار فیلد فعال است)' : '')
             ];
             break;
             

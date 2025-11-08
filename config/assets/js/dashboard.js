@@ -2531,7 +2531,7 @@ document.getElementById('phone-validation-enabled')?.addEventListener('change', 
         } else if (source === 'wordpress') {
             // Check if WordPress settings are configured
             if (!phoneValidationSettings.wp_api_url || !phoneValidationSettings.wp_api_key || 
-                !phoneValidationSettings.wp_form_id || !phoneValidationSettings.wp_field_id) {
+                !phoneValidationSettings.wp_form_id) {
                 showToast('ابتدا تنظیمات WordPress را تکمیل کنید', 'error');
                 this.checked = false;
                 return;
