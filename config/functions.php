@@ -1375,12 +1375,12 @@ function call_wordpress_api($event_id, $endpoint, $method = 'GET', $data = []) {
     
     $api_url = rtrim($settings['wp_api_url'], '/');
     
-    // FIX: Automatically append /wp-json if it's missing from the base URL
-    if (strpos($api_url, '/wp-json') === false) {
-        $api_url .= '/wp-json';
-    }
+    // FIX: Clean and normalize the base URL
+    // Remove any existing /wp-json or /livestream/v1 suffixes
+    $api_url = preg_replace('#/wp-json.*$#', '', $api_url);
     
-    $api_url .= $endpoint;
+    // Now build the complete URL
+    $api_url .= '/wp-json/livestream/v1' . $endpoint;
 
     $ch = curl_init();
     
@@ -1392,8 +1392,8 @@ function call_wordpress_api($event_id, $endpoint, $method = 'GET', $data = []) {
     curl_setopt($ch, CURLOPT_URL, $api_url);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10 second timeout
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enforce SSL
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
     if ($method === 'POST') {
@@ -1417,7 +1417,6 @@ function call_wordpress_api($event_id, $endpoint, $method = 'GET', $data = []) {
     $body = json_decode($response, true);
     
     if ($http_code >= 400) {
-        // Log the full response for debugging
         write_log('ERROR', "WP API Error ($http_code) at $api_url: " . $response);
         throw new Exception('WordPress API Error (' . $http_code . '): ' . ($body['message'] ?? $response));
     }
@@ -1444,6 +1443,7 @@ function test_wordpress_connection($event_id) {
         }
     } catch (Exception $e) {
         $message = $e->getMessage();
+        write_log('ERROR', "WordPress connection test failed for event {$event_id}: " . $message);
     }
     
     // Save test result to database
@@ -1462,7 +1462,8 @@ function test_wordpress_connection($event_id) {
     if ($status_text === 'موفق') {
         return ['success' => true, 'message' => $message];
     } else {
-        throw new Exception($message);
+        // FIX: Don't throw exception, return error in response
+        return ['success' => false, 'message' => $message];
     }
 }
 
@@ -1473,11 +1474,18 @@ function verify_phone_wordpress($event_id, $phone_number) {
     try {
         $settings = get_phone_validation_settings($event_id);
         
+        // FIX: Pass form_id and field_id to the API
         $data = [
             'phone' => $phone_number,
-            'form_id' => $settings['wp_form_id'],
-            'field_id' => $settings['wp_field_id']
         ];
+        
+        // Only add form_id and field_id if they're set in settings
+        if (!empty($settings['wp_form_id'])) {
+            $data['form_id'] = $settings['wp_form_id'];
+        }
+        if (!empty($settings['wp_field_id'])) {
+            $data['field_id'] = $settings['wp_field_id'];
+        }
         
         $response = call_wordpress_api($event_id, '/verify-phone', 'POST', $data);
         
@@ -1488,7 +1496,7 @@ function verify_phone_wordpress($event_id, $phone_number) {
             return false;
         }
     } catch (Exception $e) {
-        write_log('ERROR', 'WP API Verification Failed. Event: {$event_id}, Error: ' . $e->getMessage());
+        write_log('ERROR', 'WP API Verification Failed. Event: ' . $event_id . ', Error: ' . $e->getMessage());
         return false; // Fail-closed. If API fails, deny access.
     }
 }

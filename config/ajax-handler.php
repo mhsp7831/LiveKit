@@ -623,10 +623,19 @@ try {
             
             $result = test_wordpress_connection($current_event_id);
             
-            $response = [
-                'success' => true,
-                'message' => $result['message']
-            ];
+            // FIX: Handle both success and failure cases
+            if ($result['success']) {
+                $response = [
+                    'success' => true,
+                    'message' => $result['message']
+                ];
+            } else {
+                // Don't throw exception, just return error message
+                $response = [
+                    'success' => false,
+                    'message' => $result['message']
+                ];
+            }
             break;
 
         default:

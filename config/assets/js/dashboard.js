@@ -2433,11 +2433,22 @@ async function loadPhoneValidation() {
         // Update stats
         displayPhoneValidationStats(result.stats, phoneValidationSettings);
         
-        // --- NEW WP/CSV LOGIC ---
+        // --- FIX: Ensure source_type has a default value ---
+        const source = phoneValidationSettings.source_type || 'csv';
         
         // Set source radio button
-        const source = phoneValidationSettings.source_type || 'csv';
-        document.getElementById(`phone_source_${source}`).checked = true;
+        const csvRadio = document.getElementById('phone_source_csv');
+        const wpRadio = document.getElementById('phone_source_wordpress');
+        
+        if (csvRadio && wpRadio) {
+            if (source === 'wordpress') {
+                wpRadio.checked = true;
+                csvRadio.checked = false;
+            } else {
+                csvRadio.checked = true;
+                wpRadio.checked = false;
+            }
+        }
         
         // Show/hide containers
         toggleValidationSourceView(source);
@@ -2506,11 +2517,26 @@ function updateCurrentFileInfo(settings) {
 document.getElementById('phone-validation-enabled')?.addEventListener('change', async function() {
     const enabled = this.checked;
     
-    // If enabling, check if CSV is uploaded
-    if (enabled && !phoneValidationSettings) {
-        showToast('ابتدا فایل CSV شماره تلفن‌ها را آپلود کنید', 'error');
-        this.checked = false;
-        return;
+    // FIX: If enabling, check which source is selected and validate accordingly
+    if (enabled && phoneValidationSettings) {
+        const source = phoneValidationSettings.source_type || 'csv';
+        
+        if (source === 'csv') {
+            // Check if CSV has been uploaded
+            if (!phoneValidationSettings.csv_uploaded_at || phoneValidationSettings.total_numbers === 0) {
+                showToast('ابتدا فایل CSV شماره تلفن‌ها را آپلود کنید', 'error');
+                this.checked = false;
+                return;
+            }
+        } else if (source === 'wordpress') {
+            // Check if WordPress settings are configured
+            if (!phoneValidationSettings.wp_api_url || !phoneValidationSettings.wp_api_key || 
+                !phoneValidationSettings.wp_form_id || !phoneValidationSettings.wp_field_id) {
+                showToast('ابتدا تنظیمات WordPress را تکمیل کنید', 'error');
+                this.checked = false;
+                return;
+            }
+        }
     }
     
     try {
@@ -2691,9 +2717,8 @@ document.getElementById('test-wp-connection-btn')?.addEventListener('click', asy
     try {
         const form = document.getElementById('wp-validation-settings-form');
         const formData = new FormData(form);
-        formData.set('action', 'save_wp_validation_settings'); // Ensure correct action
+        formData.set('action', 'save_wp_validation_settings');
         await sendRequest(formData);
-        // Don't show toast, just save
     } catch (error) {
         showToast('ابتدا تنظیمات را ذخیره کنید: ' + error.message, 'error');
         submitBtn.disabled = false;
@@ -2707,20 +2732,28 @@ document.getElementById('test-wp-connection-btn')?.addEventListener('click', asy
         testFormData.append('action', 'test_wp_validation_connection');
         
         const result = await sendRequest(testFormData);
-        showToast(result.message, 'success');
+        
+        // FIX: Check result.success instead of assuming success
+        if (result.success) {
+            showToast(result.message, 'success');
+            
+            submitBtn.classList.remove('loading');
+            submitBtn.classList.add('success');
+            setTimeout(() => {
+                submitBtn.classList.remove('success');
+                submitBtn.disabled = false;
+            }, 1500);
+        } else {
+            showToast(result.message, 'error');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+        }
         
         loadPhoneValidation(); // Reload settings to show test status
-        
-        submitBtn.classList.remove('loading');
-        submitBtn.classList.add('success');
-        setTimeout(() => {
-            submitBtn.classList.remove('success');
-            submitBtn.disabled = false;
-        }, 1500);
         
     } catch (error) {
         showToast(error.message, 'error');
-        loadPhoneValidation(); // Reload settings to show test status
+        loadPhoneValidation();
         submitBtn.disabled = false;
         submitBtn.classList.remove('loading');
     }

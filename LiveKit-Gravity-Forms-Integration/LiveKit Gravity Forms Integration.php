@@ -306,9 +306,9 @@ class LiveStream_GF_Integration {
             return new WP_Error( 'missing_parameters', 'Missing required parameters (phone, form_id, field_id).', [ 'status' => 400 ] );
         }
 
-        // --- NEW SEARCH LOGIC ---
+        // --- FIXED SEARCH LOGIC ---
 
-        // 1. Normalize the input phone number (e.g., "0912..." -> "+98912...")
+        // 1. Normalize the input phone number
         $normalized_phone = $this->normalize_phone( $phone_number );
         
         // 2. Create an array of all possible formats to search for
@@ -322,10 +322,10 @@ class LiveStream_GF_Integration {
             $search_formats[] = '0' . $core_number; // Add "09123456789"
         }
         
-        // Remove duplicate formats, just in case
+        // Remove duplicate formats
         $search_formats = array_unique($search_formats);
         
-        // 4. Build the Gravity Forms search criteria
+        // 4. FIX: Build the Gravity Forms search criteria properly
         $field_filters = [];
         foreach ($search_formats as $format) {
             $field_filters[] = [
@@ -335,23 +335,37 @@ class LiveStream_GF_Integration {
             ];
         }
 
+        // FIX: Proper array structure for field_filters
         $search_criteria = [
             'status' => 'active',
             'field_filters' => [
-                'mode' => 'any', // Match ANY of these formats
-                $field_filters
+                'mode' => 'any',
             ]
         ];
+        
+        // Add each filter to the field_filters array
+        foreach ($field_filters as $filter) {
+            $search_criteria['field_filters'][] = $filter;
+        }
 
         // 5. Query Gravity Forms
         $entries = GFAPI::get_entries( $form_id, $search_criteria );
 
-        if ( ! empty( $entries ) ) {
-            // Found it!
-            return new WP_REST_Response( [ 'authorized' => true, 'phone' => $normalized_phone, 'found' => true, 'searched_for' => $search_formats ], 200 );
+        if ( ! empty( $entries ) && !is_wp_error($entries) ) {
+            return new WP_REST_Response( [ 
+                'authorized' => true, 
+                'phone' => $normalized_phone, 
+                'found' => true, 
+                'searched_for' => $search_formats 
+            ], 200 );
         } else {
-            // Not found
-            return new WP_REST_Response( [ 'authorized' => false, 'phone' => $normalized_phone, 'found' => false, 'searched_for' => $search_formats ], 200 );
+            return new WP_REST_Response( [ 
+                'authorized' => false, 
+                'phone' => $normalized_phone, 
+                'found' => false, 
+                'searched_for' => $search_formats,
+                'error' => is_wp_error($entries) ? $entries->get_error_message() : null
+            ], 200 );
         }
     }
 

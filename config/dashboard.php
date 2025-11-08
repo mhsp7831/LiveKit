@@ -685,22 +685,50 @@ $users = get_all_users();
                                     <h4>تنظیمات اتصال به WordPress</h4>
                                     <p>اطلاعات اتصال به افزونه WordPress را وارد کنید.</p>
                                     
+                                    <div class="alert-warning" style="margin-bottom: 1rem;">
+                                        <p><strong>نکته:</strong> لطفاً ابتدا افزونه "LiveKit Gravity Forms Integration" را در وردپرس خود نصب و فعال کنید.</p>
+                                    </div>
+                                    
                                     <div class="form-grid">
                                         <div class="form-group" style="grid-column: 1 / -1;">
-                                            <label for="wp_api_url">WordPress REST API URL:</label>
-                                            <input type="url" id="wp_api_url" name="wp_api_url" placeholder="https://yourwordpress.com/wp-json" required>
+                                            <label for="wp_api_url">
+                                                WordPress Base URL:
+                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
+                                                    مثال: https://yoursite.com یا https://yoursite.com/wp-json/livestream/v1
+                                                </small>
+                                            </label>
+                                            <input type="url" id="wp_api_url" name="wp_api_url" 
+                                                placeholder="https://yourwordpress.com" required>
                                         </div>
                                         <div class="form-group" style="grid-column: 1 / -1;">
-                                            <label for="wp_api_key">API Key:</label>
-                                            <input type="text" id="wp_api_key" name="wp_api_key" required>
+                                            <label for="wp_api_key">
+                                                API Key:
+                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
+                                                    این کلید را از تنظیمات افزونه در وردپرس کپی کنید
+                                                </small>
+                                            </label>
+                                            <input type="text" id="wp_api_key" name="wp_api_key" 
+                                                placeholder="ls_..." required>
                                         </div>
                                         <div class="form-group">
-                                            <label for="wp_form_id">Gravity Forms Form ID:</label>
-                                            <input type="text" id="wp_form_id" name="wp_form_id" placeholder="e.g., 3" required>
+                                            <label for="wp_form_id">
+                                                Gravity Forms Form ID:
+                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
+                                                    شناسه فرم گراویتی (مثلاً 3)
+                                                </small>
+                                            </label>
+                                            <input type="text" id="wp_form_id" name="wp_form_id" 
+                                                placeholder="3" required>
                                         </div>
                                         <div class="form-group">
-                                            <label for="wp_field_id">Gravity Forms Field ID:</label>
-                                            <input type="text" id="wp_field_id" name="wp_field_id" placeholder="e.g., 5.1" required>
+                                            <label for="wp_field_id">
+                                                Phone Field ID:
+                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
+                                                    شناسه فیلد تلفن (مثلاً 5 یا 5.1)
+                                                </small>
+                                            </label>
+                                            <input type="text" id="wp_field_id" name="wp_field_id" 
+                                                placeholder="5.1" required>
                                         </div>
                                     </div>
                                     
@@ -713,7 +741,7 @@ $users = get_all_users();
                                         </button>
                                     </div>
                                     
-                                    <div id="wp-test-status" style="margin-top: 1rem; text-align: right;">
+                                    <div id="wp-test-status" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 8px;">
                                         <p><strong>آخرین وضعیت تست:</strong> <span id="wp-test-status-text">تست نشده</span></p>
                                         <p><strong>تاریخ تست:</strong> <span id="wp-test-date-text">---</span></p>
                                     </div>
