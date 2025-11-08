@@ -1085,6 +1085,21 @@ function create_phone_validation_table($db) {
     
     $db->exec("CREATE INDEX IF NOT EXISTS idx_phone_event ON authorized_phones(event_id)");
     $db->exec("CREATE INDEX IF NOT EXISTS idx_phone_number ON authorized_phones(event_id, phone_number)");
+
+    try {
+        // Check if the 'source_type' column exists. If not, alter the table.
+        $db->query("SELECT source_type FROM phone_validation LIMIT 1");
+    } catch (PDOException $e) {
+        // Column doesn't exist, so add it and the other WP fields
+        $db->exec("ALTER TABLE phone_validation ADD COLUMN source_type TEXT DEFAULT 'csv'");
+        $db->exec("ALTER TABLE phone_validation ADD COLUMN wp_api_url TEXT");
+        $db->exec("ALTER TABLE phone_validation ADD COLUMN wp_api_key TEXT");
+        $db->exec("ALTER TABLE phone_validation ADD COLUMN wp_form_id TEXT");
+        $db->exec("ALTER TABLE phone_validation ADD COLUMN wp_field_id TEXT");
+        $db->exec("ALTER TABLE phone_validation ADD COLUMN last_test_at INTEGER");
+        $db->exec("ALTER TABLE phone_validation ADD COLUMN last_test_status TEXT");
+        write_log('INFO', 'Database table "phone_validation" updated for WordPress integration.');
+    }
 }
 
 
@@ -1100,7 +1115,7 @@ function get_phone_validation_settings($event_id) {
     
     if (!$settings) {
         // Create default settings
-        $stmt = $db->prepare("INSERT INTO phone_validation (event_id, enabled) VALUES (:event_id, 0)");
+        $stmt = $db->prepare("INSERT INTO phone_validation (event_id, enabled, source_type) VALUES (:event_id, 0, 'csv')");
         $stmt->execute(['event_id' => $event_id]);
         
         return [
@@ -1108,8 +1123,14 @@ function get_phone_validation_settings($event_id) {
             'enabled' => 0,
             'csv_uploaded_at' => null,
             'total_numbers' => 0,
-            'last_updated_by' => null
+            'last_updated_by' => null,
+            'source_type' => 'csv' // Add default here too
         ];
+    }
+    
+    // FIX: Ensure source_type is not null for existing entries
+    if (empty($settings['source_type'])) {
+        $settings['source_type'] = 'csv';
     }
     
     return $settings;
@@ -1289,6 +1310,187 @@ function is_phone_authorized($event_id, $phone_number) {
     
     $result = $stmt->fetch();
     return $result['count'] > 0;
+}
+
+/**
+ * Saves the WordPress integration settings for an event.
+ */
+function save_wp_validation_settings($event_id, $settings) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("UPDATE phone_validation 
+        SET 
+            source_type = 'wordpress',
+            wp_api_url = :wp_api_url,
+            wp_api_key = :wp_api_key,
+            wp_form_id = :wp_form_id,
+            wp_field_id = :wp_field_id,
+            last_updated_by = :last_updated_by
+        WHERE event_id = :event_id");
+        
+    $stmt->execute([
+        ':wp_api_url' => $settings['wp_api_url'],
+        ':wp_api_key' => $settings['wp_api_key'],
+        ':wp_form_id' => $settings['wp_form_id'],
+        ':wp_field_id' => $settings['wp_field_id'],
+        ':last_updated_by' => $_SESSION['username'] ?? 'unknown',
+        ':event_id' => $event_id
+    ]);
+    
+    write_log('INFO', "WordPress validation settings saved for event {$event_id}");
+    return true;
+}
+
+/**
+ * Updates the source type (e.g., 'csv' or 'wordpress') for an event.
+ */
+function update_phone_validation_source($event_id, $source_type) {
+    $db = get_db_connection();
+    
+    $stmt = $db->prepare("UPDATE phone_validation 
+        SET 
+            source_type = :source_type,
+            last_updated_by = :last_updated_by
+        WHERE event_id = :event_id");
+        
+    $stmt->execute([
+        ':source_type' => $source_type,
+        ':last_updated_by' => $_SESSION['username'] ?? 'unknown',
+        ':event_id' => $event_id
+    ]);
+    
+    write_log('INFO', "Phone validation source changed to '{$source_type}' for event {$event_id}");
+    return true;
+}
+
+
+/**
+ * Helper function to perform cURL requests to WordPress.
+ */
+function call_wordpress_api($event_id, $endpoint, $method = 'GET', $data = []) {
+    $settings = get_phone_validation_settings($event_id);
+    if (empty($settings['wp_api_url']) || empty($settings['wp_api_key'])) {
+        throw new Exception('اطلاعات اتصال WordPress API (URL or Key) ثبت نشده است.');
+    }
+    
+    $api_url = rtrim($settings['wp_api_url'], '/');
+    
+    // FIX: Automatically append /wp-json if it's missing from the base URL
+    if (strpos($api_url, '/wp-json') === false) {
+        $api_url .= '/wp-json';
+    }
+    
+    $api_url .= $endpoint;
+
+    $ch = curl_init();
+    
+    $headers = [
+        'Content-Type: application/json',
+        'X-API-Key: ' . $settings['wp_api_key']
+    ];
+
+    curl_setopt($ch, CURLOPT_URL, $api_url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10 second timeout
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Enforce SSL
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+    if ($method === 'POST') {
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    } else {
+        curl_setopt($ch, CURLOPT_HTTPGET, true);
+    }
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    if (curl_errno($ch)) {
+        $error = curl_error($ch);
+        curl_close($ch);
+        throw new Exception('خطای cURL در اتصال به WordPress: ' . $error);
+    }
+    
+    curl_close($ch);
+    
+    $body = json_decode($response, true);
+    
+    if ($http_code >= 400) {
+        // Log the full response for debugging
+        write_log('ERROR', "WP API Error ($http_code) at $api_url: " . $response);
+        throw new Exception('WordPress API Error (' . $http_code . '): ' . ($body['message'] ?? $response));
+    }
+    
+    return $body;
+}
+
+/**
+ * Tests the connection to the WordPress API.
+ */
+function test_wordpress_connection($event_id) {
+    $db = get_db_connection();
+    $status_text = 'خطا';
+    $message = '';
+    
+    try {
+        $response = call_wordpress_api($event_id, '/test-connection', 'GET');
+        
+        if (isset($response['success']) && $response['success'] === true) {
+            $status_text = 'موفق';
+            $message = $response['message'] ?? 'اتصال با موفقیت برقرار شد.';
+        } else {
+            $message = 'پاسخ نامعتبر از سرور WordPress دریافت شد.';
+        }
+    } catch (Exception $e) {
+        $message = $e->getMessage();
+    }
+    
+    // Save test result to database
+    $stmt = $db->prepare("UPDATE phone_validation 
+        SET 
+            last_test_at = :time,
+            last_test_status = :status_message
+        WHERE event_id = :event_id");
+    
+    $stmt->execute([
+        ':time' => time(),
+        ':status_message' => $status_text . ': ' . $message,
+        ':event_id' => $event_id
+    ]);
+    
+    if ($status_text === 'موفق') {
+        return ['success' => true, 'message' => $message];
+    } else {
+        throw new Exception($message);
+    }
+}
+
+/**
+ * Verifies a phone number against the WordPress API.
+ */
+function verify_phone_wordpress($event_id, $phone_number) {
+    try {
+        $settings = get_phone_validation_settings($event_id);
+        
+        $data = [
+            'phone' => $phone_number,
+            'form_id' => $settings['wp_form_id'],
+            'field_id' => $settings['wp_field_id']
+        ];
+        
+        $response = call_wordpress_api($event_id, '/verify-phone', 'POST', $data);
+        
+        if (isset($response['authorized']) && $response['authorized'] === true) {
+            return true;
+        } else {
+            write_log('INFO', "WP API Denied. Phone: {$phone_number}, Event: {$event_id}, Reason: " . ($response['message'] ?? 'Not found'));
+            return false;
+        }
+    } catch (Exception $e) {
+        write_log('ERROR', 'WP API Verification Failed. Event: {$event_id}, Error: ' . $e->getMessage());
+        return false; // Fail-closed. If API fails, deny access.
+    }
 }
 
 /**

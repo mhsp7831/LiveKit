@@ -579,7 +579,56 @@ try {
                 $response = ['success' => true, 'authorized' => false];
             }
             break;
+
+        case 'update_phone_validation_source':
+            if (empty($current_event_id)) throw new Exception('رویداد انتخاب نشده است');
             
+            $source_type = $_POST['source_type'] ?? 'csv';
+            if (!in_array($source_type, ['csv', 'wordpress'])) {
+                throw new Exception('منبع نامعتبر است');
+            }
+            
+            update_phone_validation_source($current_event_id, $source_type);
+            
+            $response = [
+                'success' => true,
+                'message' => 'منبع اعتبارسنجی به‌روزرسانی شد'
+            ];
+            break;
+            
+        case 'save_wp_validation_settings':
+            if (empty($current_event_id)) throw new Exception('رویداد انتخاب نشده است');
+            
+            $settings = [
+                'wp_api_url' => filter_input(INPUT_POST, 'wp_api_url', FILTER_VALIDATE_URL),
+                'wp_api_key' => trim($_POST['wp_api_key'] ?? ''),
+                'wp_form_id' => trim($_POST['wp_form_id'] ?? ''),
+                'wp_field_id' => trim($_POST['wp_field_id'] ?? ''),
+            ];
+            
+            if (empty($settings['wp_api_url']) || empty($settings['wp_api_key']) || empty($settings['wp_form_id']) || empty($settings['wp_field_id'])) {
+                throw new Exception('تمام فیلدهای WordPress الزامی هستند.');
+            }
+            
+            save_wp_validation_settings($current_event_id, $settings);
+            
+            $response = [
+                'success' => true,
+                'message' => 'تنظیمات WordPress با موفقیت ذخیره شد'
+            ];
+            break;
+            
+        case 'test_wp_validation_connection':
+            if (empty($current_event_id)) throw new Exception('رویداد انتخاب نشده است');
+            
+            $result = test_wordpress_connection($current_event_id);
+            
+            $response = [
+                'success' => true,
+                'message' => $result['message']
+            ];
+            break;
+
         default:
             if (empty($current_event_id) || !is_valid_event_id($current_event_id)) throw new Exception("هیچ رویداد معتبری انتخاب نشده است.");
             switch ($action) {

@@ -589,12 +589,13 @@ $users = get_all_users();
                         </div>
                     </div>
                 </form>
-
+                
                 <div id="phone-validation" class="tab-panel">
                     <div class="card">
                         <div class="card-header">
                             <h3>اعتبارسنجی شماره تلفن</h3>
-                            <div> <a data-tippy-content="دانلود لیست شماره‌ها (CSV)" href="?download=phones&event_id=<?= htmlspecialchars($current_event_id) ?>"
+                            <div>
+                                <a data-tippy-content="دانلود لیست شماره‌ها (CSV)" href="?download=phones&event_id=<?= htmlspecialchars($current_event_id) ?>"
                                     class="btn btn--primary btn--icon" title="دانلود لیست شماره‌ها (CSV)" id="download-phone-list-btn">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18"
                                         height="18">
@@ -614,10 +615,9 @@ $users = get_all_users();
                         
                         <div class="alert-warning" style="margin-bottom: 1.5rem;">
                             <p><strong>توضیحات:</strong></p>
-                            <p>با فعال کردن این قابلیت، فقط کاربرانی که شماره تلفن آن‌ها در لیست موجود است می‌توانند به پخش زنده دسترسی داشته باشند.</p>
+                            <p>با فعال کردن این قابلیت، فقط کاربرانی که شماره تلفن آن‌ها در لیست (CSV یا WordPress) موجود است می‌توانند به پخش زنده دسترسی داشته باشند.</p>
                         </div>
                         
-                        <!-- Enable/Disable Toggle -->
                         <div class="phone-validation-toggle">
                             <label class="toggle-switch">
                                 <input type="checkbox" id="phone-validation-enabled">
@@ -626,42 +626,99 @@ $users = get_all_users();
                             </label>
                         </div>
                         
-                        <!-- Statistics -->
                         <div id="phone-validation-stats" class="phone-validation-stats">
-                            <!-- Stats will be loaded here -->
+                            </div>
+                        
+                        <div class="card" style="margin-bottom: 1.5rem; background: var(--grey-x-light-color);">
+                            <h4>انتخاب منبع اعتبارسنجی</h4>
+                            <div class="restore-target" style="margin-top: 1rem;">
+                                <label>
+                                    <input type="radio" name="phone_source_type" value="csv" id="phone_source_csv" checked>
+                                    <p>آپلود فایل CSV (دستی)</p>
+                                </label>
+                                <label>
+                                    <input type="radio" name="phone_source_type" value="wordpress" id="phone_source_wordpress">
+                                    <p>WordPress / Gravity Forms (API)</p>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="phone-validation-csv-container">
+                            <div class="phone-validation-upload">
+                                <h4>آپلود لیست شماره تلفن‌ها (CSV)</h4>
+                                <p>هر خط باید شامل یک شماره تلفن باشد. آپلود جدید، لیست قبلی را بازنویسی می‌کند.</p>
+                                
+                                <form id="phone-csv-upload-form" enctype="multipart/form-data">
+                                    <input type="hidden" name="action" value="upload_phone_numbers_csv">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
+                                    
+                                    <div class="upload-dropzone" id="phone-csv-dropzone">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 4 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <p>فایل CSV را اینجا رها کنید یا کلیک کنید</p>
+                                        <small>فرمت قابل قبول: CSV - حداکثر 5MB</small>
+                                        <input type="file" id="phone-csv-input" name="csv_file" accept=".csv,text/csv" style="display: none;">
+                                    </div>
+                                    <button type="submit" class="btn btn--primary" id="upload-csv-btn" style="margin-top: 1rem;">
+                                        <span class="btn-text">آپلود فایل CSV</span>
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div id="current-csv-info" class="current-csv-info" style="display: none;">
+                                <h4>آخرین آپلود CSV</h4>
+                                <div class="csv-info-content">
+                                    <p><strong>تاریخ آپلود:</strong> <span id="csv-upload-date"></span></p>
+                                    <p><strong>تعداد شماره‌ها:</strong> <span id="csv-total-numbers"></span></p>
+                                    <p><strong>آپلود شده توسط:</strong> <span id="csv-uploaded-by"></span></p>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- CSV Upload Section -->
-                        <div class="phone-validation-upload">
-                            <h4>آپلود لیست شماره تلفن‌ها</h4>
-                            <p>فایل CSV حاوی لیست شماره تلفن‌های مجاز را آپلود کنید. هر خط باید شامل یک شماره تلفن باشد.</p>
-                            
-                            <form id="phone-csv-upload-form" enctype="multipart/form-data">
-                                <input type="hidden" name="action" value="upload_phone_numbers_csv">
+                        <div id="phone-validation-wp-container" style="display: none;">
+                            <form id="wp-validation-settings-form">
+                                <input type="hidden" name="action" value="save_wp_validation_settings">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
                                 
-                                <div class="upload-dropzone" id="phone-csv-dropzone">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 4 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                    </svg>
-                                    <p>فایل CSV را اینجا رها کنید یا کلیک کنید</p>
-                                    <small>فرمت قابل قبول: CSV - حداکثر 5MB</small>
-                                    <input type="file" id="phone-csv-input" name="csv_file" accept=".csv,text/csv" style="display: none;">
+                                <div class="phone-validation-upload">
+                                    <h4>تنظیمات اتصال به WordPress</h4>
+                                    <p>اطلاعات اتصال به افزونه WordPress را وارد کنید.</p>
+                                    
+                                    <div class="form-grid">
+                                        <div class="form-group" style="grid-column: 1 / -1;">
+                                            <label for="wp_api_url">WordPress REST API URL:</label>
+                                            <input type="url" id="wp_api_url" name="wp_api_url" placeholder="https://yourwordpress.com/wp-json" required>
+                                        </div>
+                                        <div class="form-group" style="grid-column: 1 / -1;">
+                                            <label for="wp_api_key">API Key:</label>
+                                            <input type="text" id="wp_api_key" name="wp_api_key" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="wp_form_id">Gravity Forms Form ID:</label>
+                                            <input type="text" id="wp_form_id" name="wp_form_id" placeholder="e.g., 3" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="wp_field_id">Gravity Forms Field ID:</label>
+                                            <input type="text" id="wp_field_id" name="wp_field_id" placeholder="e.g., 5.1" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-actions" style="margin-top: 1.5rem;">
+                                        <button type="submit" class="btn btn--primary" id="save-wp-settings-btn">
+                                            <span class="btn-text">ذخیره تنظیمات WordPress</span>
+                                        </button>
+                                        <button type="button" class="btn btn--primary btn--outline" id="test-wp-connection-btn">
+                                            <span class="btn-text">تست اتصال</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="wp-test-status" style="margin-top: 1rem; text-align: right;">
+                                        <p><strong>آخرین وضعیت تست:</strong> <span id="wp-test-status-text">تست نشده</span></p>
+                                        <p><strong>تاریخ تست:</strong> <span id="wp-test-date-text">---</span></p>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn--primary" id="upload-csv-btn">
-                                    <span class="btn-text">آپلود فایل CSV</span>
-                                </button>
                             </form>
-                        </div>
-                        
-                        <!-- Current File Info -->
-                        <div id="current-csv-info" class="current-csv-info" style="display: none;">
-                            <h4>آخرین آپلود</h4>
-                            <div class="csv-info-content">
-                                <p><strong>تاریخ آپلود:</strong> <span id="csv-upload-date"></span></p>
-                                <p><strong>تعداد شماره‌ها:</strong> <span id="csv-total-numbers"></span></p>
-                                <p><strong>آپلود شده توسط:</strong> <span id="csv-uploaded-by"></span></p>
-                            </div>
                         </div>
                     </div>
                 </div>

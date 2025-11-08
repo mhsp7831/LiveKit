@@ -49,7 +49,18 @@ if (!$event_id) {
                 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['phone_number'])) {
                     $submitted_phone = $_POST['phone_number'];
                     
-                    if (is_phone_authorized($event_id, $submitted_phone)) {
+                    $is_authorized = false;
+                    
+                    // Check source type from settings
+                    if ($phone_settings['source_type'] === 'wordpress') {
+                        // Call the new WordPress API verifier
+                        $is_authorized = verify_phone_wordpress($event_id, $submitted_phone);
+                    } else {
+                        // Default to existing 'csv' (local database) check
+                        $is_authorized = is_phone_authorized($event_id, $submitted_phone);
+                    }
+                    
+                    if ($is_authorized) {
                         // Authorize in session
                         if (!isset($_SESSION['authorized_events'])) {
                             $_SESSION['authorized_events'] = [];

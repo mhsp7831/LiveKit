@@ -2433,7 +2433,32 @@ async function loadPhoneValidation() {
         // Update stats
         displayPhoneValidationStats(result.stats, phoneValidationSettings);
         
-        // Update current file info
+        // --- NEW WP/CSV LOGIC ---
+        
+        // Set source radio button
+        const source = phoneValidationSettings.source_type || 'csv';
+        document.getElementById(`phone_source_${source}`).checked = true;
+        
+        // Show/hide containers
+        toggleValidationSourceView(source);
+        
+        // Populate WP fields
+        document.getElementById('wp_api_url').value = phoneValidationSettings.wp_api_url || '';
+        document.getElementById('wp_api_key').value = phoneValidationSettings.wp_api_key || '';
+        document.getElementById('wp_form_id').value = phoneValidationSettings.wp_form_id || '';
+        document.getElementById('wp_field_id').value = phoneValidationSettings.wp_field_id || '';
+        
+        // Populate WP test status
+        if (phoneValidationSettings.last_test_at) {
+            const date = new Date(phoneValidationSettings.last_test_at * 1000);
+            document.getElementById('wp-test-date-text').textContent = date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
+            document.getElementById('wp-test-status-text').textContent = phoneValidationSettings.last_test_status || 'خطا';
+        } else {
+            document.getElementById('wp-test-date-text').textContent = '---';
+            document.getElementById('wp-test-status-text').textContent = 'تست نشده';
+        }
+
+        // Update current CSV file info
         updateCurrentFileInfo(phoneValidationSettings);
         
     } catch (error) {
@@ -2585,6 +2610,117 @@ document.getElementById('phone-csv-upload-form')?.addEventListener('submit', asy
         
     } catch (error) {
         showToast(error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+    }
+});
+
+// --- Phone Validation Source Switching ---
+
+function toggleValidationSourceView(source) {
+    if (source === 'wordpress') {
+        document.getElementById('phone-validation-csv-container').style.display = 'none';
+        document.getElementById('phone-validation-wp-container').style.display = 'block';
+    } else { // Default to 'csv'
+        document.getElementById('phone-validation-csv-container').style.display = 'block';
+        document.getElementById('phone-validation-wp-container').style.display = 'none';
+    }
+}
+
+document.querySelectorAll('input[name="phone_source_type"]').forEach(radio => {
+    radio.addEventListener('change', async function() {
+        const source = this.value;
+        toggleValidationSourceView(source);
+        
+        // Save the source change to the server
+        try {
+            const formData = new FormData();
+            formData.append('action', 'update_phone_validation_source');
+            formData.append('source_type', source);
+            const result = await sendRequest(formData);
+            showToast(result.message);
+            phoneValidationSettings.source_type = source; // Update local cache
+        } catch (error) {
+            showToast(error.message, 'error');
+            // Revert UI
+            const oldSource = source === 'csv' ? 'wordpress' : 'csv';
+            document.getElementById(`phone_source_${oldSource}`).checked = true;
+            toggleValidationSourceView(oldSource);
+        }
+    });
+});
+
+// --- WordPress Validation Form Handlers ---
+
+// Save WP Settings
+document.getElementById('wp-validation-settings-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('save-wp-settings-btn');
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    
+    try {
+        const formData = new FormData(this);
+        const result = await sendRequest(formData);
+        
+        showToast(result.message);
+        loadPhoneValidation(); // Reload settings
+        
+        submitBtn.classList.remove('loading');
+        submitBtn.classList.add('success');
+        setTimeout(() => {
+            submitBtn.classList.remove('success');
+            submitBtn.disabled = false;
+        }, 1500);
+        
+    } catch (error) {
+        showToast(error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+    }
+});
+
+// Test WP Connection
+document.getElementById('test-wp-connection-btn')?.addEventListener('click', async function() {
+    const submitBtn = this;
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    
+    // First, save the current settings
+    try {
+        const form = document.getElementById('wp-validation-settings-form');
+        const formData = new FormData(form);
+        formData.set('action', 'save_wp_validation_settings'); // Ensure correct action
+        await sendRequest(formData);
+        // Don't show toast, just save
+    } catch (error) {
+        showToast('ابتدا تنظیمات را ذخیره کنید: ' + error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        return;
+    }
+    
+    // Now, run the test
+    try {
+        const testFormData = new FormData();
+        testFormData.append('action', 'test_wp_validation_connection');
+        
+        const result = await sendRequest(testFormData);
+        showToast(result.message, 'success');
+        
+        loadPhoneValidation(); // Reload settings to show test status
+        
+        submitBtn.classList.remove('loading');
+        submitBtn.classList.add('success');
+        setTimeout(() => {
+            submitBtn.classList.remove('success');
+            submitBtn.disabled = false;
+        }, 1500);
+        
+    } catch (error) {
+        showToast(error.message, 'error');
+        loadPhoneValidation(); // Reload settings to show test status
         submitBtn.disabled = false;
         submitBtn.classList.remove('loading');
     }
