@@ -2402,6 +2402,7 @@ function createMediaPickerModal() {
 
 
 let phoneValidationSettings = null;
+let cachedForms = []; // Cache loaded forms
 
 // Load phone validation when tab is opened
 document.querySelector('[data-tab="phone-validation"]')?.addEventListener('click', function() {
@@ -2433,10 +2434,8 @@ async function loadPhoneValidation() {
         // Update stats
         displayPhoneValidationStats(result.stats, phoneValidationSettings);
         
-        // --- FIX: Ensure source_type has a default value ---
+        // Set source radio
         const source = phoneValidationSettings.source_type || 'csv';
-        
-        // Set source radio button
         const csvRadio = document.getElementById('phone_source_csv');
         const wpRadio = document.getElementById('phone_source_wordpress');
         
@@ -2450,26 +2449,83 @@ async function loadPhoneValidation() {
             }
         }
         
-        // Show/hide containers
         toggleValidationSourceView(source);
         
-        // Populate WP fields
+        // Populate WordPress fields
         document.getElementById('wp_api_url').value = phoneValidationSettings.wp_api_url || '';
         document.getElementById('wp_api_key').value = phoneValidationSettings.wp_api_key || '';
-        document.getElementById('wp_form_id').value = phoneValidationSettings.wp_form_id || '';
-        document.getElementById('wp_field_id').value = phoneValidationSettings.wp_field_id || '';
         
-        // Populate WP test status
-        if (phoneValidationSettings.last_test_at) {
-            const date = new Date(phoneValidationSettings.last_test_at * 1000);
-            document.getElementById('wp-test-date-text').textContent = date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
-            document.getElementById('wp-test-status-text').textContent = phoneValidationSettings.last_test_status || 'خطا';
-        } else {
-            document.getElementById('wp-test-date-text').textContent = '---';
-            document.getElementById('wp-test-status-text').textContent = 'تست نشده';
+        // If we have form_id, try to load forms and select it
+        if (phoneValidationSettings.wp_form_id && phoneValidationSettings.wp_api_url && phoneValidationSettings.wp_api_key) {
+            const apiUrl = phoneValidationSettings.wp_api_url;
+            const apiKey = phoneValidationSettings.wp_api_key;
+
+            try {
+                const formsResult = await loadWordPressFormsDirect(apiUrl, apiKey);
+                if (formsResult.success) {
+                    cachedForms = formsResult.forms;
+                    populateFormsDropdown(formsResult.forms);
+
+                    document.getElementById('wp-forms-selection').style.display = 'block';
+                    document.getElementById('wp_form_select').value = phoneValidationSettings.wp_form_id;
+
+                    if (phoneValidationSettings.wp_field_id) {
+                        try {
+                            const fieldsResult = await loadWordPressFormFieldsDirect(
+                                apiUrl, 
+                                apiKey, 
+                                phoneValidationSettings.wp_form_id
+                            );
+                            
+                            if (fieldsResult.success) {
+                                const fieldSelect = document.getElementById('wp_field_select');
+                                
+                                fieldSelect.innerHTML = '<option value="">-- شناسایی خودکار --</option>';
+                                
+                                fieldsResult.fields.forEach(field => {
+                                    const option = document.createElement('option');
+                                    option.value = field.id;
+                                    
+                                    const isPhoneField = field.type === 'phone' ||
+                                                    field.label.toLowerCase().includes('phone') ||
+                                                    field.label.includes('تلفن') ||
+                                                    field.label.includes('موبایل');
+                                    
+                                    option.textContent = `${field.label} (ID: ${field.id}) ${field.type}`;
+                                    
+                                    if (isPhoneField) {
+                                        option.textContent += ' 📱';
+                                        option.style.fontWeight = 'bold';
+                                        option.style.color = 'var(--primary-color)';
+                                    }
+                                    
+                                    fieldSelect.appendChild(option);
+                                });
+                                
+                                fieldSelect.disabled = false;
+                                
+                                fieldSelect.value = phoneValidationSettings.wp_field_id;
+                                
+                                document.getElementById('wp-fields-selection').style.display = 'block';
+                            }
+                        } catch (fieldError) {
+                            console.error('Could not auto-load fields:', fieldError);
+                        }
+                    }
+
+                    // نمایش وضعیت اتصال
+                    document.getElementById('wp-connection-status').style.display = 'block';
+                    document.getElementById('wp-connection-status-text').textContent = 'متصل ✓';
+                    document.getElementById('wp-connection-status-text').style.color = 'var(--success-color)';
+                    document.getElementById('wp-forms-count-text').textContent = formsResult.forms.length;
+                }
+            } catch (error) {
+                console.log('Could not auto-load forms:', error);
+            }
         }
 
-        // Update current CSV file info
+        
+        // Update CSV info
         updateCurrentFileInfo(phoneValidationSettings);
         
     } catch (error) {
@@ -2756,6 +2812,294 @@ document.getElementById('test-wp-connection-btn')?.addEventListener('click', asy
         loadPhoneValidation();
         submitBtn.disabled = false;
         submitBtn.classList.remove('loading');
+    }
+});
+
+document.getElementById('load-wp-forms-btn')?.addEventListener('click', async function() {
+    const apiUrl = document.getElementById('wp_api_url').value.trim();
+    const apiKey = document.getElementById('wp_api_key').value.trim();
+
+    // Validate inputs
+    if (!apiUrl || !apiKey) {
+        showToast('لطفاً ابتدا URL و API Key را وارد کنید', 'error');
+        return;
+    }
+
+    const loadBtn = this;
+    loadBtn.firstElementChild.style.opacity = 0;
+    loadBtn.disabled = true;
+    loadBtn.classList.add('loading');
+
+    try {
+        // Step 1: Test connection
+        const testResult = await testWordPressConnectionDirect(apiUrl, apiKey);
+
+        if (!testResult.success) {
+            throw new Error(testResult.message);
+        }
+
+        // Step 2: Load forms
+        const formsResult = await loadWordPressFormsDirect(apiUrl, apiKey);
+
+        if (!formsResult.success) {
+            throw new Error(formsResult.message);
+        }
+
+        cachedForms = formsResult.forms;
+
+        // Step 3: Populate dropdown
+        populateFormsDropdown(formsResult.forms);
+
+        if (phoneValidationSettings && phoneValidationSettings.wp_form_id) {
+            document.getElementById('wp_form_select').value = phoneValidationSettings.wp_form_id;
+            
+            if (phoneValidationSettings.wp_field_id) {
+                try {
+                    const fieldsResult = await loadWordPressFormFieldsDirect(
+                        apiUrl, 
+                        apiKey, 
+                        phoneValidationSettings.wp_form_id
+                    );
+                    
+                    if (fieldsResult.success) {
+                        const fieldSelect = document.getElementById('wp_field_select');
+                        
+                        fieldSelect.innerHTML = '<option value="">-- شناسایی خودکار --</option>';
+                        
+                        fieldsResult.fields.forEach(field => {
+                            const option = document.createElement('option');
+                            option.value = field.id;
+                            
+                            const isPhoneField = field.type === 'phone' ||
+                                               field.label.toLowerCase().includes('phone') ||
+                                               field.label.includes('تلفن') ||
+                                               field.label.includes('موبایل');
+                            
+                            option.textContent = `${field.label} (ID: ${field.id}) ${field.type}`;
+                            
+                            if (isPhoneField) {
+                                option.textContent += ' 📱';
+                                option.style.fontWeight = 'bold';
+                                option.style.color = 'var(--primary-color)';
+                            }
+                            
+                            fieldSelect.appendChild(option);
+                        });
+                        
+                        fieldSelect.disabled = false;
+                        
+                        fieldSelect.value = phoneValidationSettings.wp_field_id;
+                        
+                        document.getElementById('wp-fields-selection').style.display = 'block';
+                    }
+                } catch (fieldError) {
+                    console.error('Could not auto-load fields:', fieldError);
+                }
+            }
+        }
+
+        // Step 4: Show success status
+        document.getElementById('wp-connection-status').style.display = 'block';
+        document.getElementById('wp-connection-status-text').textContent = 'متصل ✓';
+        document.getElementById('wp-connection-status-text').style.color = 'var(--success-color)';
+        document.getElementById('wp-forms-count-text').textContent = formsResult.forms.length;
+
+        // Step 5: Show form selection
+        document.getElementById('wp-forms-selection').style.display = 'block';
+
+        showToast(`${formsResult.forms.length} فرم با موفقیت بارگیری شد`, 'success');
+
+        loadBtn.classList.remove('loading');
+        loadBtn.classList.add('success');
+        setTimeout(() => {
+            loadBtn.classList.remove('success');
+            loadBtn.disabled = false;
+            loadBtn.firstElementChild.style.opacity = 1;
+        }, 1500);
+
+    } catch (error) {
+        showToast(error.message, 'error');
+
+        // Show error status
+        document.getElementById('wp-connection-status').style.display = 'block';
+        document.getElementById('wp-connection-status-text').textContent = 'خطا در اتصال ✗';
+        document.getElementById('wp-connection-status-text').style.color = 'var(--danger-color)';
+        document.getElementById('wp-forms-count-text').textContent = '0';
+
+        loadBtn.disabled = false;
+        loadBtn.classList.remove('loading');
+        loadBtn.firstElementChild.style.opacity = 1;
+    }
+});
+
+async function testWordPressConnectionDirect(apiUrl, apiKey) {
+    try {
+        // Normalize URL
+        let normalizedUrl = apiUrl.replace(/\/+$/, ''); // Remove trailing slashes
+        normalizedUrl = normalizedUrl.replace(/\/wp-json.*$/, ''); // Remove any existing /wp-json
+        
+        const endpoint = normalizedUrl + '/wp-json/livestream/v1/test-connection';
+        
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'X-API-Key': apiKey,
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            return { success: true, message: data.message };
+        } else {
+            return { success: false, message: 'پاسخ نامعتبر از سرور WordPress' };
+        }
+        
+    } catch (error) {
+        return { success: false, message: 'خطا در اتصال: ' + error.message };
+    }
+}
+
+async function loadWordPressFormsDirect(apiUrl, apiKey) {
+    try {
+        // Normalize URL
+        let normalizedUrl = apiUrl.replace(/\/+$/, '');
+        normalizedUrl = normalizedUrl.replace(/\/wp-json.*$/, '');
+        
+        const endpoint = normalizedUrl + '/wp-json/livestream/v1/forms';
+        
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'X-API-Key': apiKey,
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const forms = await response.json();
+        
+        if (Array.isArray(forms)) {
+            return { success: true, forms: forms };
+        } else {
+            return { success: false, message: 'فرمت داده‌های دریافتی نامعتبر است' };
+        }
+        
+    } catch (error) {
+        return { success: false, message: 'خطا در دریافت فرم‌ها: ' + error.message };
+    }
+}
+
+async function loadWordPressFormFieldsDirect(apiUrl, apiKey, formId) {
+    try {
+        let normalizedUrl = apiUrl.replace(/\/+$/, '');
+        normalizedUrl = normalizedUrl.replace(/\/wp-json.*$/, '');
+        
+        const endpoint = normalizedUrl + '/wp-json/livestream/v1/forms/' + formId + '/fields';
+        
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'X-API-Key': apiKey,
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const fields = await response.json();
+        
+        if (Array.isArray(fields)) {
+            return { success: true, fields: fields };
+        } else {
+            return { success: false, message: 'فرمت داده‌های فیلدها نامعتبر است' };
+        }
+        
+    } catch (error) {
+        return { success: false, message: 'خطا در دریافت فیلدها: ' + error.message };
+    }
+}
+
+function populateFormsDropdown(forms) {
+    const select = document.getElementById('wp_form_select');
+    
+    // Clear existing options (except the first placeholder)
+    select.innerHTML = '<option value="">-- انتخاب فرم --</option>';
+    
+    // Add forms
+    forms.forEach(form => {
+        const option = document.createElement('option');
+        option.value = form.id;
+        option.textContent = `${form.title} (ID: ${form.id})`;
+        select.appendChild(option);
+    });
+}
+
+document.getElementById('wp_form_select')?.addEventListener('change', async function() {
+    const formId = this.value;
+    const fieldsSelection = document.getElementById('wp-fields-selection');
+    
+    if (!formId) {
+        fieldsSelection.style.display = 'none';
+        return;
+    }
+    
+    // Show loading state
+    fieldsSelection.style.display = 'block';
+    const fieldSelect = document.getElementById('wp_field_select');
+    fieldSelect.innerHTML = '<option value="">در حال بارگیری فیلدها...</option>';
+    fieldSelect.disabled = true;
+    
+    try {
+        const apiUrl = document.getElementById('wp_api_url').value.trim();
+        const apiKey = document.getElementById('wp_api_key').value.trim();
+        
+        const fieldsResult = await loadWordPressFormFieldsDirect(apiUrl, apiKey, formId);
+        
+        if (!fieldsResult.success) {
+            throw new Error(fieldsResult.message);
+        }
+        
+        // Populate fields dropdown
+        fieldSelect.innerHTML = '<option value="">-- شناسایی خودکار --</option>';
+        
+        fieldsResult.fields.forEach(field => {
+            const option = document.createElement('option');
+            option.value = field.id;
+            
+            // Highlight phone fields
+            const isPhoneField = field.type === 'phone' || 
+                                 field.label.toLowerCase().includes('phone') ||
+                                 field.label.includes('تلفن') ||
+                                 field.label.includes('موبایل');
+            
+            option.textContent = `${field.label} (ID: ${field.id}) ${field.type}`;
+            
+            if (isPhoneField) {
+                option.textContent += ' 📱';
+                option.style.fontWeight = 'bold';
+                option.style.color = 'var(--primary-color)';
+            }
+            
+            fieldSelect.appendChild(option);
+        });
+        
+        fieldSelect.disabled = false;
+        
+    } catch (error) {
+        showToast(error.message, 'error');
+        fieldSelect.innerHTML = '<option value="">خطا در بارگیری فیلدها</option>';
+        fieldSelect.disabled = false;
     }
 });
 

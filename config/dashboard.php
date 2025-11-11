@@ -685,16 +685,17 @@ $users = get_all_users();
                                     <h4>تنظیمات اتصال به WordPress</h4>
                                     <p>اطلاعات اتصال به افزونه WordPress را وارد کنید.</p>
                                     
-                                    <div class="alert-warning">
-                                        <p><strong>نکته:</strong> لطفاً ابتدا افزونه "LiveKit Gravity Forms Integration" را در وردپرس خود نصب و فعال کنید.</p>
+                                    <div class="alert-warning" style="margin-bottom: 1rem;">
+                                        <p><strong>نکته:</strong> پس از وارد کردن URL و API Key، روی دکمه "بارگیری فرم‌ها" کلیک کنید.</p>
                                     </div>
                                     
                                     <div class="form-grid">
+                                        <!-- Step 1: WordPress Connection -->
                                         <div class="form-group" style="grid-column: 1 / -1;">
                                             <label for="wp_api_url">
-                                                WordPress Base URL:
+                                                WordPress Site URL:
                                                 <div class="label-tooltip">
-                                                    <svg data-tippy-content="مثال: https://yoursite.com یا https://yoursite.com/wp-json/livestream/v1" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <svg data-tippy-content="آدرس پایه سایت وردپرس (مثال: https://yoursite.com)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                     </svg>
                                                 </div>
@@ -702,11 +703,12 @@ $users = get_all_users();
                                             <input type="url" id="wp_api_url" name="wp_api_url" 
                                                 placeholder="https://yourwordpress.com" required>
                                         </div>
+                                        
                                         <div class="form-group" style="grid-column: 1 / -1;">
                                             <label for="wp_api_key">
                                                 API Key:
                                                 <div class="label-tooltip">
-                                                    <svg data-tippy-content="این کلید را از تنظیمات افزونه در وردپرس کپی کنید" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <svg data-tippy-content="کلید API را از تنظیمات افزونه در وردپرس کپی کنید" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                     </svg>
                                                 </div>
@@ -714,46 +716,60 @@ $users = get_all_users();
                                             <input type="text" id="wp_api_key" name="wp_api_key" 
                                                 placeholder="ls_..." required>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="wp_form_id">
-                                                Gravity Forms Form ID:
-                                                <div class="label-tooltip">
-                                                    <svg data-tippy-content="شناسه فرم گراویتی (مثلاً 3)" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
-                                                    </svg>
-                                                </div>
-                                            </label>
-                                            <input type="text" id="wp_form_id" name="wp_form_id" 
-                                                placeholder="3" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="wp_field_id">
-                                                Phone Field ID (اختیاری):
-                                                <small style="display: block; color: var(--text-light-color); font-weight: normal; margin-top: 0.25rem;">
+                                        
+                                        <!-- Step 2: Form Selection (hidden until forms loaded) -->
+                                        <div id="wp-forms-selection" style="grid-column: 1 / -1; display: none;">
+                                            <div class="form-group">
+                                                <label for="wp_form_select">
+                                                    انتخاب فرم Gravity Forms:
                                                     <div class="label-tooltip">
-                                                        <svg data-tippy-content="شناسه فیلد تلفن (مثلاً 5 یا 5.1)<br><strong>نکته:</strong> اگر خالی بگذارید، سیستم به صورت خودکار فیلد تلفن را پیدا می‌کند" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <svg data-tippy-content="فرم مورد نظر خود را از لیست انتخاب کنید" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
                                                         </svg>
                                                     </div>
-                                                </small>
-                                            </label>
-                                            <input type="text" id="wp_field_id" name="wp_field_id" 
-                                                placeholder="5.1 (اختیاری - خودکار شناسایی می‌شود)">
+                                                </label>
+                                                <div style="display: flex; gap: var(--spacing-sm);">
+                                                    <select id="wp_form_select" name="wp_form_id" required style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 2px solid var(--placeholder-border);">
+                                                        <option value="">-- انتخاب فرم --</option>
+                                                    </select>
+                                                    <div>
+                                                        <button data-tippy-content="بارگیری فرم‌ها از WordPress" type="button" class="btn btn--primary btn--icon" id="load-wp-forms-btn" style="width: 100%;">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Field Selection (shown after form is selected) -->
+                                            <div id="wp-fields-selection" style="display: none;">
+                                                <div class="form-group">
+                                                    <label for="wp_field_select">
+                                                        انتخاب فیلد تلفن (اختیاری):
+                                                        <div class="label-tooltip">
+                                                            <svg data-tippy-content="اگر انتخاب نکنید، سیستم به صورت خودکار فیلد تلفن را پیدا می‌کند" class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
+                                                            </svg>
+                                                        </div>
+                                                    </label>
+                                                    <select id="wp_field_select" name="wp_field_id" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 2px solid var(--placeholder-border);">
+                                                        <option value="">-- شناسایی خودکار --</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     
                                     <div class="form-actions" style="margin-top: 1.5rem;">
                                         <button type="submit" class="btn btn--primary" id="save-wp-settings-btn">
-                                            <span class="btn-text">ذخیره تنظیمات WordPress</span>
-                                        </button>
-                                        <button type="button" class="btn btn--primary btn--outline" id="test-wp-connection-btn">
-                                            <span class="btn-text">تست اتصال</span>
+                                            <span class="btn-text">ذخیره تنظیمات</span>
                                         </button>
                                     </div>
                                     
-                                    <div id="wp-test-status" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 8px;">
-                                        <p><strong>آخرین وضعیت تست:</strong> <span id="wp-test-status-text">تست نشده</span></p>
-                                        <p><strong>تاریخ تست:</strong> <span id="wp-test-date-text">---</span></p>
+                                    <div id="wp-connection-status" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: 8px; display: none;">
+                                        <p><strong>وضعیت اتصال:</strong> <span id="wp-connection-status-text">---</span></p>
+                                        <p><strong>تعداد فرم‌های یافت شده:</strong> <span id="wp-forms-count-text">---</span></p>
                                     </div>
                                 </div>
                             </form>
